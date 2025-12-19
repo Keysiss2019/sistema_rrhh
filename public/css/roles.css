@@ -1,0 +1,81 @@
+/* Fondo de la página blanco */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor centrado */
+.container {
+    width: 80%;
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+/* Header: logo a la izquierda, título a la derecha */
+.header {
+    display: flex;              /* Contenedor flexible */
+    align-items: center;        /* Centrar verticalmente */
+    margin-bottom: 20px;
+}
+
+/* Logo a la izquierda */
+.logo {
+    width: 90px;
+    height: auto;
+    margin-right: 20px;         /* Separación del título */
+}
+
+/* Título del header */
+.header h2 {
+    margin: 0;                  /* Elimina márgenes por defecto */
+    color: #333;
+}
+
+/* Mensaje de éxito */
+.success {
+    color: green;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* Botón Nuevo Rol */
+.btn-nuevo {
+    display: inline-block;
+    background-color: #007bff; /* Azul */
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    transition: background-color 0.3s;
+}
+
+.btn-nuevo:hover {
+    background-color: #0056b3;
+}
+
+/* Tabla de roles */
+.roles-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.roles-table th, .roles-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+.roles-table th {
+    background-color: #f2f2f2;
+}
+
+.roles-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}

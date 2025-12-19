@@ -1,0 +1,93 @@
+/* Fondo de la página blanco */
+body {
+    font-family: Arial, sans-serif;
+    background-color: azure;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor centrado */
+.container {
+    width: 400px;
+    margin: 50px auto;
+    background-color: #ffffff; /* blanco */
+    padding: 30px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+/* Logo centrado */
+.logo {
+    display: block;
+    margin: 0 auto 20px auto;
+    width: 100px;
+    height: auto;
+}
+
+/* Título centrado */
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Etiquetas de los campos */
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+}
+
+/* Campos de texto y textarea */
+input[type="text"], textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+/* Botón Guardar rol azul */
+.btn-nuevo {
+    margin-top: 20px;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff; /* Azul */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+}
+
+.btn-nuevo:hover {
+    background-color: #0056b3;
+}
+
+/* Botón Cancelar gris */
+.btn-cancelar {
+    display: block;
+    margin-top: 10px;
+    width: 95%;
+    padding: 10px;
+    background-color: #6c757d; /* Gris */
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.btn-cancelar:hover {
+    background-color: #5a6268;
+}
+
+/* Errores en rojo */
+.errors {
+    color: red;
+    margin-top: 10px;
+}
