@@ -1,0 +1,312 @@
+/* ===========================
+   VARIABLES GLOBALES
+   =========================== */
+:root {
+    --ihci-blue: #003366;   /* Color institucional azul IHCI */
+    --ihci-red: #C8102E;    /* Color institucional rojo IHCI */
+    --ihci-gray: #f8f9fa;   /* Color de fondo neutro / gris claro */
+}
+
+/* ===========================
+   ESTILOS GENERALES DEL BODY
+   =========================== */
+body {
+    background-color: var(--ihci-gray);  /* Fondo general de la página */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Tipografía principal */
+}
+
+/* ===========================
+   NAVBAR / BARRA DE NAVEGACIÓN
+   =========================== */
+.navbar-ihci {
+    background: white;                     /* Fondo blanco para navbar */
+    border-bottom: 3px solid var(--ihci-blue); /* Línea azul inferior */
+    padding: 0.5rem 1rem;                  /* Espaciado interno */
+}
+
+/* Contenedor flexible para elementos del navbar */
+.nav-flex-container {
+    display: flex;                         /* Flexbox para alinear elementos horizontalmente */
+    align-items: center;                    /* Centrado vertical */
+    justify-content: space-between;         /* Separación entre logo y menú */
+    max-width: 1300px;                      /* Máximo ancho de navbar */
+    margin: 0 auto;                         /* Centrado horizontal */
+}
+
+/* ===========================
+   LOGO DEL NAVBAR
+   =========================== */
+.logo-nav {
+    display: flex;
+    align-items: center;
+    height: 50px;          /* Altura del contenedor de logo */
+    position: relative;    /* Para permitir posicionamiento absoluto del logo dentro */
+}
+
+.logo-nav img {
+    height: 65px;          /* Altura real del logo */
+    width: auto;           /* Mantener proporciones */
+    position: absolute;    /* Permite que sobresalga sin empujar menú */
+    top: -10px;            /* Ajuste vertical visual */
+    z-index: 1010;         /* Siempre encima de otros elementos */
+    transition: transform 0.3s ease; /* Animación suave para efectos futuros */
+}
+
+/* ===========================
+   MENÚ PRINCIPAL DE MÓDULOS
+   =========================== */
+.nav-modules {
+    display: flex;         /* Flex horizontal */
+    gap: 20px;             /* Espacio entre cada módulo */
+    margin: 0;
+    padding: 0;
+    list-style: none;      /* Sin viñetas */
+}
+
+.menu-item {
+    position: relative;    /* Para submenú absoluto */
+    font-weight: 600;      /* Texto semi-negrita */
+    color: var(--ihci-blue); /* Color azul institucional */
+    cursor: pointer;       /* Cursor de mano */
+    padding: 10px 5px;     /* Espaciado interno */
+    transition: color 0.3s; /* Animación de color al hover */
+}
+
+.menu-item:hover {
+    color: var(--ihci-red); /* Cambia a rojo al pasar el mouse */
+}
+
+/* ===========================
+   SUBMENÚS (Dropdown)
+   =========================== */
+.submenu {
+    display: none;         /* Oculto por defecto */
+    position: absolute;    /* Posición relativa al menú padre */
+    top: 100%;             /* Debajo del menú principal */
+    left: 0;
+    background: white;     /* Fondo blanco */
+    min-width: 220px;      /* Ancho mínimo */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1); /* Sombra suave */
+    z-index: 1000;         /* Por encima de otros elementos */
+    border-top: 3px solid var(--ihci-red); /* Línea superior roja */
+}
+
+/* Mostrar submenu al pasar mouse sobre el item */
+.menu-item:hover .submenu {
+    display: block;
+}
+
+/* Estilo de cada enlace dentro del submenu */
+.submenu-item {
+    display: block;
+    padding: 12px 15px;
+    text-decoration: none; /* Sin subrayado */
+    color: #333;           /* Color de texto neutro */
+    border-bottom: 1px solid #eee; /* Separador suave */
+}
+
+.submenu-item:hover {
+    background: var(--ihci-blue); /* Fondo azul al pasar mouse */
+    color: white;                  /* Texto blanco */
+}
+
+/* ===========================
+   HERO / SECCIÓN PRINCIPAL
+   =========================== */
+.ihci-hero-container {
+    position: relative;
+    height: 350px;          /* Altura del hero */
+    background: linear-gradient(rgba(0,51,102,0.7), rgba(0,51,102,0.5)), url('/images/cultura1.jpg'); 
+    /* Fondo con imagen y degradado */
+    background-size: cover;        /* Cubrir todo el contenedor */
+    background-position: center;   /* Centrado de imagen */
+    display: flex;                 /* Flex para centrar contenido */
+    align-items: center;
+    justify-content: center;
+    color: white;                  /* Texto blanco */
+    text-align: center;
+}
+
+.hero-content h1 {
+    font-weight: 800;              /* Negrita extrema */
+    font-size: 2.8rem;             /* Tamaño grande */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Sombra de texto para contraste */
+}
+
+/* Botón destacado dentro del Hero */
+.btn-history {
+    background: var(--ihci-red); /* Fondo rojo institucional */
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-weight: bold;
+    border-radius: 4px;
+    margin-top: 15px;
+    transition: transform 0.2s;  /* Efecto hover */
+}
+
+.btn-history:hover {
+    transform: scale(1.05); /* Crece ligeramente al pasar el mouse */
+    color: white;
+}
+
+/* ===========================
+   MODAL / VENTANA EMERGENTE
+   =========================== */
+/* AJUSTES PARA EL MODAL PROFESIONAL */
+/* Modal Header */
+.modal-header {
+    background: var(--ihci-blue); /* Color corporativo IHCI */
+    color: white;
+    border-bottom: none;
+}
+
+/* Modal Body */
+.modal-body {
+    font-size: 1.1rem;       /* Tamaño de texto legible */
+    line-height: 1.7;        /* Espacio entre líneas */
+    text-align: justify;      /* Alineación justificada */
+    max-height: 75vh;         /* Máximo alto = 75% de la ventana */
+    overflow-y: auto;         /* Scroll vertical si sobrepasa */
+    padding: 1.5rem;          /* Espacio interno cómodo */
+}
+
+/* Botones del modal */
+.modal-footer {
+    border-top: none;
+    justify-content: flex-end;
+}
+
+.modal-footer .btn {
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+/* ===========================
+   Pantalla roles
+   =========================== */
+/* Estilo general de la sección */
+.roles-section {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Tabla personalizada */
+.custom-table thead {
+    background-color: #f1f4f9;
+    color: #495057;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.custom-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f2f7ff !important;
+    transform: scale(1.002);
+}
+
+/* Botones de acción */
+.btn-group .btn {
+    border-radius: 8px;
+    margin: 0 2px;
+    padding: 6px 10px;
+}
+
+/* Offcanvas Estilo */
+.offcanvas {
+    width: 400px !important;
+}
+
+.offcanvas-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    border-color: #0d6efd;
+}
+
+/* Animación para el logo de fondo (opcional) */
+.logo-bg-rol {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.03;
+    z-index: -1;
+    width: 400px;
+}
+
+/* ===========================
+   Pantalla empleados
+   =========================== */
+/* public/css/gestion-tablas.css */
+
+.tabla-personalizada {
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* --- ENCABEZADO REDONDEADO --- */
+.tabla-personalizada thead th {
+    background-color: #224cf4 !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 15px !important;
+    border: none !important;
+    /* Borde interno blanco semitransparente */
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Redondear esquina superior izquierda */
+.tabla-personalizada thead th:first-child {
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+}
+
+/* Redondear esquina superior derecha y quitar borde lateral */
+.tabla-personalizada thead th:last-child {
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+    border-right: none !important;
+}
+
+/* --- CUERPO DE LA TABLA (FILAS) --- */
+.tabla-personalizada td {
+    background-color: #f8f9fa !important;
+    border-right: 1px solid #e2e8f0 !important;
+    /* Bordes blancos para simular separación entre filas */
+    border-top: 2px solid #ffffff !important;
+    border-bottom: 2px solid #ffffff !important;
+    padding: 12px !important;
+}
+
+/* Redondear inicio de la fila de datos */
+.tabla-personalizada td:first-child {
+    border-left: none !important;
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+}
+
+/* Redondear fin de la fila de datos y quitar borde lateral */
+.tabla-personalizada td:last-child {
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+    border-right: none !important;
+}
+
+/* Efecto hover elegante */
+.tabla-personalizada tr:hover td {
+    background-color: #f0f4ff !important;
+    border-top-color: #224cf4 !important;
+    border-bottom-color: #224cf4 !important;
+    cursor: pointer;
+}
