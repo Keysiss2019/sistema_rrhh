@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models;  //Define la ubicación lógica del modelo dentro de la aplicación.
 
-use Illuminate\Database\Eloquent\Model;
+// Importación de clases base
+use Illuminate\Database\Eloquent\Model; //Se importa la clase Model de Eloquent
 
 class Role extends Model
 {
