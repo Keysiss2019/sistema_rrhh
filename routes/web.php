@@ -93,6 +93,9 @@ Route::post('/usuarios', [UsuarioController::class, 'store'])
 Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])
     ->name('usuarios.destroy'); // Eliminar usuario
 
+Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])
+    ->name('usuarios.update');  // Para el formulario de edición
+
 Route::put('/usuarios/{id}/estado', [UsuarioController::class, 'toggleEstado'])
     ->name('usuarios.estado');  // Activar / desactivar usuario
 
