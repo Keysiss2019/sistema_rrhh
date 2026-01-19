@@ -22,7 +22,7 @@
                     {{-- Botones de acciones --}}
                     <div class="d-flex gap-2">
                         {{-- Botón volver a inicio --}}
-                        <a href="{{ url('/') }}" class="btn btn-light btn-sm shadow-sm fw-bold">
+                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm fw-bold">
                             <i class="fa-solid fa-house me-1"></i> Inicio
                         </a>
 

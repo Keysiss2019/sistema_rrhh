@@ -22,7 +22,7 @@
 
                     <div class="d-flex gap-2">
                         <!-- Botón Inicio -->
-                        <a href="{{ url('/') }}" class="btn btn-light btn-sm shadow-sm">
+                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm">
                             <i class="fa-solid fa-house"></i> Inicio
                         </a>
 

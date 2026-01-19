@@ -17,7 +17,7 @@
         </h2>
 
         <div class="d-flex gap-2">
-            <a href="{{ url('/') }}" class="btn btn-outline-secondary shadow-sm">
+            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary shadow-sm">
                 <i class="fa-solid fa-house"></i> Inicio
             </a>
             <button class="btn btn-dark px-4 shadow-sm fw-bold"
