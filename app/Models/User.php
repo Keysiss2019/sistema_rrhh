@@ -1,45 +1,50 @@
 <?php
 
+// Namespace del modelo
+// Esto indica que esta clase pertenece a App\Models
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+// Importamos la clase base Model de Eloquent para usar ORM
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+// Importamos Hash para encriptar contraseñas
+use Illuminate\Support\Facades\Hash;
+
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    // Especificamos la tabla de la base de datos asociada a este modelo
+    protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    // Campos que se pueden asignar de forma masiva (mass assignment)
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'usuario',               // Nombre de usuario
+        'password',              // Contraseña encriptada
+        'empleado_id',           // Relación con tabla empleados
+        'role_id',               // Relación con tabla roles
+        'estado',                // Estado del usuario: activo/inactivo
+        'debe_cambiar_password'  // Flag que indica si debe cambiar la contraseña al ingresar
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    // RELACIÓN: Un usuario pertenece a un empleado
+    public function empleado()
+    {
+        return $this->belongsTo(Empleado::class);
+    }
+
+    // RELACIÓN: Un usuario pertenece a un rol
+    public function rol()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Mutador para el atributo "password"
+     * Se ejecuta automáticamente cuando se asigna $user->password = 'algo';
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    public function setPasswordAttribute($value)
+    {
+        // Solo encripta si el valor no está ya encriptado
+        $this->attributes['password'] = Hash::needsRehash($value) ? Hash::make($value) : $value;
+    }
 }
+
