@@ -172,7 +172,7 @@
                     <i class="fa-solid fa-save me-2"></i> Guardar Rol
                 </button>
                 <button type="button"
-                        class="btn btn-light"
+                        class="btn btn-secondary btn-lg fw-bold"
                         data-bs-dismiss="offcanvas">
                     Cancelar
                 </button>
