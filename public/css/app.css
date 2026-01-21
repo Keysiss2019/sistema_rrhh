@@ -230,16 +230,6 @@ body {
     border-color: #0d6efd;
 }
 
-/* Animación para el logo de fondo (opcional) */
-.logo-bg-rol {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.03;
-    z-index: -1;
-    width: 400px;
-}
 
 /* ===========================
    Pantalla empleados
@@ -309,4 +299,154 @@ body {
     border-top-color: #224cf4 !important;
     border-bottom-color: #224cf4 !important;
     cursor: pointer;
+}
+
+/* ===========================
+   login
+   =========================== */
+
+  /* Contenedor que ocupa toda la pantalla con degradado */
+.login-main-wrapper {
+    height: 80vh; /* Alto exacto de la ventana */
+    width: 80vw;  /* Ancho exacto de la ventana */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    margin: 0;
+    padding: 0;
+}
+
+/* Caja blanca principal */
+/* 3. Asegurar que la tarjeta no sea más alta que la pantalla */
+.login-container {
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh; /* La tarjeta nunca ocupará más del 90% del alto */
+    background: #c8b1b1;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    
+}
+
+/* Esta clase solo se activará en el Login */
+.auth-body {
+    overflow: hidden !important;
+    height: 100vh;
+}
+
+/* Lado izquierdo con fondo gris suave */
+.bg-light-custom {
+    background-color: #5597ad;
+    border-right: 1px solid #e2d8d8;
+}
+
+/* El círculo donde va el logo */
+.logo-circle-bg {
+    width: 150px;
+    height: 150px;
+    background: white;
+    border-radius: 50%;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* Botón con el azul de tu marca */
+.btn-primary-ihci {
+    background-color: #3f98b5; /* Cambia al azul de tu logo */
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.btn-primary-ihci:hover {
+    background-color: #0a8ce9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(63, 81, 181, 0.4);
+}
+
+/* Inputs redondeados y limpios */
+.form-control {
+    border-radius: 0 10px 10px 0 !important;
+}
+.input-group-text {
+    border-radius: 10px 0 0 10px !important;
+}
+
+/* ===========================
+   Cambiar contraseña temporal
+   =========================== */
+
+/* Este es el contenedor que usas en la vista de cambiar contraseña */
+.pwd-update-wrapper {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Muy importante */
+    background-color: #f8f9fa; /* Fondo gris claro institucional */
+    margin: 0;
+    padding: 0;
+}
+
+.logo-bg-rol {
+    position: fixed; 
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.15; 
+    z-index: 1; /* El logo va en la capa 1 */
+    width: 750px; 
+    pointer-events: none; /* Esto evita que el logo bloquee los clics al formulario */
+    filter: grayscale(0%); 
+}
+
+/* Forzamos a que la tarjeta de cambio de clave esté por encima de TODO */
+.pwd-card-container {
+    position: relative;
+    z-index: 10; /* La tarjeta va en la capa 10 (por encima del logo) */
+}
+
+/* ===========================
+   Recuperar contraseña 
+   =========================== */
+
+   /* Contenedor específico para Recuperar Contraseña */
+.forgot-password-wrapper {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa; /* Gris claro para que resalte el logo */
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* La tarjeta debe estar por encima del logo */
+.forgot-card-container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Asegúrate de que esta clase esté en tu CSS (la que ya tenías) */
+.logo-bg-rol {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.15; /* Nivel de visibilidad que definimos antes */
+    z-index: 0;
+    width: 750px;
+    pointer-events: none;
+    filter: grayscale(0%);
 }
