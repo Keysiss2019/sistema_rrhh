@@ -17,8 +17,10 @@
     <!-- CSS personalizado del proyecto -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body>
-
+<body class="{{ Route::is('login') ? 'auth-body' : '' }}">
+   
+@auth
+@if(!Route::is('login') && !Route::is('password.cambiar'))
     <!-- ===========================
          Header principal / Navbar
          =========================== -->
@@ -34,7 +36,7 @@
 
             <!-- Menú de navegación principal -->
             <nav class="nav-modules">
-
+               @if(auth()->user()->role_id == 1)
                 <!-- Módulo Seguridad -->
                 <div class="menu-item">
                     <i class="fa-solid fa-shield-halved"></i> Seguridad <i class="fa-solid fa-chevron-down small"></i>
@@ -46,6 +48,7 @@
                         <a href="{{ route('usuarios.index') }}" class="submenu-item">Usuarios</a>
                     </div>
                 </div>
+                @endif
 
                 <!-- Módulo Permisos Laborales -->
                 <div class="menu-item">
@@ -95,11 +98,14 @@
             </div>
         </div>
     </header>
+    @endif
+@endauth
 
+   @auth
     <!-- ===========================
          Sección Hero (solo en la página home/dashboard)
          =========================== -->
-    @if(Request::is('home') || Request::is('/') || Request::is('dashboard'))
+    @if(Request::is('home') || Request::is('dashboard'))
     <section class="ihci-hero-container">
         <div class="hero-content">
             <h1>Una Exitosa Gestión Cultural</h1>
@@ -111,6 +117,7 @@
         </div>
     </section>
     @endif
+    @endauth
 
     <!-- ===========================
          Contenedor principal del contenido de la página
