@@ -164,6 +164,4 @@ public function actualizarPassword(Request $request)
         ->with('success', 'Contraseña actualizada. Inicia sesión nuevamente.');
 }
 
-
-
 }
