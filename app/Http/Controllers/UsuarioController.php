@@ -10,6 +10,7 @@ use App\Models\Empleado;  // Modelo de empleados relacionados
 use App\Models\Role;      // Modelo de roles de usuario
 use Illuminate\Http\Request; // Para manejar solicitudes HTTP
 use Illuminate\Support\Facades\Hash; // Para encriptar contraseñas
+use Illuminate\Support\Facades\Auth; // - Obtener el usuario autenticado (Auth::user)
 
 class UsuarioController extends Controller
 {
@@ -138,4 +139,34 @@ class UsuarioController extends Controller
         // Retorna con mensaje de éxito
         return back()->with('success', 'Usuario eliminado correctamente.');
     }
+
+public function actualizarPassword(Request $request)
+{
+    // 1. Validar que la contraseña sea segura
+    $request->validate([
+        'password' => 'required|confirmed|min:8',
+    ]);
+
+    // 2. Obtener el usuario y decirle a PHP que es un modelo User
+    /** @var User $user */
+    $user = Auth::user();
+
+    if ($user) {
+        // 3. Actualizar datos
+        $user->password = $request->password; // El mutador del modelo lo encriptará
+        $user->debe_cambiar_password = 0;
+        
+        // 4. Guardar (Aquí ya no debe darte el error de "Undefined method")
+        $user->save();
+
+        // 5. Cerrar sesión por seguridad
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('success', 'Contraseña actualizada con éxito. Inicia sesión de nuevo.');
+    }
+
+    return redirect()->route('login')->with('error', 'Sesión no válida.');
+}
 }
