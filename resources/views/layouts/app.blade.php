@@ -54,7 +54,7 @@
                 <div class="menu-item">
                     <i class="fa-solid fa-key"></i> Permisos Laborales <i class="fa-solid fa-chevron-down small"></i>
                     <div class="submenu">
-                        <a href="{{ route('permisos.index') }}" class="submenu-item">Solicitudes laborales</a>
+                        <a href="{{ route('solicitudes.index') }}" class="submenu-item">Solicitudes laborales</a>
                         <a href="#" class="submenu-item">Vacaciones</a>
                         <a href="#" class="submenu-item">Tiempos compensatorios</a>
                     </div>
