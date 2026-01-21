@@ -142,31 +142,28 @@ class UsuarioController extends Controller
 
 public function actualizarPassword(Request $request)
 {
-    // 1. Validar que la contraseña sea segura
+    // Validar que password y confirmación coincidan
     $request->validate([
-        'password' => 'required|confirmed|min:8',
+        'password' => 'required|confirmed|min:6',
     ]);
 
-    // 2. Obtener el usuario y decirle a PHP que es un modelo User
-    /** @var User $user */
-    $user = Auth::user();
+    // Obtener usuario autenticado
+    $user = User::findOrFail(Auth::id());
 
-    if ($user) {
-        // 3. Actualizar datos
-        $user->password = $request->password; // El mutador del modelo lo encriptará
-        $user->debe_cambiar_password = 0;
-        
-        // 4. Guardar (Aquí ya no debe darte el error de "Undefined method")
-        $user->save();
+    // Asignar nueva contraseña y quitar flag
+    $user->password = $request->password; // Mutador hace Hash automáticamente
+    $user->debe_cambiar_password = 0;
+    $user->save(); // Guarda en BD
 
-        // 5. Cerrar sesión por seguridad
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+    // Logout automático
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Contraseña actualizada con éxito. Inicia sesión de nuevo.');
-    }
-
-    return redirect()->route('login')->with('error', 'Sesión no válida.');
+    return redirect()->route('login')
+        ->with('success', 'Contraseña actualizada. Inicia sesión nuevamente.');
 }
+
+
+
 }

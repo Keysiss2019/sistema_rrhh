@@ -9,7 +9,7 @@ class Kernel extends HttpKernel
     /**
      * The application's global HTTP middleware stack.
      *
-     * These middleware are run during every request to your application.
+     * Se ejecutan en cada petición HTTP.
      *
      * @var array<int, class-string|string>
      */
@@ -24,7 +24,7 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The application's route middleware groups.
+     * Los grupos de middleware de la aplicación.
      *
      * @var array<string, array<int, class-string|string>>
      */
@@ -36,8 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CheckPasswordChange::class,
-            \App\Http\Middleware\ForcePasswordChange::class
+            // NOTA: Los middlewares de cambio de contraseña se usan por alias, no aquí
         ],
 
         'api' => [
@@ -48,9 +47,9 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The application's middleware aliases.
+     * Alias de middlewares para rutas
      *
-     * Aliases may be used instead of class names to conveniently assign middleware to routes and groups.
+     * Permite usar nombres cortos en lugar de la clase completa
      *
      * @var array<string, class-string|string>
      */
@@ -65,5 +64,9 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+
+        // --- Tus middlewares de cambio de contraseña ---
+        'check.password.change' => \App\Http\Middleware\CheckPasswordChange::class,
+        'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
     ];
 }

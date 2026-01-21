@@ -1,90 +1,122 @@
-@extends('layouts.app') 
-{{-- Extiende el layout principal de la aplicación --}}
+@extends('layouts.app') {{-- Extiende la plantilla principal de la app --}}
 
 @section('content')
-<div class="pwd-update-wrapper">
-    
-    {{-- Logo de fondo como marca de agua (identidad visual IHCI) --}}
-    <img src="{{ asset('images/ihci_logo.jpg') }}" class="logo-bg-rol" alt="Fondo IHCI">
 
-    {{-- Contenedor principal centrado --}}
-    <div class="container" style="z-index: 10;">
-        <div class="row justify-content-center">
-            <div class="col-md-5">
-
-                {{-- Tarjeta principal del formulario --}}
-                <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-
-                    {{-- Encabezado de seguridad --}}
-                    <div class="card-header text-white fw-bold text-center py-3" style="background-color: #003366;">
-                        <i class="fa-solid fa-shield-keyhole me-2"></i> 
-                        SEGURIDAD: ACTUALIZAR CLAVE
-                    </div>
-                    
-                    {{-- Cuerpo del formulario --}}
-                    <div class="card-body p-4">
-
-                        {{-- Mensaje informativo obligatorio --}}
-                        <div class="alert alert-warning small border-0 shadow-sm mb-4">
-                            <i class="fa-solid fa-circle-exclamation me-1"></i> 
-                            Por seguridad, debes cambiar la contraseña temporal para poder acceder al menú principal.
-                        </div>
-                        
-                        {{-- Formulario para actualizar contraseña --}}
-                        <form method="POST" action="{{ route('password.actualizar') }}">
-                            @csrf {{-- Token de seguridad --}}
-
-                            {{-- Campo: nueva contraseña --}}
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    NUEVA CONTRASEÑA
-                                </label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-white border-end-0">
-                                        <i class="fa-solid fa-lock text-muted"></i>
-                                    </span>
-                                    <input type="password"
-                                           name="password"
-                                           class="form-control border-start-0"
-                                           required
-                                           minlength="6"
-                                           placeholder="Escribe tu nueva clave">
-                                </div>
-                            </div>
-
-                            {{-- Campo: confirmar contraseña --}}
-                            <div class="mb-4">
-                                <label class="form-label fw-bold small text-secondary">
-                                    CONFIRMAR CONTRASEÑA
-                                </label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-white border-end-0">
-                                        <i class="fa-solid fa-check-double text-muted"></i>
-                                    </span>
-                                    <input type="password"
-                                           name="password_confirmation"
-                                           class="form-control border-start-0"
-                                           required
-                                           placeholder="Repite la clave">
-                                </div>
-                            </div>
-
-                            {{-- Botón de envío --}}
-                            <div class="d-grid">
-                                <button type="submit"
-                                        class="btn btn-lg fw-bold text-white shadow"
-                                        style="background-color: #003366; transition: 0.3s;">
-                                    ACTUALIZAR Y CONTINUAR 
-                                    <i class="fa-solid fa-chevron-right ms-2"></i>
-                                </button>
-                            </div>
-                        </form>
-                        {{-- Fin del formulario --}}
-
-                    </div>
-                </div>
-            </div>
+<div class="pwd-body"> {{-- Contenedor del fondo y centrado --}}
+    <div class="glass-card"> {{-- Tarjeta principal tipo glass --}}
+        <div class="card-header-custom"> {{-- Header con icono y título --}}
+            <i class="fa-solid fa-shield-halved"></i>
+            <h2>SEGURIDAD IHCI</h2>
+            <p class="small opacity-75">Actualización de contraseña obligatoria</p>
         </div>
-    </div>
-</div>
-@endsection {{-- Fin de la sección de contenido --}}
+
+        <div class="card-body p-4"> {{-- Cuerpo de la tarjeta --}}
+
+            {{-- Mensaje de información --}}
+            @if(session('info'))
+                <div class="alert alert-warning alert-custom">
+                    <i class="fa-solid fa-circle-info me-2"></i> {{ session('info') }}
+                </div>
+            @endif
+
+            {{-- Mostrar errores de validación --}}
+            @if ($errors->any())
+                <div class="alert alert-danger alert-custom">
+                    <ul class="mb-0 list-unstyled">
+                        @foreach ($errors->all() as $error)
+                            <li><i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- Formulario para actualizar contraseña --}}
+            <form method="POST" action="{{ route('password.actualizar') }}">
+                @csrf {{-- Token CSRF obligatorio --}}
+
+                {{-- Campo: Nueva contraseña --}}
+                <div class="form-group-custom">
+                    <label class="form-label fw-bold mb-2">Nueva Contraseña</label>
+                    <i class="fa-solid fa-lock icon-input"></i>
+                    <input type="password" name="password" class="input-custom" required minlength="8" placeholder="Mínimo 8 caracteres">
+                </div>
+
+                {{-- Campo: Confirmar contraseña --}}
+                <div class="form-group-custom">
+                    <label class="form-label fw-bold mb-2">Confirmar Contraseña</label>
+                    <i class="fa-solid fa-key icon-input"></i>
+                    <input type="password" name="password_confirmation" class="input-custom" required placeholder="Repite tu nueva contraseña">
+                </div>
+
+                {{-- Botón de envío --}}
+                <button type="submit" class="btn-update">
+                    ACTUALIZAR CREDENCIALES
+                    <i class="fa-solid fa-circle-check ms-2"></i>
+                </button>
+            </form>
+        </div> {{-- Fin card-body --}}
+    </div> {{-- Fin glass-card --}}
+</div> {{-- Fin pwd-body --}}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.querySelector('input[name="password"]');
+    const confirmInput = document.querySelector('input[name="password_confirmation"]');
+    const form = document.querySelector('form');
+
+    // Crear contenedor de feedback tipo lista
+    const feedback = document.createElement('ul');
+    feedback.style.listStyle = 'none';
+    feedback.style.paddingLeft = '0';
+    feedback.style.fontSize = '14px';
+    feedback.style.marginTop = '5px';
+    passwordInput.parentNode.appendChild(feedback);
+
+    const rules = [
+        { regex: /.{8,}/, text: 'Mínimo 8 caracteres' },
+        { regex: /[a-z]/, text: 'Una letra minúscula' },
+        { regex: /[A-Z]/, text: 'Una letra mayúscula' },
+        { regex: /\d/, text: 'Al menos un número' },
+        { regex: /[.!@#$%^&*]/, text: 'Al menos un símbolo (.!@#$%^&*)' }
+    ];
+
+    function updateFeedback() {
+        const val = passwordInput.value;
+        feedback.innerHTML = '';
+        rules.forEach(rule => {
+            const li = document.createElement('li');
+            li.textContent = rule.text;
+            if (rule.regex.test(val)) {
+                li.style.color = 'green';
+                li.textContent = '✅ ' + li.textContent;
+            } else {
+                li.style.color = 'red';
+                li.textContent = '❌ ' + li.textContent;
+            }
+            feedback.appendChild(li);
+        });
+    }
+
+    passwordInput.addEventListener('input', updateFeedback);
+
+    form.addEventListener('submit', function(e) {
+        const password = passwordInput.value;
+        const confirm = confirmInput.value;
+
+        // Validación final antes de enviar
+        const unmet = rules.filter(r => !r.regex.test(password));
+        if (unmet.length > 0) {
+            e.preventDefault();
+            alert('La contraseña no cumple con todos los requisitos.');
+            return;
+        }
+        if (password !== confirm) {
+            e.preventDefault();
+            alert('Las contraseñas no coinciden.');
+            return;
+        }
+    });
+});
+</script>
+
+@endsection

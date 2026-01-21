@@ -35,21 +35,16 @@ Route::middleware(['guest'])->group(function () {
 | 2. RUTAS PROTEGIDAS (AUTH)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     // --- DASHBOARD / INICIO ---
-    Route::get('/dashboard', function () {
-        return view('index');
-    })->name('dashboard');
+   Route::get('/dashboard', fn() => view('index'))->name('dashboard');
 
     // --- SEGURIDAD Y PERFIL ---
-    Route::get('/cambiar-password', function() {
-        return view('auth.cambiar-password');
-    })->name('password.cambiar');
-
+    Route::get('/cambiar-password', fn() => view('auth.cambiar-password'))->name('password.cambiar');
     Route::post('/actualizar-password', [UsuarioController::class, 'actualizarPassword'])->name('password.actualizar');
+    
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
     // --- MÓDULO: GESTIÓN DE USUARIOS ---
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
