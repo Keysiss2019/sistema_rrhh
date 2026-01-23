@@ -13,6 +13,8 @@ use Illuminate\Notifications\Notifiable;
 // Facade para encriptar contraseñas
 use Illuminate\Support\Facades\Hash;
 
+use App\Models\Role; //Importa la clase Role
+
 /**
  * Modelo User
  * Representa a los usuarios del sistema y permite autenticación
@@ -49,23 +51,12 @@ class User extends Authenticatable
     ];
 
     /**
-     * Laravel usa este método para enviar el correo
-     * de recuperación de contraseña
-     */
-    public function sendPasswordResetNotification($token)
-    {
-        $this->notify(
-            new \Illuminate\Auth\Notifications\ResetPassword($token)
-        );
-    }
-
-    /**
      * RELACIÓN:
      * Un usuario pertenece a un empleado
      */
     public function empleado()
     {
-        return $this->belongsTo(Empleado::class);
+        return $this->belongsTo(Empleado::class, 'empleado_id');
     }
 
     /**
@@ -77,6 +68,31 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id');
     }
 
+    /**
+     * Verifica si el usuario tiene un rol específico.
+     */
+    public function hasRole($roleName)
+    {
+        // Usamos ->rol para obtener el objeto relacionado
+        if (!$this->rol) {
+            return false;
+        }
+        
+        return $this->rol->nombre === $roleName || $this->rol->slug === $roleName;
+    }
+
+    /**
+     * Laravel usa este método para enviar el correo
+     * de recuperación de contraseña
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(
+            new \Illuminate\Auth\Notifications\ResetPassword($token)
+        );
+    }
+
+    
     /**
      * MUTADOR:
      * Encripta automáticamente la contraseña antes de guardarla
