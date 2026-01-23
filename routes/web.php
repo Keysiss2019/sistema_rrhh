@@ -63,9 +63,17 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::post('/seguridad/permisos', [PermisosSistemaController::class, 'update'])->name('permisos_sistema.update');
     
     // --- MÓDULO: PERMISOS LABORALES ---
-    Route::get('/permisos', [PermisoController::class, 'index'])->name('permisos.index');
-    Route::get('/permisos/create', [PermisoController::class, 'create'])->name('permisos.create');
-    Route::post('/permisos', [PermisoController::class, 'store'])->name('permisos.store');
+    // --- MÓDULO  DE SOLICITUDES ---
+    Route::prefix('solicitudes')->group(function () {
+    // Listado de solicitudes
+    Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
+    
+    // Ver detalle / Formato de impresión
+    Route::get('/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
+    
+    // Procesar aprobación o rechazo
+    Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+    Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
 
     // --- MÓDULO: POLÍTICAS DE VACACIONES ---
     Route::get('/politicas-vacaciones', [PoliticaVacacionesController::class, 'index'])->name('politicas.index');
