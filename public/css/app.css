@@ -173,215 +173,219 @@ body {
 
 /* Botones del modal */
 .modal-footer {
-    border-top: none;
-    justify-content: flex-end;
+    border-top: none; /* Quita la línea superior que normalmente separa el footer del contenido del modal */
+    justify-content: flex-end; /* Alinea los botones del modal hacia la derecha */
 }
 
 .modal-footer .btn {
-    border-radius: 0.25rem;
-    font-weight: 600;
+    border-radius: 0.25rem; /* Redondea ligeramente las esquinas de los botones */
+    font-weight: 600;       /* Hace que el texto de los botones sea un poco más grueso (semi-negrita) */
 }
+
 
 /* ===========================
    Pantalla roles
    =========================== */
 /* Estilo general de la sección */
 .roles-section {
-    background-color: #f8f9fa;
-    min-height: 100vh;
+    background-color: #f8f9fa; /* Fondo gris claro para toda la sección */
+    min-height: 100vh; /* Se asegura que ocupe toda la altura de la pantalla */
 }
 
 /* Tabla personalizada */
 .custom-table thead {
-    background-color: #f1f4f9;
-    color: #495057;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
+    background-color: #f1f4f9; /* Color de fondo de encabezado */
+    color: #495057; /* Color de texto */
+    text-transform: uppercase; /* Texto en mayúsculas */
+    font-size: 0.85rem; /* Tamaño de letra más pequeño */
+    letter-spacing: 0.5px; /* Espaciado entre letras */
 }
 
 .custom-table tbody tr {
-    transition: all 0.2s ease;
+    transition: all 0.2s ease; /* Animación suave al pasar el mouse */
 }
 
 .custom-table tbody tr:hover {
-    background-color: #f2f7ff !important;
-    transform: scale(1.002);
+    background-color: #f2f7ff !important; /* Cambia fondo al pasar el mouse */
+    transform: scale(1.002); /* Muy leve zoom para efecto visual */
 }
 
 /* Botones de acción */
 .btn-group .btn {
-    border-radius: 8px;
-    margin: 0 2px;
-    padding: 6px 10px;
+    border-radius: 8px; /* Esquinas redondeadas de los botones */
+    margin: 0 2px; /* Separación horizontal entre botones */
+    padding: 6px 10px; /* Tamaño interno del botón */
 }
 
 /* Offcanvas Estilo */
 .offcanvas {
-    width: 400px !important;
+    width: 400px !important; /* Ancho fijo del offcanvas */
 }
 
 .offcanvas-header {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1); /* Línea sutil inferior del header */
 }
 
 .form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
-    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15); /* Sombra azul suave al enfocar */
+    border-color: #0d6efd; /* Borde azul al enfocar */
 }
 
 
 /* ===========================
    Pantalla empleados
    =========================== */
-/* public/css/gestion-tablas.css */
 
 .tabla-personalizada {
-    border-collapse: separate !important;
-    border-spacing: 0 8px !important;
-    background-color: transparent !important;
-    border: none !important;
+    border-collapse: separate !important; /* Las celdas no se pegan entre sí; permite usar espacio entre filas */
+    border-spacing: 0 8px !important;    /* Espaciado vertical de 8px entre filas, sin horizontal */
+    background-color: transparent !important; /* Fondo transparente, deja ver lo que esté debajo */
+    border: none !important;             /* Sin borde general alrededor de la tabla */
 }
 
 /* --- ENCABEZADO REDONDEADO --- */
 .tabla-personalizada thead th {
-    background-color: #224cf4 !important;
-    color: #ffffff !important;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    font-weight: bold;
-    padding: 15px !important;
-    border: none !important;
-    /* Borde interno blanco semitransparente */
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: #224cf4 !important; /* Fondo azul intenso para los encabezados */
+    color: #ffffff !important;            /* Texto blanco */
+    text-transform: uppercase;            /* Convierte texto a mayúsculas */
+    font-size: 0.8rem;                    /* Tamaño pequeño de letra */
+    font-weight: bold;                     /* Negrita */
+    padding: 15px !important;             /* Espaciado interno de las celdas */
+    border: none !important;              /* Quita bordes por defecto */
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important; /* Bordes internos semitransparentes a la derecha */
 }
 
 /* Redondear esquina superior izquierda */
 .tabla-personalizada thead th:first-child {
-    border-top-left-radius: 12px !important;
-    border-bottom-left-radius: 12px !important;
+    border-top-left-radius: 12px !important;    /* Esquina superior izquierda redondeada */
+    border-bottom-left-radius: 12px !important; /* Esquina inferior izquierda redondeada (al mantener la tabla elevada) */
 }
 
 /* Redondear esquina superior derecha y quitar borde lateral */
 .tabla-personalizada thead th:last-child {
-    border-top-right-radius: 12px !important;
-    border-bottom-right-radius: 12px !important;
-    border-right: none !important;
+    border-top-right-radius: 12px !important;   /* Esquina superior derecha redondeada */
+    border-bottom-right-radius: 12px !important;/* Esquina inferior derecha redondeada */
+    border-right: none !important;              /* Quita el borde derecho para que quede limpio */
 }
 
 /* --- CUERPO DE LA TABLA (FILAS) --- */
 .tabla-personalizada td {
-    background-color: #f8f9fa !important;
-    border-right: 1px solid #e2e8f0 !important;
+    background-color: #f8f9fa !important;      /* Fondo gris muy claro para cada celda */
+    border-right: 1px solid #e2e8f0 !important; /* Borde derecho sutil para separar columnas */
+    
     /* Bordes blancos para simular separación entre filas */
-    border-top: 2px solid #ffffff !important;
-    border-bottom: 2px solid #ffffff !important;
-    padding: 12px !important;
+    border-top: 2px solid #ffffff !important;   /* Línea blanca arriba de la celda */
+    border-bottom: 2px solid #ffffff !important;/* Línea blanca abajo de la celda */
+    
+    padding: 12px !important;                  /* Espacio interno de cada celda */
 }
 
 /* Redondear inicio de la fila de datos */
 .tabla-personalizada td:first-child {
-    border-left: none !important;
-    border-top-left-radius: 12px !important;
-    border-bottom-left-radius: 12px !important;
+    border-left: none !important;             /* Quita el borde izquierdo de la primera celda */
+    border-top-left-radius: 12px !important;  /* Esquina superior izquierda redondeada */
+    border-bottom-left-radius: 12px !important;/* Esquina inferior izquierda redondeada */
 }
 
 /* Redondear fin de la fila de datos y quitar borde lateral */
 .tabla-personalizada td:last-child {
-    border-top-right-radius: 12px !important;
-    border-bottom-right-radius: 12px !important;
-    border-right: none !important;
+    border-top-right-radius: 12px !important; /* Esquina superior derecha redondeada */
+    border-bottom-right-radius: 12px !important;/* Esquina inferior derecha redondeada */
+    border-right: none !important;            /* Quita el borde derecho de la última celda */
 }
 
 /* Efecto hover elegante */
 .tabla-personalizada tr:hover td {
-    background-color: #f0f4ff !important;
-    border-top-color: #224cf4 !important;
-    border-bottom-color: #224cf4 !important;
-    cursor: pointer;
+    background-color: #f0f4ff !important;      /* Fondo azul muy claro al pasar el mouse */
+    border-top-color: #224cf4 !important;      /* Borde superior azul del estilo del encabezado */
+    border-bottom-color: #224cf4 !important;   /* Borde inferior azul del estilo del encabezado */
+    cursor: pointer;                            /* Cambia el cursor para indicar que es interactivo */
 }
+
 
 /* ===========================
    login
    =========================== */
 
-  /* Contenedor que ocupa toda la pantalla con degradado */
+ /* Contenedor que ocupa toda la pantalla con degradado */
 .login-main-wrapper {
-    height: 80vh; /* Alto exacto de la ventana */
-    width: 80vw;  /* Ancho exacto de la ventana */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: 80vh; /* Altura de la ventana: 80% de la altura del viewport */
+    width: 80vw;  /* Ancho de la ventana: 80% del ancho del viewport */
+    display: flex; /* Usamos flexbox para centrar contenido */
+    align-items: center; /* Centra verticalmente */
+    justify-content: center; /* Centra horizontalmente */
     
-    margin: 0;
-    padding: 0;
+    margin: 0; /* Quita márgenes externos */
+    padding: 0; /* Quita relleno interno */
 }
 
 /* Caja blanca principal */
-/* 3. Asegurar que la tarjeta no sea más alta que la pantalla */
+/* Asegura que la tarjeta no sea más alta que la pantalla */
 .login-container {
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh; /* La tarjeta nunca ocupará más del 90% del alto */
-    background: #c8b1b1;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    
+    width: 90%; /* Ocupa el 90% del ancho de su contenedor */
+    max-width: 900px; /* No se expande más allá de 900px */
+    max-height: 90vh; /* Nunca ocupará más del 90% de la altura de la pantalla */
+    background: #c8b1b1; /* Color de fondo de la tarjeta (rosa suave) */
+    border-radius: 20px; /* Esquinas redondeadas de la tarjeta */
+    overflow: hidden; /* Evita que el contenido sobresalga */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Sombra grande para efecto flotante */
 }
 
 /* Esta clase solo se activará en el Login */
 .auth-body {
-    overflow: hidden !important;
-    height: 100vh;
+    overflow: hidden !important; /* Evita scroll interno */
+    height: 100vh; /* Altura completa de la ventana */
 }
 
 /* Lado izquierdo con fondo gris suave */
 .bg-light-custom {
-    background-color: #5597ad;
-    border-right: 1px solid #e2d8d8;
+    background-color: #5597ad; /* Azul grisáceo */
+    border-right: 1px solid #e2d8d8; /* Línea divisoria a la derecha */
 }
 
 /* El círculo donde va el logo */
 .logo-circle-bg {
-    width: 150px;
-    height: 150px;
-    background: white;
-    border-radius: 50%;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    width: 150px;  /* Ancho del círculo */
+    height: 150px; /* Alto del círculo */
+    background: white; /* Fondo blanco */
+    border-radius: 50%; /* Hace que sea completamente redondo */
+    padding: 20px; /* Espacio interno para que el logo no toque bordes */
+    display: flex; /* Flexbox para centrar contenido interno */
+    align-items: center; /* Centra verticalmente el logo */
+    justify-content: center; /* Centra horizontalmente el logo */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Sombra sutil para dar efecto flotante */
 }
+
 
 /* Botón con el azul de tu marca */
 .btn-primary-ihci {
-    background-color: #3f98b5; /* Cambia al azul de tu logo */
-    border: none;
-    padding: 12px;
-    font-weight: bold;
-    border-radius: 10px;
-    transition: all 0.3s;
+    background-color: #3f98b5; /* Color principal del botón, basado en el azul del logo de tu marca */
+    border: none; /* Sin borde visible */
+    padding: 12px; /* Espacio interno para hacerlo más grande y cómodo */
+    font-weight: bold; /* Texto en negrita */
+    border-radius: 10px; /* Esquinas redondeadas */
+    transition: all 0.3s; /* Suaviza las transiciones al hacer hover o clic */
 }
 
 .btn-primary-ihci:hover {
-    background-color: #0a8ce9;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(63, 81, 181, 0.4);
+    background-color: #0a8ce9; /* Cambio de color al pasar el mouse (hover) */
+    transform: translateY(-2px); /* Levanta ligeramente el botón para efecto flotante */
+    box-shadow: 0 5px 15px rgba(63, 81, 181, 0.4); /* Sombra más intensa al pasar el mouse */
 }
 
 /* Inputs redondeados y limpios */
 .form-control {
-    border-radius: 0 10px 10px 0 !important;
+    border-radius: 0 10px 10px 0 !important; /* Redondea solo las esquinas derechas de los inputs */
 }
 .input-group-text {
-    border-radius: 10px 0 0 10px !important;
+    border-radius: 10px 0 0 10px !important; /* Redondea solo las esquinas izquierdas de los iconos de los inputs */
 }
+
 
 /* ===========================
    Cambiar contraseña temporal
    =========================== */
+
 
     /* Contenedor principal con fondo degradado animado */
     .pwd-body {
@@ -396,143 +400,360 @@ body {
         overflow: hidden; /* Evita scroll interno no deseado */
     }
 
-    @keyframes gradient { /* Animación del fondo */
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+   @keyframes gradient { /* Animación del fondo */
+    0% { background-position: 0% 50%; }    /* Inicio: el fondo comienza a la izquierda */
+    50% { background-position: 100% 50%; } /* Mitad: el fondo se desplaza completamente a la derecha */
+    100% { background-position: 0% 50%; }  /* Final: vuelve al inicio para un bucle continuo */
+}
+/* Esto genera el efecto de fondo degradado animado en movimiento */
 
-    /* Tarjeta estilo glass (Glassmorphism) */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.95); /* Semi-transparente */
-        backdrop-filter: blur(10px); /* Efecto blur */
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-        width: 100%;
-        max-width: 450px; /* Limita ancho */
-        transition: transform 0.3s ease; /* Animación al hover */
-    }
+/* Tarjeta estilo glass (Glassmorphism) */
+.glass-card {
+    background: rgba(255, 255, 255, 0.95); /* Fondo semi-transparente para efecto vidrio */
+    backdrop-filter: blur(10px); /* Desenfoque del fondo detrás de la tarjeta */
+    border-radius: 20px; /* Esquinas redondeadas grandes */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borde blanco semi-transparente */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); /* Sombra para dar profundidad */
+    overflow: hidden; /* Evita que el contenido sobresalga de la tarjeta */
+    width: 100%; 
+    max-width: 450px; /* Limita el ancho de la tarjeta */
+    transition: transform 0.3s ease; /* Animación suave al pasar el mouse */
+}
 
-    .glass-card:hover {
-        transform: translateY(-5px); /* Eleva tarjeta al pasar mouse */
-    }
+.glass-card:hover {
+    transform: translateY(-5px); /* Eleva ligeramente la tarjeta al pasar el mouse */
+}
 
-    /* Header personalizado de la tarjeta */
-    .card-header-custom {
-        background: #003366; /* Color IHCI */
-        padding: 10px !important; /* Ajuste de padding */
-        text-align: center;
-        color: white;
-    }
+/* Header personalizado de la tarjeta */
+.card-header-custom {
+    background: #003366; /* Color azul oscuro de IHCI */
+    padding: 10px !important; /* Ajuste del espacio interno */
+    text-align: center; /* Centrar el contenido */
+    color: white; /* Texto blanco */
+}
 
-    .card-header-custom i {
-        font-size: 3rem; /* Icono grande */
-        margin-bottom: 15px;
-        display: block;
-        color: #ffcc00; /* Icono dorado */
-    }
+.card-header-custom i {
+    font-size: 3rem; /* Icono grande */
+    margin-bottom: 15px; /* Espacio debajo del icono */
+    display: block; /* Se muestra como bloque para que ocupe toda la línea */
+    color: #ffcc00; /* Icono dorado para destacar */
+}
 
-    .card-header-custom h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
-        letter-spacing: 1px;
-    }
+.card-header-custom h2 {
+    font-size: 1.5rem; /* Tamaño del título */
+    font-weight: 700; /* Negrita */
+    margin: 0; /* Sin margen superior ni inferior */
+    letter-spacing: 1px; /* Separación entre letras para estilo */
+}
 
-    /* Inputs estilo personalizado */
-    .form-group-custom {
-        position: relative;
-        margin-bottom: 25px;
-    }
 
-    .input-custom {
-        width: 100%;
-        padding: 12px 15px 12px 45px; /* Espacio para icono */
-        border: 2px solid #e1e1e1;
-        border-radius: 12px;
-        outline: none;
-        font-size: 16px;
-        transition: all 0.3s;
-    }
+   /* Inputs estilo personalizado */
+.form-group-custom {
+    position: relative;      /* Permite posicionar iconos dentro del input */
+    margin-bottom: 25px;     /* Espacio inferior entre grupos de inputs */
+}
 
-    .input-custom:focus {
-        border-color: #003366; /* Cambio color al foco */
-        box-shadow: 0 0 10px rgba(0, 51, 102, 0.1);
-    }
+.input-custom {
+    width: 100%;                       /* Ocupa todo el ancho del contenedor */
+    padding: 12px 15px 12px 45px;      /* Espacio: arriba, derecha, abajo, izquierda; deja 45px a la izquierda para el icono */
+    border: 2px solid #e1e1e1;         /* Borde gris claro */
+    border-radius: 12px;                /* Bordes redondeados */
+    outline: none;                      /* Quita el borde de enfoque por defecto */
+    font-size: 16px;                    /* Tamaño de texto dentro del input */
+    transition: all 0.3s;               /* Transición suave para cambios como color o sombra */
+}
 
-    .icon-input {
-        position: absolute; /* Icono dentro del input */
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #003366;
-        font-size: 18px;
-    }
+.input-custom:focus {
+    border-color: #003366;              /* Cambia el borde a azul oscuro al hacer foco */
+    box-shadow: 0 0 10px rgba(0, 51, 102, 0.1); /* Sombra ligera alrededor para destacar el input */
+}
 
-    /* Botón llamativo */
-    .btn-update {
-        background: linear-gradient(135deg, #003366 0%, #00509e 100%);
-        color: white;
-        border: none;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 16px;
-        cursor: pointer;
-        width: 100%;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);
-    }
+.icon-input {
+    position: absolute;                  /* Posiciona el icono dentro del input */
+    left: 15px;                          /* Separa el icono 15px del borde izquierdo */
+    top: 50%;                            /* Centra verticalmente respecto al input */
+    transform: translateY(-50%);         /* Ajuste fino para centrar verticalmente */
+    color: #003366;                      /* Color azul del icono */
+    font-size: 18px;                     /* Tamaño del icono */
+}
 
-    .btn-update:hover {
-        background: linear-gradient(135deg, #00509e 0%, #003366 100%);
-        transform: scale(1.02); /* Ligera ampliación al hover */
-        box-shadow: 0 6px 20px rgba(0, 51, 102, 0.4);
-    }
+/* Botón llamativo */
+.btn-update {
+    background: linear-gradient(135deg, #003366 0%, #00509e 100%); /* Gradiente azul de izquierda a derecha */
+    color: white;                   /* Texto blanco */
+    border: none;                   /* Sin borde */
+    padding: 15px;                  /* Espaciado interno amplio */
+    border-radius: 12px;            /* Bordes redondeados */
+    font-weight: 700;               /* Texto en negrita */
+    font-size: 16px;                /* Tamaño del texto */
+    cursor: pointer;                /* Cambia el cursor al pasar sobre el botón */
+    width: 100%;                    /* Botón ocupa todo el ancho disponible */
+    transition: all 0.3s;           /* Transición suave al cambiar estilos */
+    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3); /* Sombra para darle profundidad */
+}
 
-    /* Alertas personalizadas */
-    .alert-custom {
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 20px;
-        font-size: 14px;
-    }
+.btn-update:hover {
+    background: linear-gradient(135deg, #00509e 0%, #003366 100%); /* Invertimos gradiente al pasar el mouse */
+    transform: scale(1.02);           /* Agranda ligeramente el botón al hover */
+    box-shadow: 0 6px 20px rgba(0, 51, 102, 0.4); /* Sombra más marcada al pasar el mouse */
+}
 
-/* ===========================
-   Recuperar contraseña 
+   /* ===========================
+   Alertas personalizadas
    =========================== */
 
-   /* Contenedor específico para Recuperar Contraseña */
+/* Contenedor para alertas con estilo personalizado */
+.alert-custom {
+    border-radius: 12px; /* Bordes redondeados de la alerta */
+    padding: 15px;       /* Espaciado interno alrededor del contenido */
+    margin-bottom: 20px; /* Separación con otros elementos debajo */
+    font-size: 14px;     /* Tamaño de fuente de la alerta */
+}
+
+/* ===========================
+   Recuperar contraseña
+   =========================== */
+
+/* Contenedor principal para la pantalla de recuperar contraseña */
 .forgot-password-wrapper {
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f8f9fa; /* Gris claro para que resalte el logo */
-    position: relative;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
+    height: 100vh; /* Ocupa toda la altura de la ventana */
+    width: 100vw;  /* Ocupa todo el ancho de la ventana */
+    display: flex; /* Se usa Flexbox para centrar contenido */
+    align-items: center; /* Centrado vertical */
+    justify-content: center; /* Centrado horizontal */
+    background-color: #f8f9fa; /* Fondo gris claro para resaltar el logo */
+    position: relative; /* Permite posicionamiento relativo de hijos */
+    overflow: hidden;   /* Evita que contenido se desborde */
+    margin: 0;          /* Sin margen externo */
+    padding: 0;         /* Sin relleno interno */
 }
 
-/* La tarjeta debe estar por encima del logo */
+/* Contenedor de la tarjeta de recuperar contraseña */
 .forgot-card-container {
-    position: relative;
-    z-index: 10;
+    position: relative; /* Para poder superponerla sobre otros elementos */
+    z-index: 10;        /* Asegura que la tarjeta quede encima del logo */
 }
 
-/* Asegúrate de que esta clase esté en tu CSS (la que ya tenías) */
+/* Logo de fondo en la pantalla de recuperar contraseña */
 .logo-bg-rol {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.15; /* Nivel de visibilidad que definimos antes */
-    z-index: 0;
-    width: 750px;
-    pointer-events: none;
-    filter: grayscale(0%);
+    position: fixed;         /* Fija el logo aunque se haga scroll */
+    top: 50%;                /* Centrado vertical */
+    left: 50%;               /* Centrado horizontal */
+    transform: translate(-50%, -50%); /* Ajusta para que quede exactamente en el centro */
+    opacity: 0.15;           /* Transparencia para que no distraiga */
+    z-index: 0;               /* Detrás de todo el contenido */
+    width: 750px;             /* Ancho fijo del logo */
+    pointer-events: none;     /* No interfiere con clics en otros elementos */
+    filter: grayscale(0%);    /* Logo a color (0% gris) */
+}
+
+/* ===========================
+   Formulario de solicitudes
+   =========================== */
+
+/* =========================
+   CONTENEDOR GENERAL
+   ========================= */
+
+/* Contenedor principal de la vista/impresión */
+#contenedor-principal-show {
+    background-color: #f8f9fa; /* Fondo gris claro */
+}
+
+/* Área donde se mostrará el contenido final para imprimir */
+#area-impresion-final {
+    background: #ffffff;       /* Fondo blanco */
+    padding: 30px;             /* Espaciado interno amplio */
+    font-family: Arial, sans-serif; /* Fuente limpia y legible */
+    color: #000;               /* Texto negro */
+    line-height: 1.6;          /* Espaciado entre líneas para mejor lectura */
+}
+
+/* =========================
+   ENCABEZADO OFICIAL
+   ========================= */
+
+/* Tabla que sirve como encabezado oficial */
+.encabezado-tabla {
+    width: 100%;               /* Ocupa todo el ancho del contenedor */
+    border-collapse: collapse; /* Une los bordes de las celdas */
+    margin-bottom: 25px;       /* Separación debajo de la tabla */
+    border: 1.5px solid #000;  /* Borde negro más grueso */
+}
+
+/* Celdas del encabezado */
+.encabezado-tabla td {
+    border: 1px solid #000;    /* Borde negro delgado en cada celda */
+    text-align: center;        /* Texto centrado */
+    padding: 6px;              /* Espacio interno de cada celda */
+}
+
+/* Contenedor del logo dentro del encabezado */
+.encabezado-logo {
+    width: 20%;                /* Ocupa el 20% del ancho de la tabla */
+    padding: 10px;             /* Espacio interno para separar el logo */
+}
+
+/* Imagen del logo */
+.encabezado-logo img {
+    max-height: 55px;          /* Altura máxima para que no se desborde */
+}
+
+/* Título principal dentro del encabezado */
+.encabezado-titulo {
+    font-weight: bold;          /* Texto en negrita */
+    font-size: 14px;           /* Tamaño de fuente legible */
+}
+
+/* Etiquetas dentro del encabezado (como "Nombre", "Fecha") */
+.encabezado-label {
+    font-weight: bold;          /* Negrita para resaltar la etiqueta */
+    font-size: 10px;           /* Tamaño más pequeño para etiquetas */
+}
+
+/* Valores correspondientes a las etiquetas */
+.encabezado-valor {
+    font-size: 11px;           /* Tamaño ligeramente mayor que la etiqueta */
+}
+
+/* =========================
+   CUERPO DEL FORMATO
+========================= */
+/* =========================
+   CUERPO DEL FORMATO
+========================= */
+.cuerpo-formato {
+    margin-top: 15px;      /* Separación desde el encabezado */
+    font-size: 12px;       /* Tamaño de fuente del cuerpo del formato */
+}
+
+.fila-dato {
+    margin-bottom: 18px;   /* Separación entre filas de datos */
+}
+
+.etiqueta {
+    font-weight: bold;     /* Texto en negrita para etiquetas */
+}
+
+.linea-dato {
+    border-bottom: 1px solid #000; /* Línea inferior para subrayar datos */
+    display: inline-block;          /* Mantiene el ancho según contenido */
+    padding-left: 10px;             /* Espaciado antes del texto */
+}
+
+/* Clases de ancho específico para elementos dentro del formato */
+.ancho-75 { width: 75%; }
+.ancho-70 { width: 70%; }
+.ancho-68 { width: 68%; }
+
+/* =========================
+   SALDOS
+========================= */
+.fila-saldos {
+    display: flex;       /* Filas flexibles para alinear cajas de saldo */
+    gap: 20px;           /* Espacio entre cajas */
+    margin-bottom: 18px; /* Separación inferior */
+}
+
+.caja-valor {
+    border: 1px solid #000; /* Borde negro para resaltar valor */
+    padding: 4px 18px;      /* Espaciado interno */
+    margin-left: 5px;       /* Pequeño margen izquierdo para separación */
+}
+
+/* =========================
+   FECHAS
+========================= */
+.fecha-permiso {
+    text-align: center;    /* Centrado del texto */
+    font-weight: bold;     /* Negrita para resaltar la fecha */
+    letter-spacing: 1px;   /* Espacio entre letras para estilo */
+}
+
+/* =========================
+   MOTIVOS
+========================= */
+.tabla-motivos {
+    width: 100%;           /* Tabla ocupa todo el ancho */
+    font-size: 11px;       /* Tamaño de fuente más pequeño */
+    margin-bottom: 25px;   /* Espaciado inferior */
+    border-collapse: separate; /* Separación de celdas */
+    border-spacing: 0 10px;    /* Espaciado vertical entre filas */
+}
+
+.celda-motivo {
+    width: 50%;            /* Cada celda ocupa la mitad del ancho */
+}
+
+.motivo-item {
+    display: flex;         /* Alinea checkbox y texto en línea */
+    align-items: center;   /* Centra verticalmente el contenido */
+}
+
+.checkbox-motivo {
+    width: 32px;           /* Ancho del checkbox */
+    height: 26px;          /* Alto del checkbox */
+    border: 1.5px solid #000; /* Borde visible */
+    text-align: center;    /* Centrado del contenido (X o ✓) */
+    line-height: 26px;     /* Centrado vertical del contenido */
+    font-weight: bold;     /* Resalta la marca del checkbox */
+    margin-right: 12px;    /* Separación con el texto */
+}
+
+/* =========================
+   DETALLES
+========================= */
+.caja-detalles {
+    border: 1px solid #000; /* Caja con borde para resaltar detalles */
+    width: 100%;            /* Ocupa todo el ancho */
+    min-height: 80px;       /* Altura mínima para contenido largo */
+    padding: 12px;          /* Espaciado interno */
+    margin-bottom: 45px;    /* Separación inferior grande */
+    font-size: 11px;        /* Fuente más pequeña para detalles */
+}
+
+/* =========================
+   FIRMAS
+========================= */
+.tabla-firmas {
+    width: 100%;           /* Tabla ocupa todo el ancho */
+    text-align: center;    /* Centrado de contenido */
+    margin-top: 90px;      /* Separación desde el contenido anterior */
+    border-collapse: collapse; /* Une bordes de celdas si los hay */
+}
+
+.firma {
+    border-top: 1.5px solid #000; /* Línea superior para firma */
+    padding-top: 10px;             /* Espacio entre línea y texto */
+    font-weight: bold;              /* Negrita para el nombre */
+    font-size: 11px;                /* Tamaño de fuente legible */
+}
+
+/* =========================
+   PIE DE PÁGINA
+========================= */
+.pie-formato {
+    margin-top: 60px;      /* Separación del contenido principal */
+    font-size: 10px;       /* Fuente más pequeña para pie de página */
+    font-style: italic;    /* Texto en cursiva */
+    text-align: center;    /* Centrado del pie */
+}
+
+/* =========================
+   IMPRESIÓN
+========================= */
+@media print {
+    .no-print {
+        display: none !important; /* Oculta elementos que no deben imprimirse */
+    }
+
+    body {
+        margin: 0;   /* Quita márgenes del body al imprimir */
+        padding: 0;  /* Quita relleno del body al imprimir */
+    }
+
+    @page {
+        size: letter;  /* Tamaño de página Carta */
+        margin: 1.5cm; /* Márgenes de la página */
+    }
 }
