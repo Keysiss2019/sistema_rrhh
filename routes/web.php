@@ -6,7 +6,7 @@
 use App\Http\Controllers\EmpleadoController;           // Controlador de empleados
 use App\Http\Controllers\RoleController;               // Controlador de roles
 use App\Http\Controllers\PermisosSistemaController;    // Controlador de permisos del sistema
-use App\Http\Controllers\PermisoController;            // Controlador de permisos laborales
+use App\Http\Controllers\SolicitudController;            // Controlador de permisos laborales
 use App\Http\Controllers\PoliticaVacacionesController; // Controlador de políticas de vacaciones
 use App\Http\Controllers\UsuarioController;            // Controlador de usuarios
 use App\Http\Controllers\LoginController;              //controla el inicio de sesión
@@ -74,6 +74,8 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     // Procesar aprobación o rechazo
     Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
     Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+
+});
 
     // --- MÓDULO: POLÍTICAS DE VACACIONES ---
     Route::get('/politicas-vacaciones', [PoliticaVacacionesController::class, 'index'])->name('politicas.index');
