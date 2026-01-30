@@ -10,9 +10,13 @@ use App\Http\Controllers\SolicitudController;            // Controlador de permi
 use App\Http\Controllers\PoliticaVacacionesController; // Controlador de políticas de vacaciones
 use App\Http\Controllers\UsuarioController;            // Controlador de usuarios
 use App\Http\Controllers\LoginController;              //controla el inicio de sesión
-
 use Illuminate\Support\Facades\Route;                  // Facade para definir rutas
 use Illuminate\Support\Facades\Auth;                   // Facade para autenticación
+use App\Http\Controllers\TiempoCompensatorioController; // Controlador de tiempo compensatorio
+use App\Http\Controllers\HoraExtraController;           // Controlador de horas extras
+
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -65,18 +69,43 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     // --- MÓDULO: PERMISOS LABORALES ---
     // --- MÓDULO  DE SOLICITUDES ---
     Route::prefix('solicitudes')->group(function () {
-    // Listado de solicitudes
-    Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
+      // Listado de solicitudes
+      Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
     
-    // Ver detalle / Formato de impresión
-    Route::get('/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
-    
-    // Procesar aprobación o rechazo
-    Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
-    Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+      // Ver detalle / Formato de impresión/ Editar
+      Route::get('/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
+      Route::put('/solicitudes/{id}', [SolicitudController::class, 'update'])->name('solicitudes.update');
+     
+      // Procesar aprobación o rechazo
+      Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+      Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+      Route::post('/solicitudes/{id}/rectificar', [SolicitudController::class, 'rectificarTipo'])->name('solicitudes.rectificar');
+  
 
+    });
+
+
+ // --- RUTAS PARA PERMISOS (USO DE TIEMPO) ---
+Route::prefix('tiempo-compensatorio')->group(function () {
+    Route::get('/', [TiempoCompensatorioController::class, 'index'])->name('tiempo_compensatorio.index');
+    Route::get('/crear', [TiempoCompensatorioController::class, 'create'])->name('tiempo_compensatorio.create');
+    Route::post('/store', [TiempoCompensatorioController::class, 'store'])->name('tiempo_compensatorio.store');
+    Route::get('/{id}', [TiempoCompensatorioController::class, 'show'])->name('tiempo_compensatorio.show');
+    Route::delete('/{id}', [TiempoCompensatorioController::class, 'destroy'])->name('tiempo_compensatorio.destroy');
+    
 });
 
+// --- RUTAS PARA HORAS EXTRAS (REGISTRO FT-GTH-002) ---
+Route::prefix('horas-extras')->group(function () {
+    // Para guardar desde el modal
+    Route::post('/store', [HoraExtraController::class, 'store'])->name('horas_extras.store');
+    
+    // Para ver la lista de pendientes (la que vería el jefe)
+    Route::get('/pendientes', [HoraExtraController::class, 'pendientes'])->name('horas_extras.pendientes');
+    
+    // Para aprobar o rechazar (usamos validar para que coincida con el controlador anterior)
+    Route::patch('/{id}/validar', [HoraExtraController::class, 'validar'])->name('horas_extras.validar');
+});
     // --- MÓDULO: POLÍTICAS DE VACACIONES ---
     Route::get('/politicas-vacaciones', [PoliticaVacacionesController::class, 'index'])->name('politicas.index');
     Route::post('/politicas-vacaciones', [PoliticaVacacionesController::class, 'store'])->name('politicas.store');
@@ -88,3 +117,5 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
        return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
     });
 });
+
+ 
