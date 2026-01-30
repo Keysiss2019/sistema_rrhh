@@ -56,7 +56,7 @@
                     <div class="submenu">
                         <a href="{{ route('solicitudes.index') }}" class="submenu-item">Solicitudes laborales</a>
                         <a href="#" class="submenu-item">Vacaciones</a>
-                        <a href="#" class="submenu-item">Tiempos compensatorios</a>
+                        <a href="{{ route('tiempo_compensatorio.index') }}" class="submenu-item">Tiempos compensatorios</a>
                     </div>
                 </div>
 
