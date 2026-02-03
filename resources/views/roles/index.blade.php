@@ -21,11 +21,6 @@
                     </h4>
 
                     <div class="d-flex gap-2">
-                        <!-- Botón Inicio -->
-                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm">
-                            <i class="fa-solid fa-house"></i> Inicio
-                        </a>
-
                         <!-- Botón Nuevo Rol (Offcanvas) -->
                         <button class="btn btn-dark btn-sm shadow-sm"
                                 type="button"
