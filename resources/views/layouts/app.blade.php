@@ -29,7 +29,7 @@
             
             <!-- Logo del IHCI -->
             <div class="logo-nav">
-                <a href="{{ url('/home') }}">
+                <a href="{{ url('dashboard') }}">
                     <img src="{{ asset('images/ihci_logo.jpg') }}" alt="IHCI">
                 </a>
             </div>
