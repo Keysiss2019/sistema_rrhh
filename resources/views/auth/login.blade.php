@@ -81,8 +81,13 @@
                             <input type="password" 
                                    name="password" 
                                    class="form-control bg-light border-0 py-2" 
-                                   placeholder="••••••••" 
+                                   placeholder="" 
                                    required>
+
+                                {{-- Botón manual para mostrar/ocultar --}}
+                              <button class="btn btn-light border-0" type="button" id="togglePassword">
+                             <i class="fa-solid fa-eye text-muted" id="eyeIcon"></i>
+                             </button>
                         </div>
                     </div>
 
@@ -106,6 +111,23 @@
         </div>
     </div>
 </div>
+
+{{-- scrip para el btn de ver contraseña --}}
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const eyeIcon = document.querySelector('#eyeIcon');
+
+    togglePassword.addEventListener('click', function (e) {
+        // Cambiar el tipo de atributo
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        // Cambiar el ícono (opcional)
+        eyeIcon.classList.toggle('fa-eye');
+        eyeIcon.classList.toggle('fa-eye-slash');
+    });
+</script>
 
 {{-- Fin de la sección de contenido --}}
 @endsection
