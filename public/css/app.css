@@ -757,3 +757,10 @@ body {
         margin: 1.5cm; /* Márgenes de la página */
     }
 }
+
+/* =========================
+   Para el selec con buscador
+========================= */
+.select2-container {
+    z-index: 2000 !important;
+}
