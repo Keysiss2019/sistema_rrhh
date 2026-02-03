@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;                  // Facade para definir ru
 use Illuminate\Support\Facades\Auth;                   // Facade para autenticación
 use App\Http\Controllers\TiempoCompensatorioController; // Controlador de tiempo compensatorio
 use App\Http\Controllers\HoraExtraController;           // Controlador de horas extras
-
+use App\Http\Controllers\DepartmentController;         // Controlador para departamento
 
 
 
@@ -66,6 +66,10 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::get('/seguridad/permisos', [PermisosSistemaController::class, 'index'])->name('permisos_sistema.index');
     Route::post('/seguridad/permisos', [PermisosSistemaController::class, 'update'])->name('permisos_sistema.update');
     
+    // --- MÓDULO: DEPARTAMENTO ---
+    Route::resource('departamentos', DepartmentController::class)
+    ->except(['show', 'create', 'edit']);
+
     // --- MÓDULO: PERMISOS LABORALES ---
     // --- MÓDULO  DE SOLICITUDES ---
     Route::prefix('solicitudes')->group(function () {
@@ -85,8 +89,8 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     });
 
 
- // --- RUTAS PARA PERMISOS (USO DE TIEMPO) ---
-Route::prefix('tiempo-compensatorio')->group(function () {
+    // --- RUTAS PARA PERMISOS (USO DE TIEMPO) ---
+    Route::prefix('tiempo-compensatorio')->group(function () {
     Route::get('/', [TiempoCompensatorioController::class, 'index'])->name('tiempo_compensatorio.index');
     Route::get('/crear', [TiempoCompensatorioController::class, 'create'])->name('tiempo_compensatorio.create');
     Route::post('/store', [TiempoCompensatorioController::class, 'store'])->name('tiempo_compensatorio.store');
