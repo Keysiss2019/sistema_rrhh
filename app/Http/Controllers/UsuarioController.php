@@ -109,7 +109,7 @@ class UsuarioController extends Controller
         $usuario->save();
 
         // Retorna con mensaje de éxito
-        return back()->with('success', 'Usuario actualizado. Se requerirá cambio de contraseña al ingresar.');
+        return back()->with('success', 'Usuario actualizado.');
     }
 
     /**
