@@ -17,12 +17,12 @@
                     <input type="text" name="apellido" class="form-control shadow-sm" required>
                 </div>
                 
-                <div class="col-md-7">
+                <div class="col-md-6">
                     <label class="form-label fw-bold small">CORREO</label>
                     <input type="email" name="email" class="form-control shadow-sm" required>
                 </div>
 
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <label class="form-label fw-bold small">CONTACTO</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-phone text-muted small"></i></span>
@@ -40,16 +40,26 @@
                 </div>
 
                 <div class="col-12">
+                 <label class="form-label fw-bold small text-uppercase">Departamento</label>
+                  <select name="departamento" id="departamento" class="form-select shadow-sm" required>
+                     <option value="" selected disabled>-- Seleccione Departamento --</option>
+                        @foreach($departamentos as $dep)
+                           {{-- Aquí cargamos el nombre completo del jefe en el data-jefe --}}
+                            <option value="{{ $dep->id }}" 
+                                data-jefe="{{ $dep->jefeEmpleado ? $dep->jefeEmpleado->nombre . ' ' . $dep->jefeEmpleado->apellido : 'Sin jefe asignado' }}">
+                              {{ $dep->nombre }}
+                           </option>
+                        @endforeach
+                  </select>
+                </div>
+
+               <div class="col-12">
                     <label class="form-label fw-bold small text-uppercase">Jefe Inmediato</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-user-tie text-muted"></i></span>
-                        <input type="text" name="jefe_inmediato" class="form-control shadow-sm" placeholder="Nombre del supervisor directo">
+                        <input type="text" name="jefe_inmediato" id="jefe_inmediato" class="form-control shadow-sm" placeholder="Nombre del supervisor directo" readonly>
                     </div>
-                </div>
 
-                <div class="col-12">
-                    <label class="form-label fw-bold small text-uppercase">Departamento</label>
-                    <input type="text" name="departamento" class="form-control shadow-sm" placeholder="Ej. Contabilidad / Operaciones" required>
                 </div>
 
                 {{-- CORRECCIÓN: Quitamos el $empleado->tipo_contrato porque aquí no existe --}}
@@ -69,23 +79,12 @@
                     <label class="form-label fw-bold small">FECHA NACIMIENTO</label>
                     <input type="date" name="fecha_nacimiento" class="form-control shadow-sm">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">ESTADO</label>
-                    <select name="estado" class="form-select shadow-sm">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
-                </div>
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold small text-success">FECHA INGRESO</label>
                     <input type="date" name="fecha_ingreso" class="form-control border-success shadow-sm" required>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small text-danger">FECHA BAJA</label>
-                    <input type="date" name="fecha_baja" class="form-control border-danger shadow-sm">
-                </div>
-
+                
                 <div class="col-12">
                     <label class="form-label fw-bold small text-uppercase">Adjuntar Expediente / Contrato</label>
                     <input type="file" name="documentos[]" class="form-control shadow-sm" multiple>
@@ -103,3 +102,18 @@
         </form>
     </div>
 </div>
+
+{{-- Script --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectDepto = document.getElementById('departamento');
+    const inputJefe = document.getElementById('jefe_inmediato');
+
+    selectDepto.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        // Obtenemos el atributo data-jefe que corregimos arriba
+        const jefe = selectedOption.getAttribute('data-jefe');
+        inputJefe.value = jefe;
+    });
+});
+</script>

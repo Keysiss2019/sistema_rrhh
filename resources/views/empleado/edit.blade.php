@@ -43,35 +43,43 @@
                             <input type="text" name="cargo" value="{{ old('cargo', $empleado->cargo) }}" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small">DEPARTAMENTO</label>
-                            <input type="text" name="departamento" value="{{ old('departamento', $empleado->departamento) }}" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small">JEFE INMEDIATO</label>
-                            <input type="text" name="jefe_inmediato" value="{{ old('jefe_inmediato', $empleado->jefe_inmediato) }}" class="form-control">
-                        </div>
+                          <label class="form-label fw-bold small text-uppercase">Departamento</label>
+                          <select name="departamento" class="form-select select-departamento-edit" required>
+                             <option value="" disabled>-- Seleccione --</option>
+                                @foreach($departamentos as $dep)
+                                  <option value="{{ $dep->id }}" 
+                                      data-jefe="{{ $dep->jefeEmpleado ? $dep->jefeEmpleado->nombre . ' ' . $dep->jefeEmpleado->apellido : 'Sin jefe asignado' }}"
+                                      {{ $empleado->departamento_id == $dep->id ? 'selected' : '' }}>
+                                      {{ $dep->nombre }}
+                                 </option>
+                               @endforeach
+                          </select>
+                       </div>
+
+                       <div class="col-md-4">
+                         <label class="form-label fw-bold small text-uppercase">Jefe Inmediato</label>
+                          {{-- Agregamos una clase para identificarlo mediante JS --}}
+                          <input type="text" name="jefe_inmediato" 
+                            value="{{ $empleado->departamento?->jefeEmpleado ? $empleado->departamento->jefeEmpleado->nombre . ' ' . $empleado->departamento->jefeEmpleado->apellido : 'Sin jefe asignado' }}" 
+                            class="form-control input-jefe-edit" readonly>
+                       </div>
 
                        {{-- GESTIÓN DE CONTRATO --}}
                        <div class="col-12 mt-2">
-                          <div class="mb-0">
-                             <span class="fw-bold text-primary" style="font-size: 0.9rem;">
-                                 CONTRATO ACTUAL: {{ $empleado->tipo_contrato ?: 'SIN REGISTRO' }}
-                               </span>
-                          </div>
-
+                          
                           <label class="text-muted fw-bold" style="font-size: 0.75rem; display: block; margin-bottom: 4px;">
                              CAMBIAR TIPO DE CONTRATO
                           </label>
     
                           {{-- Cambiamos el name a "tipo_contrato" --}}
                          <select name="politica_id" class="form-select" required>
-    @foreach($politicas as $politica)
-        <option value="{{ $politica->id }}" 
-            {{ $empleado->tipo_contrato == $politica->tipo_contrato ? 'selected' : '' }}>
-            {{ strtoupper($politica->tipo_contrato) }}
-        </option>
-    @endforeach
-</select>
+                               @foreach($politicas as $politica)
+                                 <option value="{{ $politica->id }}" 
+                                      {{ $empleado->tipo_contrato == $politica->tipo_contrato ? 'selected' : '' }}>
+                                       {{ strtoupper($politica->tipo_contrato) }}
+                                  </option>
+                               @endforeach
+                          </select>
                       </div>
 
                         {{-- 5. FECHAS Y ESTADO --}}
@@ -127,3 +135,24 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('change', function(event) {
+        // Verificamos si el elemento que cambió tiene nuestra clase de edición
+        if (event.target && event.target.classList.contains('select-departamento-edit')) {
+            const select = event.target;
+            
+            // Obtenemos el nombre del jefe desde el data-attribute
+            const selectedOption = select.options[select.selectedIndex];
+            const jefe = selectedOption.getAttribute('data-jefe') || 'Sin jefe asignado';
+            
+            // Buscamos el input de jefe que está en el mismo modal (contenedor padre .row)
+            const modalBody = select.closest('.row');
+            const inputJefe = modalBody.querySelector('.input-jefe-edit');
+            
+            if (inputJefe) {
+                inputJefe.value = jefe;
+            }
+        }
+    });
+</script>
