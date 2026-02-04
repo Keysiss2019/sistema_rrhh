@@ -31,4 +31,10 @@ class Empleado extends Model
     {
         return $this->hasMany(Departamento::class, 'jefe_empleado_id');
     }
+
+    public function user()
+    {
+      // Un empleado pertenece a un usuario (o tiene un usuario)
+      return $this->hasOne(User::class, 'empleado_id');
+    }
 }
