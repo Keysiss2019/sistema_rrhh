@@ -11,6 +11,7 @@ namespace App\Http\Controllers;
 use App\Models\Empleado;
 use App\Models\DocumentoLaboral;
 use App\Models\PoliticaVacaciones;
+use App\Models\Departamento;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,8 @@ use App\Models\PoliticaVacaciones;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon; // Librería para manejo avanzado de fechas y horas (parseo, formato, cálculos, diferencias de tiempo, etc.)
+
 
 /*
 |--------------------------------------------------------------------------
