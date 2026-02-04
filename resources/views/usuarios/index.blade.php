@@ -34,10 +34,6 @@
                         <i class="fa-solid fa-users me-2"></i> Gestión de Usuarios
                     </h4>
                     <div class="d-flex gap-2">
-                        <!-- Botón de inicio -->
-                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm fw-bold">
-                            <i class="fa-solid fa-house me-1"></i> Inicio
-                        </a>
 
                         <!-- Botón para abrir offcanvas de nuevo usuario -->
                         <button class="btn btn-dark btn-sm shadow-sm fw-bold" 
