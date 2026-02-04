@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; // Define el namespace del modelo dentro de la aplicación (organización lógica del código)
 
 // Modelo de Departamentos
 use App\Models\Departamento;
@@ -20,7 +20,7 @@ class DepartmentController extends Controller
     public function index()
     {
         // Obtiene todos los departamentos con su relación jefe
-        $departamentos = Departamento::with('jefe')->get();
+        $departamentos = Departamento::with('jefeEmpleado')->get();
 
         // Obtiene solo empleados activos (para selects)
         $empleados = Empleado::where('estado', 'activo')->get();
@@ -58,26 +58,29 @@ class DepartmentController extends Controller
     /**
      * Actualiza un departamento existente
      */
-    public function update(Request $request, $id)
-    {
-        // Busca el departamento o lanza error 404
-        $departamento = Departamento::findOrFail($id);
+public function update(Request $request, $id)
+{
+    $departamento = Departamento::findOrFail($id);
 
-        // Validación (ignora el nombre actual del departamento)
-        $request->validate([
-            'nombre' => 'required|unique:departamentos,nombre,' . $departamento->id,
-            'descripcion' => 'required',
-            'jefe_empleado_id' => 'nullable|exists:empleados,id'
-        ]);
+    $request->validate([
+        'nombre' => 'required|unique:departamentos,nombre,' . $departamento->id,
+        'descripcion' => 'required',
+        'jefe_empleado_id' => 'nullable|exists:empleados,id'
+    ]);
 
-        // Actualiza el departamento
-        $departamento->update($request->all());
+    // 1. Actualizamos el departamento (esto ya cambia quién es el jefe 
+    // para todos los empleados vinculados a este ID)
+    $departamento->update($request->all());
 
-        // Redirecciona con mensaje de éxito
-        return redirect()
-            ->route('departamentos.index')
-            ->with('success', 'Departamento actualizado correctamente');
+    // 2. Opcional: obtener nombre para el mensaje de éxito
+    $nombreNuevoJefe = 'Sin jefe asignado';
+    if ($departamento->jefeEmpleado) {
+        $nombreNuevoJefe = $departamento->jefeEmpleado->nombre . ' ' . $departamento->jefeEmpleado->apellido;
     }
+
+    return redirect()->route('departamentos.index')
+        ->with('success', "¡Departamento actualizado con éxito! El jefe actual es: $nombreNuevoJefe");
+}
 
     /**
      * Elimina un departamento

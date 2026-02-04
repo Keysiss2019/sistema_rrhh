@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.app') {{-- Indica que esta vista hereda la estructura base definida en layouts.app --}}
 
-@section('content')
+@section('content') {{-- Inicia la sección "content" que será inyectada en el layout principal --}}
 <div class="container-fluid py-4">
     <div class="card shadow border-0">
 
@@ -21,11 +21,11 @@
          <!-- Mensaje de exito -->
             @if(session('success'))
              <div id="success-alert" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-        <i class="fa-solid fa-circle-check me-2"></i>
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
+                 <i class="fa-solid fa-circle-check me-2"></i>
+                 {{ session('success') }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+           @endif
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
@@ -44,7 +44,7 @@
                             <td>#{{ $dep->id }}</td>
                             <td class="fw-bold">{{ $dep->nombre }}</td>
                             <td>{{ $dep->descripcion }}</td>
-                            <td>{{ $dep->jefe?->nombre ?? '' }} {{ $dep->jefe?->apellido ?? '' }}</td>
+                            <td>{{ $dep->jefeEmpleado?->nombre ?? '' }} {{ $dep->jefeEmpleado?->apellido ?? '' }}</td>
                             <td class="text-center">
                                 <!-- Botón Editar -->
                                 <button type="button"
@@ -219,4 +219,3 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 </script>
 @endsection
-
