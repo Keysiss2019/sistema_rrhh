@@ -8,6 +8,23 @@
     <div class="row justify-content-center">
         <div class="col-md-11">
 
+        {{-- ================= MENSAJE DE ÉXITO ================= --}}
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert" id="success-alert">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    <strong>¡Atención!</strong> 
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             <!-- Tarjeta principal para usuarios -->
             <div class="card shadow-lg border-0">
                 
@@ -229,5 +246,23 @@ function togglePassword() {
             }
         });
     }
+</script>
+
+<!-- Alerta de éxito -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Manejo de la alerta de éxito
+    const successAlert = document.getElementById('success-alert');
+    if (successAlert) {
+        setTimeout(() => {
+            if (typeof bootstrap !== 'undefined') {
+                const alertInstance = bootstrap.Alert.getOrCreateInstance(successAlert);
+                alertInstance.close();
+            } else {
+                successAlert.style.display = 'none';
+            }
+        }, 4000);
+    } 
+});
 </script>
 @endsection  {{-- Fin de la sección de contenido --}}
