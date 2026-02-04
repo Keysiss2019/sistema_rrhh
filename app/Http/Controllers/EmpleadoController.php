@@ -44,31 +44,27 @@ class EmpleadoController extends Controller
     | Permite realizar búsquedas por diferentes campos y
     | utiliza paginación para mejorar el rendimiento.
     */
-    public function index(Request $request)
-    {
-        // Obtiene el término de búsqueda desde el formulario
-        $search = $request->input('search');
+ public function index(Request $request)
+{
+    $search = $request->input('search');
 
-        /*
-        | Consulta condicional:
-        | Solo aplica el filtro si existe un término de búsqueda.
-        */
-        $empleados = Empleado::when($search, function ($query, $search) {
-            return $query->where('id', 'LIKE', "%{$search}%")
-                         ->orWhere('nombre', 'LIKE', "%{$search}%")
+    $empleados = Empleado::when($search, function ($query, $search) {
+            return $query->where('nombre', 'LIKE', "%{$search}%")
                          ->orWhere('apellido', 'LIKE', "%{$search}%")
                          ->orWhere('email', 'LIKE', "%{$search}%")
-                         ->orWhere('estado', 'LIKE', "%{$search}%");
+                         ->orWhere('cargo', 'LIKE', "%{$search}%");
         })
-        // Pagina los resultados (10 por página)
         ->paginate(10);
 
-        // Obtiene todas las políticas de vacaciones
-        $politicas = PoliticaVacaciones::all();
+    $departamentos = Departamento::with('jefeEmpleado')->get();
 
-        // Retorna la vista con los datos necesarios
-        return view('empleado.index', compact('empleados', 'politicas'));
-    }
+    // ✅ Traemos todas las políticas
+    $politicas = PoliticaVacaciones::all();
+
+    return view('empleado.index', compact('empleados', 'departamentos', 'politicas'));
+}
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -98,11 +94,10 @@ class EmpleadoController extends Controller
             'apellido'         => 'required',
             'email'            => 'required|email|unique:empleados,email',
             'cargo'            => 'required',
-            'departamento'     => 'required',
+            'departamento'     => 'required|exists:departamentos,id', // Validamos que el ID exista',
             'fecha_ingreso'    => 'required|date',
-            'fecha_baja'       => 'nullable|date',
             'fecha_nacimiento' => 'nullable|date',
-            'estado'           => 'required|in:activo,inactivo',
+            'estado'           => 'activo',
             'contacto'         => 'nullable|string|max:20',
             'politica_id'      => 'required|exists:politicas_vacaciones,id',
         ], [
@@ -123,12 +118,11 @@ class EmpleadoController extends Controller
         $empleado->apellido         = $request->apellido;
         $empleado->email            = $request->email;
         $empleado->cargo            = $request->cargo;
-        $empleado->departamento     = $request->departamento;
+        $empleado->departamento_id  = $request->departamento;
         $empleado->fecha_ingreso    = $request->fecha_ingreso;
         $empleado->fecha_nacimiento = $request->fecha_nacimiento;
-        $empleado->fecha_baja       = $request->fecha_baja;
-        $empleado->estado           = $request->estado;
-        $empleado->jefe_inmediato   = $request->jefe_inmediato;
+        $empleado->fecha_baja       = null; // Así nos aseguramos de que esté vacío
+        $empleado->estado           = 'activo';
         $empleado->contacto         = $request->input('contacto') ?? 'N/A';
         $empleado->tipo_contrato    = $politica->tipo_contrato;
         $empleado->user_id          = null;
@@ -195,6 +189,7 @@ class EmpleadoController extends Controller
                 Rule::unique('empleados')->ignore($id),
             ],
             'politica_id' => 'required|exists:politicas_vacaciones,id',
+            'departamento' => 'required|exists:departamentos,id',
             'contacto'    => 'nullable|string',
         ]);
 
@@ -203,7 +198,7 @@ class EmpleadoController extends Controller
         $empleado->apellido         = trim($request->apellido);
         $empleado->email            = $request->email;
         $empleado->cargo            = $request->cargo;
-        $empleado->departamento     = $request->departamento;
+        $empleado->departamento_id  = $request->departamento;
         $empleado->estado           = $request->estado;
         $empleado->contacto         = $request->input('contacto') ?? 'N/A';
         $empleado->fecha_nacimiento = $request->fecha_nacimiento;
@@ -250,4 +245,32 @@ class EmpleadoController extends Controller
         return redirect()->route('empleado.index')
                          ->with('success', 'Empleado eliminado correctamente.');
     }
+
+    /**
+ * Cambia el estado del empleado (Activo/Inactivo)
+ */
+public function cambiarEstado($id)
+{
+    // 1. Busca al empleado
+    $empleado = Empleado::findOrFail($id);
+
+    // 2. Determina el nuevo estado
+    if ($empleado->estado === 'activo') {
+        $empleado->estado = 'inactivo';
+        // Opcional: Registrar la fecha de salida automáticamente
+        $empleado->fecha_baja = Carbon::now()->format('Y-m-d');
+        $mensaje = "El empleado " . $empleado->nombre . " ha sido desactivado.";
+    } else {
+        $empleado->estado = 'activo';
+        // Al reactivarlo, limpiamos la fecha de baja
+        $empleado->fecha_baja = null; 
+        $mensaje = "El empleado " . $empleado->nombre . " ha sido activado correctamente.";
+    }
+
+    // 3. Guarda los cambios
+    $empleado->save();
+
+    // 4. Redirecciona con mensaje
+    return redirect()->back()->with('success', $mensaje);
+}
 }
