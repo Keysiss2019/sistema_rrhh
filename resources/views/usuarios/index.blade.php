@@ -7,8 +7,7 @@
 <div class="container-fluid roles-section py-4">
     <div class="row justify-content-center">
         <div class="col-md-11">
-
-        {{-- ================= MENSAJE DE ÉXITO ================= --}}
+           {{-- ================= MENSAJE DE ÉXITO ================= --}}
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert" id="success-alert">
                     <i class="fa-solid fa-circle-check me-2"></i>
@@ -85,7 +84,7 @@
                                     </td>
 
                                     <!-- Nombre del empleado asociado -->
-                                    <td>{{ $u->empleado->nombre }}</td>
+                                    <td>{{ $u->empleado ? $u->empleado->nombre . ' ' . $u->empleado->apellido : 'Sin asignar' }}</td>
 
                                     <!-- Rol del usuario -->
                                     <td>
