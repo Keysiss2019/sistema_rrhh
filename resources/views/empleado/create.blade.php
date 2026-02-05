@@ -16,11 +16,6 @@
                     <label class="form-label fw-bold small">APELLIDOS</label>
                     <input type="text" name="apellido" class="form-control shadow-sm" required>
                 </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">CORREO</label>
-                    <input type="email" name="email" class="form-control shadow-sm" required>
-                </div>
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold small">CONTACTO</label>
