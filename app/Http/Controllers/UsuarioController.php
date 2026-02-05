@@ -11,70 +11,93 @@ use App\Models\Role;      // Modelo de roles de usuario
 use Illuminate\Http\Request; // Para manejar solicitudes HTTP
 use Illuminate\Support\Facades\Hash; // Para encriptar contraseñas
 use Illuminate\Support\Facades\Auth; // - Obtener el usuario autenticado (Auth::user)
+use Illuminate\Support\Facades\DB; // Permite interactuar directamente con la base de datos usando el Query Builder y transacciones
 
 class UsuarioController extends Controller
 {
     /**
      * LISTADO DE USUARIOS + DATOS PARA EL OFFCANVAS
      */
+    /**
+     * LISTADO DE USUARIOS
+     */
     public function index(Request $request)
     {
-        // Creamos la consulta inicial incluyendo las relaciones 'empleado' y 'rol'
+        // Consulta con relaciones
         $query = User::with(['empleado', 'rol']);
 
-        // Buscador por usuario o nombre de empleado
+        // Buscador
         if ($request->filled('buscar')) {
-            $query->where('usuario', 'like', '%' . $request->buscar . '%')
-                  ->orWhereHas('empleado', function ($q) use ($request) {
-                      // Filtra también por nombre de empleado relacionado
-                      $q->where('nombre', 'like', '%' . $request->buscar . '%');
+            $buscar = $request->buscar;
+            $query->where(function($q) use ($buscar) {
+                $q->where('usuario', 'like', "%$buscar%")
+                  ->orWhereHas('empleado', function ($queryEmp) use ($buscar) {
+                      $queryEmp->where('nombre', 'like', "%$buscar%")
+                               ->orWhere('apellido', 'like', "%$buscar%");
                   });
+            });
         }
 
-        // Paginación de resultados: 8 usuarios por página
         $usuarios = $query->paginate(8);
 
-        // --- NUEVO: Datos necesarios para el formulario "Nuevo Usuario" ---
-        // Obtenemos empleados que todavía no tienen usuario, ordenados alfabéticamente
+        // Empleados que NO tienen usuario asignado (vínculo inverso)
         $empleados = Empleado::whereDoesntHave('user')
             ->orderBy('nombre', 'asc')
             ->get();
 
-        // Obtenemos todos los roles disponibles
         $roles = Role::all();
 
-        // Enviamos las 3 variables a la vista index (usuarios, empleados y roles)
         return view('usuarios.index', compact('usuarios', 'empleados', 'roles'));
     }
-
+ 
     /**
-     * GUARDAR USUARIO
-     */
+    * GUARDAR USUARIO (CON CORREO INSTITUCIONAL)
+    */
     public function store(Request $request)
     {
-        // Validaciones de los campos obligatorios
-        $request->validate([
-            'usuario'     => 'required|unique:users,usuario', // Usuario único
-            'empleado_id' => 'required|exists:empleados,id',  // Debe existir en empleados
-            'role_id'     => 'required|exists:roles,id',      // Debe existir en roles
-            'password'    => 'required|min:6',                // Contraseña mínima 6 caracteres
-            'estado'      => 'required|in:activo,inactivo'   // Solo estos estados
-        ]);
+     // 1. Validaciones: Agregamos el campo 'email'
+     $request->validate([
+         'usuario'     => 'required|unique:users,usuario',
+         'email'       => 'required|email|unique:users,email', // <-- Nuevo
+         'empleado_id' => 'required|exists:empleados,id',
+         'role_id'     => 'required|exists:roles,id',
+         'password'    => 'required|min:6',
+       ]);
+    
+    try {
+        // Iniciamos una transacción para que se guarde en ambas tablas o en ninguna
+        DB::beginTransaction();
 
-        // Crear usuario en la base de datos
-        User::create([
+        // 2. Creamos el usuario con el email que Tecnología escribió en el formulario
+        $nuevoUsuario = User::create([
             'usuario'               => $request->usuario,
-            'password'              => bcrypt($request->password), // Encriptar contraseña
+            'email'                 => $request->email, // El correo institucional asignado
+            'password'              => bcrypt($request->password), 
             'empleado_id'           => $request->empleado_id,
             'role_id'               => $request->role_id,
-            'estado'                => $request->estado,
-            'debe_cambiar_password' => $request->has('debe_cambiar_password') ? 1 : 0, 
-            // Marcar si el usuario debe cambiar la contraseña al ingresar
+            'estado'                => 'activo',
+            'debe_cambiar_password' => $request->has('debe_cambiar_password') ? 1 : 0,
         ]);
 
-        // Redirige de vuelta al listado de usuarios con mensaje de éxito
+        if ($nuevoUsuario) {
+            // 3. ACTUALIZACIÓN EN EMPLEADOS (Vínculo + Correo)
+            // Sincronizamos el ID del usuario y el nuevo correo en la ficha del empleado
+            DB::table('empleados')
+                ->where('id', $request->empleado_id)
+                ->update([
+                    'user_id' => $nuevoUsuario->id,
+                    'email'   => $request->email // Así RRHH ya tiene el correo oficial
+                ]);
+        }
+
+        DB::commit();
         return redirect()->route('usuarios.index')
-                         ->with('success', 'Usuario creado. Se le solicitará cambio de contraseña al ingresar.');
+                         ->with('success', 'Usuario creado y correo institucional vinculado correctamente.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Error al crear usuario: ' . $e->getMessage())->withInput();
+    }
     }
 
     /**
@@ -108,6 +131,13 @@ class UsuarioController extends Controller
         // Guardamos los cambios
         $usuario->save();
 
+        // 4. ASEGURAR EL VÍNCULO EN LA TABLA EMPLEADOS
+    // Buscamos al empleado asociado a este usuario (usando el empleado_id que ya tiene el usuario)
+    if ($usuario->empleado_id) {
+        DB::table('empleados')
+            ->where('id', $usuario->empleado_id)
+            ->update(['user_id' => $usuario->id]);
+    }
         // Retorna con mensaje de éxito
         return back()->with('success', 'Usuario actualizado.');
     }
@@ -132,13 +162,31 @@ class UsuarioController extends Controller
      * ELIMINAR USUARIO
      */
     public function destroy($id)
-    {
-        // Buscar y eliminar usuario por ID
-        User::findOrFail($id)->delete();
+{
+    try {
+        // 1. Buscamos el usuario
+        $usuario = User::findOrFail($id);
 
-        // Retorna con mensaje de éxito
-        return back()->with('success', 'Usuario eliminado correctamente.');
+        // 2. Intentamos desvincular al empleado (user_id = null)
+        // Esto es lo que evita el error de integridad
+        DB::table('empleados')
+            ->where('user_id', $id)
+            ->update(['user_id' => null]);
+
+        // 3. Borramos al usuario
+        $usuario->delete();
+
+        return back()->with('success', 'El usuario ha sido eliminado y el empleado quedó libre.');
+
+    } catch (\Illuminate\Database\QueryException $e) {
+        // 4. Si MySQL lanza un error (como el 1451), cae aquí
+        return back()->with('error', 'No se puede eliminar: el usuario todavía está vinculado a registros importantes.');
+        
+    } catch (\Exception $e) {
+        // 5. Cualquier otro error inesperado
+        return back()->with('error', 'Ocurrió un error inesperado al intentar eliminar.');
     }
+}
 
 public function actualizarPassword(Request $request)
 {
