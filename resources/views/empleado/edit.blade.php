@@ -29,8 +29,18 @@
 
                         {{-- 2. CONTACTO --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small">CORREO ELECTRÓNICO</label>
-                            <input type="email" name="email" value="{{ old('email', $empleado->email) }}" class="form-control" required>
+                          <label class="form-label fw-bold small text-uppercase">Correo Electrónico</label>
+                          <div class="input-group">
+                              <span class="input-group-text bg-light"><i class="fa-solid fa-envelope"></i></span>
+                               {{-- Quitamos el 'required' para permitir que TI lo asigne después --}}
+                               <input type="email" name="email" value="{{ old('email', $empleado->email) }}" 
+                                class="form-control" placeholder="Pendiente de asignar por TI">
+                         </div>
+                          @if(!$empleado->email)
+                             <small class="text-danger fw-bold" style="font-size: 0.7rem;">
+                                 <i class="fa-solid fa-circle-info me-1"></i> SIN CORREO INSTITUCIONAL
+                              </small>
+                           @endif
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">CONTACTO</label>
@@ -71,15 +81,32 @@
                              CAMBIAR TIPO DE CONTRATO
                           </label>
     
+                          <div class="alert alert-warning d-none" id="alertaCambioContrato{{ $empleado->id }}">
+                             <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                               <strong>Atención:</strong>
+                                 Cambiar el tipo de contrato actualizará los días de vacaciones del empleado.
+                          </div>
+
                           {{-- Cambiamos el name a "tipo_contrato" --}}
-                         <select name="politica_id" class="form-select" required>
-                               @foreach($politicas as $politica)
-                                 <option value="{{ $politica->id }}" 
+                         <select name="politica_id"  class="form-select select-politica-edit"
+                             data-contrato-actual="{{ $empleado->tipo_contrato }}"
+                              data-empleado="{{ $empleado->id }}" required>
+                              @foreach($politicas as $politica)
+                                 <option value="{{ $politica->id }}"
+                                     data-contrato="{{ $politica->tipo_contrato }}"
+                                      data-dias="{{ $politica->dias_anuales }}"
                                       {{ $empleado->tipo_contrato == $politica->tipo_contrato ? 'selected' : '' }}>
-                                       {{ strtoupper($politica->tipo_contrato) }}
-                                  </option>
+                                      {{ strtoupper($politica->tipo_contrato) }}
+                                 </option>
                                @endforeach
                           </select>
+                          <div class="mt-2">
+                             <small class="text-muted">
+                                  Días de vacaciones actuales:
+                                   <strong>{{ $empleado->dias_vacaciones_anuales }} días</strong>
+                              </small>
+                          </div>
+
                       </div>
 
                         {{-- 5. FECHAS Y ESTADO --}}
@@ -155,4 +182,26 @@
             }
         }
     });
+</script>
+
+<script>
+document.addEventListener('change', function (event) {
+
+    if (!event.target.classList.contains('select-politica-edit')) return;
+
+    const select = event.target;
+    const contratoActual = select.dataset.contratoActual;
+    const empleadoId = select.dataset.empleado;
+
+    const selectedOption = select.options[select.selectedIndex];
+    const contratoNuevo = selectedOption.dataset.contrato;
+
+    const alerta = document.getElementById('alertaCambioContrato' + empleadoId);
+
+    if (contratoNuevo !== contratoActual) {
+        alerta.classList.remove('d-none');
+    } else {
+        alerta.classList.add('d-none');
+    }
+});
 </script>
