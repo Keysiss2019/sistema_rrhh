@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon; // Librería para manejo avanzado de fechas y horas (parseo, formato, cálculos, diferencias de tiempo, etc.)
+use Illuminate\Support\Facades\DB; // Permite interactuar directamente con la base de datos usando el Query Builder y transacciones
 
 
 /*
@@ -77,93 +78,63 @@ class EmpleadoController extends Controller
     | incluyendo validaciones, asignación de política y carga de documentos.
     */
     public function store(Request $request)
-    {
-        /*
-        | Limpieza de datos:
-        | Se eliminan espacios en blanco al inicio y final del nombre y apellido.
-        */
-        $request->merge([
-            'nombre'   => trim($request->nombre),
-            'apellido' => trim($request->apellido)
-        ]);
+{
+    $request->merge([
+        'nombre'   => trim($request->nombre),
+        'apellido' => trim($request->apellido)
+    ]);
 
-        /*
-        | Validaciones del formulario
-        | Se asegura que los datos cumplan las reglas definidas
-        | antes de ser almacenados en la base de datos.
-        */
-        $request->validate([
-            'nombre'           => 'required|unique:empleados,nombre',
-            'apellido'         => 'required',
-            'email'            => 'required|email|unique:empleados,email',
-            'cargo'            => 'required',
-            'departamento'     => 'required|exists:departamentos,id', // Validamos que el ID exista',
-            'fecha_ingreso'    => 'required|date',
-            'fecha_nacimiento' => 'nullable|date',
-            'estado'           => 'activo',
-            'contacto'         => 'nullable|string|max:20',
-            'politica_id'      => 'required|exists:politicas_vacaciones,id',
-        ], [
-            // Mensajes personalizados de validación
-            'nombre.unique' => 'Ya existe un empleado registrado con este nombre.',
-            'email.unique'  => 'Este correo electrónico ya está en uso por otro empleado.',
-        ]);
+    $request->validate([
+        'nombre'           => 'required|unique:empleados,nombre',
+        'apellido'         => 'required',
+        // El email ahora es opcional (nullable) para RRHH
+        'email'            => 'nullable|email|unique:empleados,email', 
+        'cargo'            => 'required',
+        'departamento'     => 'required|exists:departamentos,id',
+        'fecha_ingreso'    => 'required|date',
+        'fecha_nacimiento' => 'nullable|date',
+        'politica_id'      => 'required|exists:politicas_vacaciones,id',
+    ], [
+        'nombre.unique' => 'Ya existe un empleado registrado con este nombre.',
+        'email.unique'  => 'Este correo electrónico ya está en uso.',
+    ]);
 
-        // Obtiene la política de vacaciones seleccionada
-        $politica = PoliticaVacaciones::findOrFail($request->politica_id);
+    $politica = PoliticaVacaciones::findOrFail($request->politica_id);
 
-        /*
-        | Creación del empleado
-        | Se asignan los valores recibidos desde el formulario.
-        */
-        $empleado = new Empleado();
-        $empleado->nombre           = $request->nombre;
-        $empleado->apellido         = $request->apellido;
-        $empleado->email            = $request->email;
-        $empleado->cargo            = $request->cargo;
-        $empleado->departamento_id  = $request->departamento;
-        $empleado->fecha_ingreso    = $request->fecha_ingreso;
-        $empleado->fecha_nacimiento = $request->fecha_nacimiento;
-        $empleado->fecha_baja       = null; // Así nos aseguramos de que esté vacío
-        $empleado->estado           = 'activo';
-        $empleado->contacto         = $request->input('contacto') ?? 'N/A';
-        $empleado->tipo_contrato    = $politica->tipo_contrato;
-        $empleado->user_id          = null;
+    $empleado = new Empleado();
+    $empleado->nombre           = $request->nombre;
+    $empleado->apellido         = $request->apellido;
+    // Si RRHH no pone email, se guarda como null hasta que Tecnología cree el usuario
+    $empleado->email            = $request->email; 
+    $empleado->cargo            = $request->cargo;
+    $empleado->departamento_id  = $request->departamento;
+    $empleado->fecha_ingreso    = $request->fecha_ingreso;
+    $empleado->fecha_nacimiento = $request->fecha_nacimiento;
+    $empleado->estado           = 'activo';
+    $empleado->contacto         = $request->input('contacto') ?? 'N/A';
+    $empleado->tipo_contrato    = $politica->tipo_contrato;
+    $empleado->dias_vacaciones_anuales = $politica->dias_anuales;
 
-        // Guarda el empleado en la base de datos
-        $empleado->save();
+    $empleado->save();
 
-        /*
-        | Carga de documentos laborales
-        | Se recorren los archivos enviados y se almacenan
-        | en el sistema de archivos junto con su registro en la BD.
-        */
-        if ($request->hasFile('documentos')) {
-            foreach ($request->file('documentos') as $index => $archivo) {
+    // Lógica de documentos (se mantiene igual...)
+    if ($request->hasFile('documentos')) {
+        foreach ($request->file('documentos') as $index => $archivo) {
+            $tipo = $request->tipos_documento[$index] ?? 'Documento Laboral';
+            $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+            $ruta = $archivo->storeAs('documentos', $nombreArchivo, 'public');
 
-                // Tipo de documento asociado
-                $tipo = $request->tipos_documento[$index] ?? 'Documento Laboral';
-
-                // Nombre único del archivo
-                $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
-
-                // Almacenamiento en disco público
-                $ruta = $archivo->storeAs('documentos', $nombreArchivo, 'public');
-
-                // Registro del documento en la base de datos
-                DocumentoLaboral::create([
-                    'empleado_id'    => $empleado->id,
-                    'tipo_documento' => $tipo,
-                    'nombre_archivo' => $nombreArchivo,
-                    'ruta_archivo'   => $ruta,
-                ]);
-            }
+            DocumentoLaboral::create([
+                'empleado_id'    => $empleado->id,
+                'tipo_documento' => $tipo,
+                'nombre_archivo' => $nombreArchivo,
+                'ruta_archivo'   => $ruta,
+            ]);
         }
-
-        // Redirección con mensaje de éxito
-        return redirect()->route('empleado.index')
-                         ->with('success', 'Empleado creado correctamente.');
     }
+
+    return redirect()->route('empleado.index')->with('success', 'Empleado creado. Pendiente creación de usuario por TI.');
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -172,54 +143,48 @@ class EmpleadoController extends Controller
     | Actualiza la información de un empleado existente.
     | Se ignoran los valores únicos del propio registro.
     */
-    public function update(Request $request, $id)
-    {
-        // Obtiene el empleado o lanza error 404
-        $empleado = Empleado::findOrFail($id);
+ public function update(Request $request, $id)
+{
+    $empleado = Empleado::findOrFail($id);
 
-        /*
-        | Validaciones para actualización
-        | Rule::unique()->ignore permite mantener valores existentes.
-        */
-        $request->validate([
-            'nombre' => [
-                'required',
-                Rule::unique('empleados')->ignore($id),
-            ],
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('empleados')->ignore($id),
-            ],
-            'politica_id' => 'required|exists:politicas_vacaciones,id',
-            'departamento' => 'required|exists:departamentos,id',
-            'contacto'    => 'nullable|string',
-        ]);
+    $request->validate([
+        'nombre' => ['required', Rule::unique('empleados')->ignore($id)],
+        'apellido' => 'required',
+        'email' => ['nullable', 'email', Rule::unique('empleados')->ignore($id)],
+        'departamento' => 'required|exists:departamentos,id',
+        'politica_id' => 'required|exists:politicas_vacaciones,id',
+    ]);
 
-        // Actualización de campos
-        $empleado->nombre           = trim($request->nombre);
-        $empleado->apellido         = trim($request->apellido);
-        $empleado->email            = $request->email;
-        $empleado->cargo            = $request->cargo;
-        $empleado->departamento_id  = $request->departamento;
-        $empleado->estado           = $request->estado;
-        $empleado->contacto         = $request->input('contacto') ?? 'N/A';
-        $empleado->fecha_nacimiento = $request->fecha_nacimiento;
-        $empleado->fecha_baja       = $request->fecha_baja;
-        $empleado->fecha_ingreso    = $request->fecha_ingreso;
-
-        // Actualiza tipo de contrato según política
-        $politica = PoliticaVacaciones::find($request->politica_id);
-        if ($politica) {
-            $empleado->tipo_contrato = $politica->tipo_contrato;
-        }
-
-        // Guarda cambios
-        $empleado->save();
-
-        return redirect()->route('empleado.index')
-                         ->with('success', 'Empleado actualizado correctamente');
+    // Actualizamos datos del empleado
+    $empleado->nombre          = trim($request->nombre);
+    $empleado->apellido        = trim($request->apellido);
+    $empleado->email           = $request->email;
+    $empleado->cargo           = $request->cargo;
+    $empleado->departamento_id = $request->departamento;
+    $empleado->estado          = $request->estado;
+    $empleado->contacto        = $request->input('contacto') ?? 'N/A';
+    
+    // SI EL EMPLEADO YA TIENE UN USUARIO VINCULADO:
+    // Actualizamos el email en la tabla users también para que coincidan.
+    if ($empleado->user_id && $request->filled('email')) {
+        DB::table('users')
+            ->where('id', $empleado->user_id)
+            ->update(['email' => $request->email]);
     }
+
+    // Lógica de cambio de política (se mantiene igual...)
+    $politicaNueva = PoliticaVacaciones::findOrFail($request->politica_id);
+    if ($empleado->tipo_contrato !== $politicaNueva->tipo_contrato) {
+        $empleado->tipo_contrato = $politicaNueva->tipo_contrato;
+        $empleado->dias_vacaciones_anuales = $politicaNueva->dias_anuales;
+        $empleado->fecha_cambio_contrato = now()->format('Y-m-d');
+    }
+
+    $empleado->save();
+
+    return redirect()->route('empleado.index')->with('success', 'Empleado y cuenta de usuario sincronizados.');
+}
+
 
     /*
     |--------------------------------------------------------------------------
