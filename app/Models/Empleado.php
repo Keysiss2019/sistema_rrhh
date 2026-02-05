@@ -11,7 +11,8 @@ class Empleado extends Model
 
     protected $fillable = [
         'user_id', 'nombre', 'apellido', 'email', 'fecha_nacimiento',
-        'fecha_ingreso', 'fecha_baja', 'estado', 'cargo', 'departamento_id'
+        'fecha_ingreso', 'fecha_baja', 'estado', 'cargo', 'departamento_id',
+        'dias_vacaciones_anuales',
     ];
 
     // Relación con departamento
