@@ -153,26 +153,31 @@ class EmpleadoController extends Controller
         'email' => ['nullable', 'email', Rule::unique('empleados')->ignore($id)],
         'departamento' => 'required|exists:departamentos,id',
         'politica_id' => 'required|exists:politicas_vacaciones,id',
+        'fecha_ingreso' => 'required|date', // Validar fechas
+        'fecha_baja' => 'nullable|date',
     ]);
 
-    // Actualizamos datos del empleado
+    // Asignación manual
     $empleado->nombre          = trim($request->nombre);
     $empleado->apellido        = trim($request->apellido);
     $empleado->email           = $request->email;
     $empleado->cargo           = $request->cargo;
-    $empleado->departamento_id = $request->departamento;
+    $empleado->departamento_id = $request->departamento; // Asegúrate que en la DB se llame así
     $empleado->estado          = $request->estado;
     $empleado->contacto        = $request->input('contacto') ?? 'N/A';
     
-    // SI EL EMPLEADO YA TIENE UN USUARIO VINCULADO:
-    // Actualizamos el email en la tabla users también para que coincidan.
+    // ESTO FALTABA:
+    $empleado->fecha_ingreso   = $request->fecha_ingreso;
+    $empleado->fecha_baja      = $request->fecha_baja;
+
+    // Sincronización con Usuario
     if ($empleado->user_id && $request->filled('email')) {
         DB::table('users')
             ->where('id', $empleado->user_id)
             ->update(['email' => $request->email]);
     }
 
-    // Lógica de cambio de política (se mantiene igual...)
+    // Lógica de política
     $politicaNueva = PoliticaVacaciones::findOrFail($request->politica_id);
     if ($empleado->tipo_contrato !== $politicaNueva->tipo_contrato) {
         $empleado->tipo_contrato = $politicaNueva->tipo_contrato;
@@ -180,9 +185,10 @@ class EmpleadoController extends Controller
         $empleado->fecha_cambio_contrato = now()->format('Y-m-d');
     }
 
+    // Guardar cambios
     $empleado->save();
 
-    return redirect()->route('empleado.index')->with('success', 'Empleado y cuenta de usuario sincronizados.');
+    return redirect()->route('empleado.index')->with('success', 'Empleado actualizado correctamente.');
 }
 
 
