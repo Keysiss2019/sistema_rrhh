@@ -21,11 +21,7 @@
 
                     {{-- Botones de acciones --}}
                     <div class="d-flex gap-2">
-                        {{-- Botón volver a inicio --}}
-                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm fw-bold">
-                            <i class="fa-solid fa-house me-1"></i> Inicio
-                        </a>
-
+                        
                         {{-- Botón para abrir offcanvas de nueva política --}}
                         <button class="btn btn-dark btn-sm shadow-sm fw-bold"
                                 type="button"
@@ -49,12 +45,22 @@
                         </div>
                     @endif
 
+                    {{-- Mensaje de ERROR (Este es el que te falta) --}}
+                  @if(session('error'))
+                     <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mt-3" role="alert">
+                         <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                         {{ session('error') }}
+                           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                       </div>
+                    @endif
+
                     {{-- Tabla de políticas --}}
                     <div class="table-responsive mt-4">
                         <table class="table table-hover align-middle border">
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-4">TIPO DE CONTRATO</th>
+                                    <th class="text-center">AÑO ANTIGÜEDAD</th>
                                     <th class="text-center">DÍAS ANUALES</th>
                                     <th class="text-center" style="width:150px;">ACCIONES</th>
                                 </tr>
@@ -69,6 +75,11 @@
                                         <i class="fa-solid fa-file-contract me-2 text-primary"></i>
                                         {{ ucfirst($politica->tipo_contrato) }}
                                     </td>
+
+                                    {{-- Columna del Año --}}
+                                    <td class="text-center fw-bold text-primary">
+                                       Año {{ $politica->anio_antiguedad }}
+                                   </td>
 
                                     {{-- Formulario para actualizar días --}}
                                     <td class="text-center">
@@ -138,45 +149,99 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>
 
-    <div class="offcanvas-body">
-        {{-- Formulario de creación --}}
-        <form method="POST" action="{{ route('politicas.store') }}">
-            @csrf
+   <div class="offcanvas-body">
+      <form method="POST" action="{{ route('politicas.store') }}" id="formPolitica">
+         @csrf
 
-            <div class="mb-4">
-                <label class="form-label fw-bold text-secondary">Tipo de Contrato</label>
-                <input type="text" 
-                       name="tipo_contrato" 
-                       class="form-control form-control-lg border-2" 
-                       placeholder="Ej: Permanente, Temporal..." 
-                       required>
-            </div>
+         <div class="mb-4">
+             <label class="form-label fw-bold text-secondary">Categoría de Contrato</label>
+            <select id="tipo_contrato_select" class="form-select border-2" required>
+                <option value="" selected disabled>Seleccione...</option>
+                <option value="permanente">Permanente (Escala de Ley)</option>
+                <option value="otros">Otros (Nombre Personalizado)</option>
+             </select>
+          </div>
+  
+          <div id="contenedor_nombre" class="mb-4" style="display: none;">
+             <label class="form-label fw-bold text-secondary">Nombre del Contrato</label>
+             <input type="text" name="tipo_contrato" id="input_nombre_real" class="form-control border-2" placeholder="Ej: Temporal, Por Hora...">
+         </div>
 
-            <div class="mb-4">
-                <label class="form-label fw-bold text-secondary">Días de Vacaciones Anuales</label>
-                <input type="number" 
-                       name="dias_anuales" 
-                       class="form-control form-control-lg border-2" 
-                       placeholder="Ej: 15" 
-                       required>
-            </div>
+          <div id="seccion_permanente" style="display: none;" class="bg-light p-3 rounded border">
+             <h6 class="fw-bold text-primary mb-3"><i class="fas fa-balance-scale me-1"></i> Escala de Días por Año</h6>
+            
+              @foreach([1 => '1er Año', 2 => '2do Año', 3 => '3er Año', 4 => '4to Año o más'] as $num => $label)
+                 <div class="row g-2 align-items-center mb-2">
+                     <div class="col-7"><small>Al cumplir {{ $label }}:</small></div>
+                        <div class="col-5">
+                         <input type="number" name="dias_permanente[{{ $num }}]" class="form-control form-control-sm input-escala" min="1" max="30">
+                       </div>
+                 </div>
+               @endforeach
+          </div>
 
-            <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-primary btn-lg shadow fw-bold">
-                    <i class="fa-solid fa-save me-2"></i> Guardar Política
-                </button>
-                <button type="button" 
-                        class="btn btn-secondary btn-lg fw-bold" 
-                        data-bs-dismiss="offcanvas">
-                    Cancelar
-                </button>
-            </div>
-        </form>
-    </div>
+          <div id="seccion_otros" style="display: none;">
+              <label class="form-label fw-bold text-secondary">Días Anuales</label>
+              <input type="number" name="dias_fijos" id="input_dias_fijos" class="form-control border-2" placeholder="Ej: 15" min="1" max="30">
+          </div>
+
+          <div class="d-grid gap-2 mt-4">
+             <button type="submit" class="btn btn-primary btn-lg shadow fw-bold">
+                  <i class="fa-solid fa-save me-2"></i> Guardar Política
+              </button>
+          </div>
+       </form>
+   </div>
 </div>
 
 {{-- SweetAlert --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Offcanvas para registrar nueva política
+    document.getElementById('tipo_contrato_select').addEventListener('change', function() {
+     const seccionPerm = document.getElementById('seccion_permanente');
+     const seccionOtros = document.getElementById('seccion_otros');
+     const contenedorNombre = document.getElementById('contenedor_nombre');
+     const inputNombreReal = document.getElementById('input_nombre_real');
+     const inputDiasFijos = document.getElementById('input_dias_fijos');
+     const inputsEscala = document.querySelectorAll('.input-escala');
+
+     if (this.value === 'permanente') {
+         // Mostrar/Ocultar
+         seccionPerm.style.display = 'block';
+         seccionOtros.style.display = 'none';
+         contenedorNombre.style.display = 'none';
+
+         // Lógica de valores
+         inputNombreReal.value = 'permanente';
+
+         // Validaciones: Activar escala, desactivar otros
+         inputNombreReal.required = false;
+         inputDiasFijos.required = false;
+         inputsEscala.forEach(input => {
+             input.required = true;
+                if(!input.value) input.value = input.name.includes('[1]') ? 10 : (input.name.includes('[2]') ? 12 : (input.name.includes('[3]') ? 15 : 20));
+           });
+
+        } else if (this.value === 'otros') {
+         // Mostrar/Ocultar
+         seccionPerm.style.display = 'none';
+         seccionOtros.style.display = 'block';
+         contenedorNombre.style.display = 'block';
+
+         // Lógica de valores
+         inputNombreReal.value = '';
+
+         // Validaciones: Activar otros, desactivar escala
+         inputNombreReal.required = true;
+         inputDiasFijos.required = true;
+         inputsEscala.forEach(input => input.required = false);
+        
+         inputNombreReal.focus();
+       }
+   });
+</script>
 
 <script>
     // Confirmación de eliminación con SweetAlert
@@ -204,16 +269,22 @@
 
     // Ocultar alerta de éxito automáticamente
     document.addEventListener('DOMContentLoaded', function () {
-        const alert = document.getElementById('success-alert');
-        if (alert) {
-            setTimeout(() => {
-                alert.style.transition = "opacity 0.5s ease";
-                alert.style.opacity = "0";
-                setTimeout(() => alert.remove(), 500);
-            }, 3000);
-        }
-    });
+      // Seleccionamos todas las alertas (éxito y error)
+     const alerts = document.querySelectorAll('.alert');
+    
+      alerts.forEach(function(alert) {
+          setTimeout(() => {
+              // Efecto de desvanecimiento suave
+              alert.style.transition = "opacity 0.5s ease";
+              alert.style.opacity = "0";
+            
+              // Eliminar del DOM después del desvanecimiento
+               setTimeout(() => alert.remove(), 500);
+           }, 4000); // 4 segundos de visibilidad
+       });
+   });
 </script>
 
 {{-- Fin de la sección content --}}
 @endsection
+
