@@ -6,79 +6,100 @@ namespace App\Http\Controllers;
 // Importa el modelo PoliticaVacaciones para poder interactuar con la tabla correspondiente
 use App\Models\PoliticaVacaciones;
 
+// Importa el modelo Empleado para poder interactuar con la tabla correspondiente
+use App\Models\Empleado;
+
 // Importa la clase Request de Laravel para manejar solicitudes HTTP (GET, POST, etc.)
 use Illuminate\Http\Request;
 
 class PoliticaVacacionesController extends Controller
 {
-    /**
-     * Muestra la pantalla de políticas de vacaciones
-     */
     public function index()
     {
-        // Obtener todas las políticas existentes
-        $politicas = PoliticaVacaciones::all();
+        // Ordenamos por tipo y año para que la tabla se vea organizada
+        $politicas = PoliticaVacaciones::orderBy('tipo_contrato')
+                                        ->orderBy('anio_antiguedad')
+                                        ->get();
 
-        // Enviar a la vista
         return view('politicas_vacaciones.index', compact('politicas'));
     }
 
-    /**
-     * Guarda una nueva política
-     */
     public function store(Request $request)
     {
-        // Validación de datos
-        $request->validate([
-            // El tipo de contrato no puede repetirse
-            'tipo_contrato' => 'required|string|max:50|unique:politicas_vacaciones,tipo_contrato',
+        // 1. Si es Permanente, procesamos la escala de Honduras
+        if ($request->tipo_contrato === 'permanente') {
+            
+            // Validamos que vengan los días de la escala
+            $request->validate([
+                'dias_permanente' => 'required|array|size:4',
+                'dias_permanente.*' => 'required|integer|min:1|max:30',
+            ]);
 
-            // Días anuales deben ser un número razonable
-            'dias_anuales'  => 'required|integer|min:1|max:30',
+            foreach ($request->dias_permanente as $anio => $dias) {
+                // Usamos updateOrCreate para que si ya existen los años 1,2,3,4, solo los actualice
+                PoliticaVacaciones::updateOrCreate(
+                    [
+                        'tipo_contrato' => 'permanente',
+                        'anio_antiguedad' => $anio
+                    ],
+                    ['dias_anuales' => $dias]
+                );
+            }
+
+            return back()->with('success', 'Escala de vacaciones permanente configurada correctamente.');
+        } 
+
+        // 2. Si es otro tipo (Temporal, etc.), validamos y guardamos normal
+        $request->validate([
+            // Validamos que no exista ya ese contrato para ese año 1
+            'tipo_contrato' => 'required|string|max:50',
+            'dias_fijos' => 'required|integer|min:1|max:30',
         ]);
 
-        // Crear la política
+        // Verificamos si ya existe para evitar duplicados en tipos simples
+        $existe = PoliticaVacaciones::where('tipo_contrato', strtolower($request->tipo_contrato))
+                                    ->where('anio_antiguedad', 1)
+                                    ->exists();
+        
+        if ($existe) {
+            return back()->with('error', 'Esta política ya existe. Si desea cambiarla, use el botón de actualizar en la tabla.');
+        }
+
         PoliticaVacaciones::create([
             'tipo_contrato' => strtolower($request->tipo_contrato),
-            'dias_anuales'  => $request->dias_anuales,
+            'anio_antiguedad' => 1,
+            'dias_anuales' => $request->dias_fijos,
         ]);
 
-        // Retornar con mensaje
         return back()->with('success', 'Política creada correctamente.');
     }
 
-    /**
-     * Actualiza los días anuales de una política existente
-     */
     public function update(Request $request, $id)
     {
-        // Validación
         $request->validate([
             'dias_anuales' => 'required|integer|min:1|max:30',
         ]);
 
-        // Buscar la política
         $politica = PoliticaVacaciones::findOrFail($id);
-
-        // Actualizar únicamente los días
         $politica->update([
             'dias_anuales' => $request->dias_anuales
         ]);
 
-        return back()->with('success', 'Política actualizada correctamente.');
+        return back()->with('success', 'Días actualizados correctamente.');
     }
 
- 
-        /**
-    * Elimina una política de vacaciones
-    * Se usa cuando el tipo de contrato fue escrito mal
-    */
     public function destroy($id)
     {
-      $politica = PoliticaVacaciones::findOrFail($id);
-      $politica->delete();
+        $politica = PoliticaVacaciones::findOrFail($id);
 
-      return back()->with('success', 'Política eliminada correctamente.');
+        // Verificamos si hay empleados con este contrato
+        $empleadosUsando = Empleado::where('tipo_contrato', $politica->tipo_contrato)->count();
+
+        if ($empleadosUsando > 0) {
+            return back()->with('error', "No se puede eliminar. Hay $empleadosUsando empleado(s) vinculados a este tipo de contrato.");
+        }
+
+        $politica->delete();
+        return back()->with('success', 'Política eliminada correctamente.');
     }
-
 }
