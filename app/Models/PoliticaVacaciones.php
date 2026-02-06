@@ -19,6 +19,7 @@ class PoliticaVacaciones extends Model
      */
     protected $fillable = [
         'tipo_contrato',
+        'anio_antiguedad',
         'dias_anuales'
     ];
 }
