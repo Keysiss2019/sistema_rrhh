@@ -38,7 +38,7 @@ class LoginController extends Controller
     if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
 
         // Iniciamos sesión manualmente
-        \Illuminate\Support\Facades\Auth::login($user);
+        Auth::login($user);
         $request->session()->regenerate();
 
         // 1. Verificamos estado del usuario
