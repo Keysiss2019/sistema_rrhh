@@ -18,49 +18,66 @@ class LoginController extends Controller
     }
 
     // Procesa el intento de inicio de sesión
-    public function login(Request $request) {
+   public function login(Request $request) {
 
-        // Validamos las credenciales enviadas desde el formulario
-        $credentials = $request->validate([
-            'usuario'  => 'required|string',   // Campo usuario obligatorio
-            'password' => 'required|string',   // Campo contraseña obligatorio
-        ]);
+    // Validamos el campo usuario/email y password
+    $request->validate([
+        'usuario'  => 'required|string',
+        'password' => 'required|string',
+    ]);
 
-        // Intentamos autenticar al usuario con las credenciales
-        if (Auth::attempt($credentials)) {
+    $login = $request->input('usuario'); // lo que el usuario ingresa
+    $password = $request->input('password');
 
-            // Regeneramos la sesión por seguridad (previene session fixation)
-            $request->session()->regenerate();
+    // Buscamos al usuario por usuario o email
+    $user = \App\Models\User::where('usuario', $login)
+                ->orWhere('email', $login)
+                ->first();
 
-            // Obtenemos el usuario autenticado
-            $user = Auth::user();
+    // Verificamos que exista y la contraseña coincida
+    if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
 
-            // 1. Verificamos si el usuario está inactivo
-            // Si no está activo, se cierra sesión inmediatamente
-            if ($user->estado !== 'activo') {
-                Auth::logout();
-                return back()->withErrors([
-                    'usuario' => 'Tu cuenta está inactiva. Contacta al administrador.'
-                ]);
-            }
+        // Iniciamos sesión manualmente
+        \Illuminate\Support\Facades\Auth::login($user);
+        $request->session()->regenerate();
 
-            // 2. Verificamos si el usuario tiene contraseña temporal
-            if ($user->debe_cambiar_password == 1) {
-
-                // Redirigimos obligatoriamente a la vista de cambio de contraseña
-                return redirect()->route('password.cambiar')
-                    ->with('info', 'Debes actualizar tu contraseña temporal para continuar.');
-            }
-
-            // 3. Si todo está correcto, redirigimos al dashboard
-            return redirect()->intended('/dashboard');
+        // 1. Verificamos estado del usuario
+        if ($user->estado !== 'activo') {
+            Auth::logout();
+            return back()->withErrors([
+                'usuario' => 'Tu cuenta está inactiva. Contacta al administrador.'
+            ]);
         }
 
-        // Si el intento de login falla (credenciales incorrectas)
+        // 2. Validar estado del EMPLEADO
+        if (!$user->empleado || 
+            $user->empleado->estado !== 'activo' || 
+            $user->empleado->fecha_baja !== null ||
+            ($user->empleado->estado ?? 'activo') !== 'activo'
+        ) {
+            Auth::logout();
+            return back()->withErrors([
+                'usuario' => 'El acceso al sistema se encuentra deshabilitado. Contacta al administrador.'
+            ]);
+        }
+
+        // 3. Forzar cambio de contraseña
+        if ($user->debe_cambiar_password == 1) {
+            return redirect()->route('password.cambiar')
+                ->with('info', 'Debes actualizar tu contraseña temporal para continuar.');
+        }
+
+        // 4. Login exitoso
+        return redirect()->intended('/dashboard');
+
+    } else {
+        // Credenciales incorrectas
         return back()->withErrors([
-            'usuario' => 'El usuario o la contraseña son incorrectos.',
-        ])->onlyInput('usuario'); // Conserva el usuario ingresado
+            'usuario' => 'El usuario o la contraseña son incorrectos.'
+        ])->onlyInput('usuario');
     }
+}
+
 
     // Cierra la sesión del usuario
     public function logout(Request $request) {

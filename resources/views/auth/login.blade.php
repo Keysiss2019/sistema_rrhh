@@ -47,6 +47,13 @@
                     {{-- Token CSRF para seguridad --}}
                     @csrf
                     
+                    {{-- Mostrar mensaje de error global (usuario inactivo o empleado dado de baja) --}}
+                    @if ($errors->has('usuario'))
+                      <div class="alert alert-danger mb-3">
+                         {{ $errors->first('usuario') }}
+                      </div>
+                  @endif
+
                     {{-- Campo usuario --}}
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">USUARIO</label>
@@ -80,6 +87,7 @@
                             {{-- Campo password --}}
                             <input type="password" 
                                    name="password" 
+                                    id="password"
                                    class="form-control bg-light border-0 py-2" 
                                    placeholder="" 
                                    required>
