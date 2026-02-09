@@ -40,18 +40,25 @@
             <!-- Menú de navegación principal -->
             <nav class="nav-modules">
                @if(auth()->user()->role_id == 1)
-                <!-- Módulo Seguridad -->
-                <div class="menu-item">
-                    <i class="fa-solid fa-shield-halved"></i> Seguridad <i class="fa-solid fa-chevron-down small"></i>
-                    <div class="submenu">
-                        <a href="{{ route('roles.index') }}" class="submenu-item">Roles</a>
-                        <a href="{{ route('departamentos.index') }}" class="submenu-item">Departamentos</a>
-                        <a href="{{ route('empleado.index') }}" class="submenu-item">Empleados</a>
-                        <a href="{{ route('permisos_sistema.index') }}" class="submenu-item">Permisos del sistema</a>
-                        <a href="{{ route('politicas.index') }}" class="submenu-item">Políticas Vacaciones</a>
-                        <a href="{{ route('usuarios.index') }}" class="submenu-item">Usuarios</a>
-                    </div>
-                </div>
+                  <!-- Módulo Seguridad -->
+                  <div class="menu-item">
+                     <i class="fa-solid fa-shield-halved"></i> Seguridad <i class="fa-solid fa-chevron-down small"></i>
+                     <div class="submenu">
+                         <a href="{{ route('roles.index') }}" class="submenu-item">Roles</a>
+                         <a href="{{ route('departamentos.index') }}" class="submenu-item">Departamentos</a>
+                         <a href="{{ route('permisos_sistema.index') }}" class="submenu-item">Permisos del sistema</a>
+                         <a href="{{ route('usuarios.index') }}" class="submenu-item">Usuarios</a>
+                      </div>
+                  </div>
+
+                   <div class="menu-item">
+                      <i class="fa-solid fa-gears"></i> Administración <i class="fa-solid fa-chevron-down small"></i>
+                      <div class="submenu">
+                          <a href="{{ route('empleado.index') }}" class="submenu-item">Empleados</a>
+                          <a href="{{ route('politicas.index') }}" class="submenu-item">Políticas Vacaciones</a>
+            
+                        </div>
+                   </div>
                 @endif
 
                 <!-- Módulo Permisos Laborales -->
