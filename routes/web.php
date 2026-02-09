@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Route;                  // Facade para definir ru
 use Illuminate\Support\Facades\Auth;                   // Facade para autenticación
 use App\Http\Controllers\TiempoCompensatorioController; // Controlador de tiempo compensatorio
 use App\Http\Controllers\HoraExtraController;           // Controlador de horas extras
+use App\Http\Controllers\DireccionHoraExtraController;  // Controlador de horas extras para aprobar
 use App\Http\Controllers\DepartmentController;         // Controlador para departamento
+
 
 
 
@@ -61,15 +63,12 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     // --- MÓDULO: EXPEDIENTE DE EMPLEADOS ---
     Route::resource('empleado', EmpleadoController::class);
-
+    Route::patch('/empleado/{id}/estado', [EmpleadoController::class, 'cambiarEstado'])->name('empleado.estado');  
+    
     // --- MÓDULO: SEGURIDAD DE MÓDULOS ---
     Route::get('/seguridad/permisos', [PermisosSistemaController::class, 'index'])->name('permisos_sistema.index');
     Route::post('/seguridad/permisos', [PermisosSistemaController::class, 'update'])->name('permisos_sistema.update');
     
-    // --- MÓDULO: DEPARTAMENTO ---
-    Route::resource('departamentos', DepartmentController::class)
-    ->except(['show', 'create', 'edit']);
-
     // --- MÓDULO: PERMISOS LABORALES ---
     // --- MÓDULO  DE SOLICITUDES ---
     Route::prefix('solicitudes')->group(function () {
@@ -85,6 +84,8 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
       Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
       Route::post('/solicitudes/{id}/rectificar', [SolicitudController::class, 'rectificarTipo'])->name('solicitudes.rectificar');
   
+      // Procesar calculo de contrato permanente
+      Route::get('/calculo-permanente/{empleadoId}', [App\Http\Controllers\SolicitudController::class, 'calculoPermanente']);
 
     });
 
@@ -97,10 +98,10 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::get('/{id}', [TiempoCompensatorioController::class, 'show'])->name('tiempo_compensatorio.show');
     Route::delete('/{id}', [TiempoCompensatorioController::class, 'destroy'])->name('tiempo_compensatorio.destroy');
     
-});
+    });
 
-// --- RUTAS PARA HORAS EXTRAS (REGISTRO FT-GTH-002) ---
-Route::prefix('horas-extras')->group(function () {
+    // --- RUTAS PARA HORAS EXTRAS (REGISTRO FT-GTH-002) ---
+    Route::prefix('horas-extras')->group(function () {
     // Para guardar desde el modal
     Route::post('/store', [HoraExtraController::class, 'store'])->name('horas_extras.store');
     
@@ -109,7 +110,19 @@ Route::prefix('horas-extras')->group(function () {
     
     // Para aprobar o rechazar (usamos validar para que coincida con el controlador anterior)
     Route::patch('/{id}/validar', [HoraExtraController::class, 'validar'])->name('horas_extras.validar');
-});
+    });
+
+    // --- RUTAS PARA APROBAR HORAS EXTRAS (REGISTRO FT-GTH-002) ---
+    Route::get('/direccion/horas-extras', [DireccionHoraExtraController::class, 'index'])
+        ->name('direccion.horas_extras');
+
+    Route::post('/direccion/horas-extras/{id}', [DireccionHoraExtraController::class, 'decidir'])
+        ->name('direccion.horas_extras.decidir');
+
+    // --- MÓDULO: DEPARTAMENTO ---
+    Route::resource('departamentos', DepartmentController::class)
+    ->except(['show', 'create', 'edit']);
+
     // --- MÓDULO: POLÍTICAS DE VACACIONES ---
     Route::get('/politicas-vacaciones', [PoliticaVacacionesController::class, 'index'])->name('politicas.index');
     Route::post('/politicas-vacaciones', [PoliticaVacacionesController::class, 'store'])->name('politicas.store');
@@ -121,5 +134,3 @@ Route::prefix('horas-extras')->group(function () {
        return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
     });
 });
-
- 
