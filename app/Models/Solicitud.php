@@ -1,9 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; // Namespace del modelo dentro de la capa de modelos de la aplicación
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
+// Trait que permite usar factories para generar datos de prueba (seeders, tests)
+
+use Illuminate\Database\Eloquent\Model; 
+// Clase base de Eloquent que habilita el ORM para interactuar con la base de datos
+
 
 class Solicitud extends Model
 {
@@ -26,7 +30,8 @@ class Solicitud extends Model
         'horas',
         'estado',
         'aprobado_por',
-        'fecha_aprobacion'
+        'fecha_aprobacion',
+        'dias_anuales_aplicados'
     ];
 
     /**
