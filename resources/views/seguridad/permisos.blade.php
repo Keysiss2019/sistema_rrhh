@@ -97,6 +97,7 @@
                                     {{-- Definición estática de los módulos --}}
                                     @foreach([
                                         'seguridad' => ['label' => 'Módulo de Seguridad', 'icon' => 'fa-lock', 'color' => 'text-danger'],
+                                        'administracion' => ['label' => 'Módulo de Administración',   'icon' => 'fa-gears','color' => 'text-primary'],
                                         'permisos_laborales' => ['label' => 'Módulo de Permisos Laborales', 'icon' => 'fa-file-signature', 'color' => 'text-success'],
                                         'informes' => ['label' => 'Módulo de Informes y Estadísticas', 'icon' => 'fa-chart-line', 'color' => 'text-info'],
                                         'proyectos' => ['label' => 'Módulo de Proyectos', 'icon' => 'fa-diagram-project', 'color' => 'text-warning']
