@@ -2,9 +2,9 @@
 <div class="p-4">
     {{-- ENCABEZADO DEL EMPLEADO --}}
     <div class="text-center mb-4">
-        <div class="badge bg-primary text-uppercase mb-2 px-3 py-2" style="letter-spacing: 1px;">
-            Contrato Permanente
-        </div>
+        <div class="badge {{ strtolower($empleado->tipo_contrato) === 'permanente' ? 'bg-primary' : 'bg-info' }} text-uppercase mb-2 px-3 py-2">
+           Contrato {{ $empleado->tipo_contrato }}
+       </div>
         <h3 class="fw-bold text-dark mb-1">{{ strtoupper($empleado->nombre . ' ' . $empleado->apellido) }}</h3>
         <p class="text-muted mb-0">
             <i class="fas fa-id-card me-1"></i> {{ strtoupper($empleado->cargo) }}
@@ -124,9 +124,6 @@
         <p class="text-muted x-small mb-0">
             * Este reporte es generado automáticamente y suma el derecho acumulado según la antigüedad del empleado.
         </p>
-        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="window.print()">
-            <i class="fas fa-print me-1"></i> IMPRIMIR
-        </button>
     </div>
 </div>
 
