@@ -106,7 +106,7 @@
 
                     <span style="font-weight: bold;">Saldo actual vacaciones:</span>
 
-                    <span style="border: 1px solid black; padding: 4px 18px; margin-left: 5px;">{{ $saldoActual }}</span> días
+                    <span style="border: 1px solid black; padding: 4px 18px; margin-left: 5px;">{{ number_format($saldoActual, 2) }}</span> días
 
                 </div>
 
@@ -114,10 +114,13 @@
 
                     <span style="font-weight: bold;">Nuevo saldo:</span>
 
-                    <span style="border: 1px solid black; padding: 4px 18px; margin-left: 5px;">{{ $nuevoSaldo }}</span> días
+                    <span style="border: 1px solid black; padding: 4px 18px; margin-left: 5px;">{{ number_format($nuevoSaldo, 2) }}</span> días
 
                 </div>
-
+                  {{-- Información de Antigüedad (Opcional, ayuda a validar) --}}
+                 <div style="font-size: 10px; margin-bottom: 10px; color: #666;">
+                      Tipo Contrato: {{ $empleado->tipo_contrato }} | Antigüedad: {{ $aniosCumplidos }} años
+                  </div>
             </div>
 
 
