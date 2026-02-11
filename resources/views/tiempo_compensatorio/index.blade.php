@@ -35,11 +35,6 @@
                     </button>
                 @endif
             @endif
-
-            {{-- Botón para regresar al dashboard --}}
-            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
-                <i class="fa-solid fa-house"></i> Inicio
-            </a>
         </div>
     </div>
 
@@ -227,7 +222,7 @@
                                 <th class="py-3">Solicitado a</th>
                                 <th class="py-3 text-center">Horas</th>
                                 <th class="py-3 text-center">Estado</th>
-                                <th class="py-3 text-center">Acción</th>
+                                <th class="py-3 text-center">Detalle</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,11 +250,21 @@
                                 {{-- Fila colapsable con la descripción completa de la actividad --}}
                                 <tr class="collapse" id="detalle{{ $h->id }}">
                                     <td colspan="6" class="bg-light shadow-inner">
-                                        <div class="p-3">
-                                            <h6 class="fw-bold border-bottom pb-2 mb-2">Descripción de la Actividad:</h6>
-                                            <p class="mb-0 text-secondary italic small">"{{ $h->detalle_actividad }}"</p>
-                                        </div>
-                                    </td>
+                                      <div class="p-3">
+                                          <h6 class="fw-bold border-bottom pb-2 mb-2">Descripción de la Actividad:</h6>
+            
+                                           @if($h->detalles && $h->detalles->isNotEmpty())
+                                                @foreach($h->detalles as $detalle)
+                                                  <p class="mb-1 text-secondary fst-italic small">
+                                                     • {{ $detalle->actividad }} 
+                                                      <span class="text-muted">({{ $detalle->horas_trabajadas }} h)</span>
+                                                    </p>
+                                               @endforeach
+                                            @else
+                                             <p class="text-muted small">No hay detalles registrados.</p>
+                                           @endif
+                                       </div>
+                                  </td>
                                 </tr>
                             @empty
                                 {{-- Mensaje si no hay registros --}}
