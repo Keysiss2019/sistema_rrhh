@@ -40,4 +40,11 @@ class HoraExtra extends Model
     {
         return $this->belongsTo(User::class, 'aprobado_por');
     }
+
+     // Visualizar los detalles de las actividades
+    public function detalles()
+    {
+      // El segundo parámetro es la llave foránea en la tabla horas_extras_detalle
+      return $this->hasMany(HoraExtraDetalle::class, 'hora_extra_id');
+    }
 }
