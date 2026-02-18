@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 // Importamos Auth para manejar autenticación (login, logout, usuario actual)
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\User;
+
+use Illuminate\Support\Facades\Hash;
+
+
 class LoginController extends Controller
 {
     // Muestra la vista del formulario de inicio de sesión
@@ -27,9 +32,9 @@ public function login(Request $request) {
     $login = $request->input('usuario');
     $password = $request->input('password');
 
-    $user = \App\Models\User::where('usuario', $login)
-                ->orWhere('email', $login)
-                ->first();
+   $user = User::where('usuario', $login)
+            ->orWhere('email', $login)
+            ->first();
 
     // Verificamos credenciales ANTES de iniciar sesión
     if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
