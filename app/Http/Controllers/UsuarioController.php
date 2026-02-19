@@ -202,24 +202,22 @@ public function actualizarPassword(Request $request)
 {
     // Validar que password y confirmación coincidan
     $request->validate([
-        'password' => 'required|confirmed|min:6',
+        'password' => 'required|confirmed|min:8', // mejor 8 para seguridad
     ]);
 
     // Obtener usuario autenticado
-    $user = User::findOrFail(Auth::id());
+    $user = Auth::user(); // ya logueado, no hace falta findOrFail
 
     // Asignar nueva contraseña y quitar flag
-    $user->password = $request->password; // Mutador hace Hash automáticamente
+    $user->password = Hash::make($request->password); // Hash manual
     $user->debe_cambiar_password = 0;
     $user->save(); // Guarda en BD
 
-    // Logout automático
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
+   
 
-    return redirect()->route('login')
-        ->with('success', 'Contraseña actualizada. Inicia sesión nuevamente.');
+    // Redirigir directo al dashboard / sistema
+    return redirect('/dashboard')
+        ->with('success', 'Contraseña actualizada correctamente.');
 }
 
 }
