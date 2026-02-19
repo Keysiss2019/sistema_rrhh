@@ -6,7 +6,7 @@
 </head>
 <body>
     <!-- Saludo personalizado usando el nombre del empleado relacionado al usuario -->
-    <h3>Hola {{ $usuario->empleado->nombre }},</h3>
+    <h3>Hola {{ $usuario->empleado->nombre }} {{ $usuario->empleado->apellido }},</h3>
 
     <!-- Mensaje principal indicando que se asignó una contraseña temporal -->
     <p>Se te ha asignado una <strong>contraseña temporal</strong> para acceder al sistema.</p>
