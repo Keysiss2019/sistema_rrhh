@@ -123,10 +123,20 @@ class UsuarioController extends Controller
 
         // Si el administrador ingresó una nueva contraseña
         if ($request->filled('password')) {
-            $usuario->password = Hash::make($request->password); 
-            // Forzamos el cambio de contraseña al próximo inicio
-            $usuario->debe_cambiar_password = 1; 
-        }
+
+           $passwordPlano = $request->password;
+
+          $usuario->password = Hash::make($passwordPlano);
+          $usuario->debe_cambiar_password = 1;
+          $usuario->save();
+
+            // Enviar correo con contraseña temporal
+               if ($usuario->email) {
+                  Mail::to($usuario->email)
+                 ->send(new PasswordTemporalMail($usuario, $passwordPlano));
+                }
+            } 
+
 
         // Guardamos los cambios
         $usuario->save();
