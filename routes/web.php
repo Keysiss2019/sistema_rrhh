@@ -16,7 +16,7 @@ use App\Http\Controllers\TiempoCompensatorioController; // Controlador de tiempo
 use App\Http\Controllers\HoraExtraController;           // Controlador de horas extras
 use App\Http\Controllers\DireccionHoraExtraController;  // Controlador de horas extras para aprobar
 use App\Http\Controllers\DepartmentController;         // Controlador para departamento
-
+use App\Http\Controllers\FirmaController;                 // Controlador para firmas
 
 
 
@@ -72,23 +72,42 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     // --- MÓDULO: PERMISOS LABORALES ---
     // --- MÓDULO  DE SOLICITUDES ---
     Route::prefix('solicitudes')->group(function () {
-      // Listado de solicitudes
-      Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
+       // Listado
+       Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
     
-      // Ver detalle / Formato de impresión/ Editar
-      Route::get('/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
-      Route::put('/solicitudes/{id}', [SolicitudController::class, 'update'])->name('solicitudes.update');
-     
-      // Procesar aprobación o rechazo
-      Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
-      Route::patch('/{id}/estado', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
-      Route::post('/solicitudes/{id}/rectificar', [SolicitudController::class, 'rectificarTipo'])->name('solicitudes.rectificar');
+       // Ver detalle (Modal/Impresión)
+       Route::get('/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
+    
+       // El motor de aprobación (Este es el que usa el botón de firma)
+       Route::post('/{id}/procesar', [SolicitudController::class, 'procesar'])->name('solicitudes.procesar');
+
+       // Rutas de edición y rectificación
+       Route::put('/{id}', [SolicitudController::class, 'update'])->name('solicitudes.update');
+       Route::post('/{id}/rectificar', [SolicitudController::class, 'rectificarTipo'])->name('solicitudes.rectificar');
+       Route::post('/{id}/accionar', [SolicitudController::class, 'accionar'])->name('solicitudes.accionar');
+       Route::post('/{id}/update-detalles', [SolicitudController::class, 'updateDetalles']);
   
       // Procesar calculo de contrato permanente
       Route::get('/calculo-permanente/{empleadoId}', [App\Http\Controllers\SolicitudController::class, 'calculoPermanente']);
 
     });
 
+
+    // Agrupa las rutas de configuración para mantener el orden
+    Route::prefix('configuracion-firmas')->group(function () {
+    
+      // Esta es la ruta que te falta (la que muestra la lista de firmas)
+      Route::get('/', [ConfigFirmaController::class, 'index'])->name('configuracion.firmas');
+    
+      // Ruta para procesar el formulario del modal (Guardar nueva)
+      Route::post('/guardar', [ConfigFirmaController::class, 'store'])->name('configuracion.store');
+    
+      // Ruta para activar/desactivar (el switch)
+      Route::post('/toggle/{id}', [ConfigFirmaController::class, 'toggle'])->name('configuracion.toggle');
+
+      Route::delete('/eliminar/{id}', [ConfigFirmaController::class, 'destroy'])->name('configuracion.destroy');
+      Route::put('/actualizar/{id}', [ConfigFirmaController::class, 'update'])->name('configuracion.update');
+    });
 
     // --- RUTAS PARA PERMISOS (USO DE TIEMPO) ---
     Route::prefix('tiempo-compensatorio')->group(function () {
