@@ -32,7 +32,7 @@ class PoliticaVacacionesController extends Controller
             // Validamos que vengan los días de la escala
             $request->validate([
                 'dias_permanente' => 'required|array|size:4',
-                'dias_permanente.*' => 'required|integer|min:1|max:30',
+                'dias_permanente.*' => 'required|integer|min:1|max:100',
             ]);
 
             foreach ($request->dias_permanente as $anio => $dias) {
@@ -53,7 +53,7 @@ class PoliticaVacacionesController extends Controller
         $request->validate([
             // Validamos que no exista ya ese contrato para ese año 1
             'tipo_contrato' => 'required|string|max:50',
-            'dias_fijos' => 'required|integer|min:1|max:30',
+            'dias_fijos' => 'required|integer|min:1|max:100',
         ]);
 
         // Verificamos si ya existe para evitar duplicados en tipos simples
@@ -76,16 +76,23 @@ class PoliticaVacacionesController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'dias_anuales' => 'required|integer|min:1|max:30',
+      // 1. Validamos ambos campos
+      $request->validate([
+         'tipo_contrato' => 'required|string|max:100', // Validación para el nuevo nombre
+         'dias_anuales'  => 'required|integer|min:1|max:100',
+       ]);
+
+       // 2. Buscamos la política
+       $politica = PoliticaVacaciones::findOrFail($id);
+
+       // 3. Actualizamos ambos valores
+       $politica->update([
+         'tipo_contrato' => $request->tipo_contrato, // Guardamos el nuevo nombre
+         'dias_anuales'  => $request->dias_anuales
         ]);
 
-        $politica = PoliticaVacaciones::findOrFail($id);
-        $politica->update([
-            'dias_anuales' => $request->dias_anuales
-        ]);
-
-        return back()->with('success', 'Días actualizados correctamente.');
+       // 4. Retornamos con un mensaje más descriptivo
+       return back()->with('success', 'La política se ha actualizado correctamente.');
     }
 
     public function destroy($id)
