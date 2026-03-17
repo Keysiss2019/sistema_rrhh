@@ -9,16 +9,16 @@
             <div class="row g-3">
                 {{-- 1. IDENTIDAD --}}
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">NOMBRES</label>
+                    <label class="form-label fw-bold small">NOMBRES:</label>
                     <input type="text" name="nombre" class="form-control shadow-sm" required>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">APELLIDOS</label>
+                    <label class="form-label fw-bold small">APELLIDOS:</label>
                     <input type="text" name="apellido" class="form-control shadow-sm" required>
                 </div>
-
+               
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">CONTACTO</label>
+                    <label class="form-label fw-bold small">CONTACTO:</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-phone text-muted small"></i></span>
                         <input type="text" name="contacto" class="form-control shadow-sm" placeholder="Ej. 9988-7766">
@@ -26,8 +26,8 @@
                 </div>
 
                 {{-- 2. DATOS LABORALES --}}
-                <div class="col-12">
-                  <label class="form-label fw-bold small text-uppercase">Cargo / Puesto de Trabajo</label>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-nowrap">CARGO / PUESTO DE TRABAJO:</label>
                   <div class="input-group">
                      <span class="input-group-text bg-light"><i class="fa-solid fa-briefcase text-muted"></i></span>
                       <input type="text" name="cargo" class="form-control shadow-sm" placeholder="Ej. Analista de Recursos Humanos" required>
@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="col-12">
-                 <label class="form-label fw-bold small text-uppercase">Departamento</label>
+                 <label class="form-label fw-bold small text-uppercase">DEPARTAMENTO:</label>
                   <select name="departamento" id="departamento" class="form-select shadow-sm" required>
                      <option value="" selected disabled>-- Seleccione Departamento --</option>
                         @foreach($departamentos as $dep)
@@ -49,7 +49,7 @@
                 </div>
 
                <div class="col-12">
-                    <label class="form-label fw-bold small text-uppercase">Jefe Inmediato</label>
+                    <label class="form-label fw-bold small text-uppercase">JEFE INMEDIATO:</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-user-tie text-muted"></i></span>
                         <input type="text" name="jefe_inmediato" id="jefe_inmediato" class="form-control shadow-sm" placeholder="Nombre del supervisor directo" readonly>
@@ -59,32 +59,36 @@
 
                 {{-- CORRECCIÓN: Quitamos el $empleado->tipo_contrato porque aquí no existe --}}
                 <div class="col-12">
-                    <label class="form-label fw-bold small text-primary">TIPO DE CONTRATO (POLÍTICAS)</label>
+                    <label class="form-label fw-bold small text-primary">TIPO DE CONTRATO (POLÍTICAS):</label>
                     <select name="politica_id" class="form-select" required>
                         <option value="" selected disabled>-- Seleccione Contrato --</option>
                         @foreach($politicas as $politica)
-                           <option value="{{ $politica->id }}">
+                           <option value="{{ $politica->id }}"   data-dias="{{ $politica->dias_anuales }}">
                               {{ strtoupper($politica->tipo_contrato) }}
                           </option>
                        @endforeach
                   </select>
+                  <small class="text-muted" id="infoDiasVacaciones"></small>
+
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">FECHA NACIMIENTO</label>
+                    <label class="form-label fw-bold small">FECHA NACIMIENTO:</label>
                     <input type="date" name="fecha_nacimiento" class="form-control shadow-sm">
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small text-success">FECHA INGRESO</label>
+                    <label class="form-label fw-bold small text-success">FECHA INGRESO:</label>
                     <input type="date" name="fecha_ingreso" class="form-control border-success shadow-sm" required>
                 </div>
                 
                 <div class="col-12">
-                    <label class="form-label fw-bold small text-uppercase">Adjuntar Expediente / Contrato</label>
+                    <label class="form-label fw-bold small text-uppercase">ADJUNTAR CONTRATO:</label>
                     <input type="file" name="documentos[]" class="form-control shadow-sm" multiple>
                     <input type="hidden" name="tipos_documento[]" value="Contrato Inicial">
                 </div>
+
+        
 
                 {{-- Botones de acción directos --}}
                 <div class="col-12 d-flex justify-content-end gap-2 mt-3">
@@ -111,4 +115,37 @@ document.addEventListener('DOMContentLoaded', function() {
         inputJefe.value = jefe;
     });
 });
+
+// Espera a que todo el contenido del HTML se cargue completamente
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Busca el elemento <select> que tenga el nombre "politica_id"
+    // Este select probablemente contiene las políticas de contrato o vacaciones
+    const selectPolitica = document.querySelector('select[name="politica_id"]');
+
+    // Busca el elemento donde se mostrará la información de los días de vacaciones
+    // Normalmente es un <div> o <span> con id="infoDiasVacaciones"
+    const info = document.getElementById('infoDiasVacaciones');
+
+    // Si el select no existe en la página, se detiene el script para evitar errores
+    if (!selectPolitica) return;
+
+    // Detecta cuando el usuario cambia la opción seleccionada en el select
+    selectPolitica.addEventListener('change', function () {
+
+        // Obtiene el atributo personalizado "data-dias" de la opción seleccionada
+        // Ejemplo en HTML: <option data-dias="15">Contrato Permanente</option>
+        const dias = this.options[this.selectedIndex].getAttribute('data-dias');
+
+        // Si existe un valor en data-dias
+        if (dias) {
+
+            // Muestra el mensaje indicando cuántos días de vacaciones asigna esa política
+            info.textContent = `Este contrato asigna ${dias} días de vacaciones anuales.`;
+
+        }
+    });
+
+});
 </script>
+
