@@ -11,7 +11,10 @@ use App\Models\Role;      // Modelo de roles de usuario
 use Illuminate\Http\Request; // Para manejar solicitudes HTTP
 use Illuminate\Support\Facades\Hash; // Para encriptar contraseñas
 use Illuminate\Support\Facades\Auth; // - Obtener el usuario autenticado (Auth::user)
-use Illuminate\Support\Facades\DB; // Permite interactuar directamente con la base de datos usando el Query Builder y transacciones
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordTemporalMail;
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
 {
@@ -53,105 +56,100 @@ class UsuarioController extends Controller
     /**
     * GUARDAR USUARIO (CON CORREO INSTITUCIONAL)
     */
-    public function store(Request $request)
-    {
-     // 1. Validaciones: Agregamos el campo 'email'
-     $request->validate([
-         'usuario'     => 'required|unique:users,usuario',
-         'email'       => 'required|email|unique:users,email', // <-- Nuevo
-         'empleado_id' => 'required|exists:empleados,id',
-         'role_id'     => 'required|exists:roles,id',
-         'password'    => 'required|min:6',
+   public function store(Request $request)
+   {
+      // 1. VALIDACIÓN 
+      $request->validate([
+          'usuario'     => 'required|unique:users,usuario',
+          'email'       => 'required|email|unique:users,email',
+          'empleado_id' => 'required|exists:empleados,id',
+          'role_id'     => 'required|exists:roles,id',
        ]);
-    
-    try {
-        // Iniciamos una transacción para que se guarde en ambas tablas o en ninguna
-        DB::beginTransaction();
 
-        // 2. Creamos el usuario con el email que Tecnología escribió en el formulario
-        $nuevoUsuario = User::create([
-            'usuario'               => $request->usuario,
-            'email'                 => $request->email, // El correo institucional asignado
-            'password'              => bcrypt($request->password), 
-            'empleado_id'           => $request->empleado_id,
-            'role_id'               => $request->role_id,
-            'estado'                => 'activo',
-            'debe_cambiar_password' => $request->has('debe_cambiar_password') ? 1 : 0,
-        ]);
+       try {
+          DB::beginTransaction();
 
-        if ($nuevoUsuario) {
-            // 3. ACTUALIZACIÓN EN EMPLEADOS (Vínculo + Correo)
-            // Sincronizamos el ID del usuario y el nuevo correo en la ficha del empleado
-            DB::table('empleados')
+          // 2. GENERAR CONTRASEÑA (Forma compatible con todas las versiones)
+          // Esto crea una clave de 8 caracteres mezcla de letras y números
+          $passwordPlano = Str::random(8); 
+
+          // 3. CREAR EL USUARIO
+          $nuevoUsuario = User::create([
+              'usuario'               => $request->usuario,
+              'email'                 => $request->email,
+              'password'              => Hash::make($passwordPlano),
+              'empleado_id'           => $request->empleado_id,
+               'role_id'               => $request->role_id,
+               'estado'                => 'activo',
+              'debe_cambiar_password' => 1,
+           ]);
+
+           if ($nuevoUsuario) {
+             // 4. VINCULAR EMPLEADO
+             DB::table('empleados')
                 ->where('id', $request->empleado_id)
                 ->update([
                     'user_id' => $nuevoUsuario->id,
-                    'email'   => $request->email // Así RRHH ya tiene el correo oficial
+                    'email'   => $request->email
                 ]);
+
+              // 5. ENVIAR CORREO
+              Mail::to($nuevoUsuario->email)->send(new PasswordTemporalMail($nuevoUsuario, $passwordPlano));
+           }
+
+           DB::commit();
+          return redirect()->route('usuarios.index')
+                         ->with('success', 'Usuario creado. La contraseña fue enviada al correo.');
+
+        } catch (\Exception $e) {
+          DB::rollBack();
+          // ESTO TE MOSTRARÁ EL ERROR REAL SI FALLA ALGO INTERNO
+          return back()->with('error', 'Error técnico: ' . $e->getMessage())->withInput();
         }
-
-        DB::commit();
-        return redirect()->route('usuarios.index')
-                         ->with('success', 'Usuario creado y correo institucional vinculado correctamente.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Error al crear usuario: ' . $e->getMessage())->withInput();
-    }
-    }
-
+   }
     /**
      * ACTUALIZAR USUARIO
      */
     public function update(Request $request, $id)
     {
-        // Buscar usuario por ID o fallar
-        $usuario = User::findOrFail($id);
+      $usuario = User::findOrFail($id);
 
-        // Validaciones de actualización
-        $request->validate([
-            'usuario'  => 'required|unique:users,usuario,' . $id, // Ignora este usuario al validar unicidad
-            'role_id'  => 'required',  // Rol obligatorio
-            'estado'   => 'required',  // Estado obligatorio
-            'password' => 'nullable|min:6' // Contraseña opcional, solo si se quiere cambiar
-        ]);
+      $request->validate([
+         'usuario' => 'required|unique:users,usuario,' . $id,
+         'role_id' => 'required',
+         'estado'  => 'required'
+       ]);
 
-        // Actualizamos campos básicos
-        $usuario->usuario = $request->usuario;
-        $usuario->role_id = $request->role_id;
-        $usuario->estado  = $request->estado;
+      // Actualizamos datos básicos
+      $usuario->usuario = $request->usuario;
+      $usuario->role_id = $request->role_id;
+      $usuario->estado  = $request->estado;
 
-        // Si el administrador ingresó una nueva contraseña
-        if ($request->filled('password')) {
-
-           $passwordPlano = $request->password;
-
+      // LÓGICA DE CONTRASEÑA GENÉRICA
+      if ($request->has('reset_password')) {
+          // Generamos la clave (usamos random para compatibilidad)
+          $passwordPlano = Str::random(6) . rand(10, 99); 
+        
           $usuario->password = Hash::make($passwordPlano);
-          $usuario->debe_cambiar_password = 1;
-          $usuario->save();
+          $usuario->debe_cambiar_password = 1; // Forzamos cambio
+        
+          // Enviamos el correo (el mismo que usaste en store)
+          if ($usuario->email) {
+              Mail::to($usuario->email)->send(new PasswordTemporalMail($usuario, $passwordPlano));
+            }
+        }
 
-            // Enviar correo con contraseña temporal
-               if ($usuario->email) {
-                  Mail::to($usuario->email)
-                 ->send(new PasswordTemporalMail($usuario, $passwordPlano));
-                }
-            } 
+       $usuario->save();
 
-
-        // Guardamos los cambios
-        $usuario->save();
-
-        // 4. ASEGURAR EL VÍNCULO EN LA TABLA EMPLEADOS
-    // Buscamos al empleado asociado a este usuario (usando el empleado_id que ya tiene el usuario)
-    if ($usuario->empleado_id) {
-        DB::table('empleados')
+      // Asegurar vínculo con empleado
+      if ($usuario->empleado_id) {
+         DB::table('empleados')
             ->where('id', $usuario->empleado_id)
             ->update(['user_id' => $usuario->id]);
-    }
-        // Retorna con mensaje de éxito
-        return back()->with('success', 'Usuario actualizado.');
-    }
+       }
 
+       return back()->with('success', 'Usuario actualizado correctamente.');
+   }
     /**
      * ACTIVAR / INACTIVAR USUARIO
      */
@@ -219,5 +217,6 @@ public function actualizarPassword(Request $request)
     return redirect('/dashboard')
         ->with('success', 'Contraseña actualizada correctamente.');
 }
+
 
 }
