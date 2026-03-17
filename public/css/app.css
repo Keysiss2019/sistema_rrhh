@@ -450,17 +450,26 @@ body {
    /* Inputs estilo personalizado */
 .form-group-custom {
     position: relative;      /* Permite posicionar iconos dentro del input */
-    margin-bottom: 25px;     /* Espacio inferior entre grupos de inputs */
+    margin-bottom: 1.5rem;     /* Espacio inferior entre grupos de inputs */
+}
+
+/* Contenedor del input para aislar el icono del label */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;             /* Ayuda a centrar elementos internos */
 }
 
 .input-custom {
     width: 100%;                       /* Ocupa todo el ancho del contenedor */
-    padding: 12px 15px 12px 45px;      /* Espacio: arriba, derecha, abajo, izquierda; deja 45px a la izquierda para el icono */
+    padding: 12px 45px 12px 45px;      /* Espacio: arriba, derecha, abajo, izquierda; deja 45px a la izquierda para el icono */
     border: 2px solid #e1e1e1;         /* Borde gris claro */
     border-radius: 12px;                /* Bordes redondeados */
     outline: none;                      /* Quita el borde de enfoque por defecto */
     font-size: 16px;                    /* Tamaño de texto dentro del input */
     transition: all 0.3s;               /* Transición suave para cambios como color o sombra */
+    background-color: #fff;
 }
 
 .input-custom:focus {
@@ -475,6 +484,105 @@ body {
     transform: translateY(-50%);         /* Ajuste fino para centrar verticalmente */
     color: #003366;                      /* Color azul del icono */
     font-size: 18px;                     /* Tamaño del icono */
+    z-index: 10;
+    pointer-events: none;                 /* Para que no bloquee el click en el input */
+    line-height: 0; /* Evita que el alto del icono afecte la posición */
+}
+
+/* Icono del ojo (derecha) */
+/* ===========================
+   CSS CORREGIDO Y DEPURADO
+   =========================== */
+
+/* Contenedor: Forzamos a que sea exactamente del alto del input */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center; /* Centrado vertical flex */
+}
+
+.input-custom {
+    width: 100%;
+    height: 50px; /* Forzamos altura fija para control total */
+    padding: 0 45px !important; /* Espacio para iconos izquierdo y derecho */
+    border: 2px solid #e1e1e1;
+    border-radius: 12px;
+    outline: none;
+    font-size: 16px;
+    background-color: #fff;
+    display: block;
+    line-height: 50px; /* Centra el texto verticalmente */
+}
+
+/* El Candado */
+.icon-input {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #003366;
+    font-size: 18px;
+    z-index: 10;
+    pointer-events: none;
+    line-height: 0; /* Evita que el alto del icono afecte la posición */
+    margin: 0;
+}
+
+/* EL OJO: Eliminamos cualquier margen o top fijo anterior */
+.icon-eye {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important; /* Centrado vertical absoluto */
+    transform: translateY(-50%) !important; /* Ajuste fino de centrado */
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 18px;
+    line-height: 0; /* Reset de espacio de fuente */
+    margin: 0 !important; /* Quitamos márgenes heredados */
+}
+
+.icon-eye:hover {
+    color: #003366;
+}
+
+/* Requisitos: Depurados */
+.password-requirements {
+    background: rgba(0, 51, 102, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+    list-style: none;
+    border-left: 3px solid #ffcc00;
+}
+
+.password-requirements li {
+    font-size: 12px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.icon-eye:hover {
+    color: #003366;
+}
+
+/* Estados de validación */
+.input-custom.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.1);
+}
+
+.input-custom.is-valid {
+    border-color: #198754 !important;
+    box-shadow: 0 0 10px rgba(25, 135, 84, 0.1);
+}
+
+.validation-msg {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 5px;
+    display: block;
 }
 
 /* Botón llamativo */
@@ -496,6 +604,29 @@ body {
     background: linear-gradient(135deg, #00509e 0%, #003366 100%); /* Invertimos gradiente al pasar el mouse */
     transform: scale(1.02);           /* Agranda ligeramente el botón al hover */
     box-shadow: 0 6px 20px rgba(0, 51, 102, 0.4); /* Sombra más marcada al pasar el mouse */
+}
+
+.btn-update:disabled { /* btn spiner*/
+    opacity: 0.7;
+    cursor: not-allowed;
+    filter: grayscale(0.3);
+    transform: none !important; /* Evita el efecto hover de agrandarse */
+}
+
+/* Estilo para la lista de requisitos dentro de la tarjeta */
+.password-requirements {
+    background: rgba(0, 51, 102, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+    list-style: none;
+    border-left: 4px solid #ffcc00; /* Detalle dorado IHCI */
+}
+
+.password-requirements li {
+    font-size: 12px;
+    margin-bottom: 2px;
+    font-weight: 600;
 }
 
    /* ===========================
@@ -729,6 +860,7 @@ body {
     font-size: 11px;                /* Tamaño de fuente legible */
 }
 
+
 /* =========================
    PIE DE PÁGINA
 ========================= */
@@ -758,9 +890,6 @@ body {
     }
 }
 
-/* =========================
-   Para el selec con buscador
-========================= */
 .select2-container {
     z-index: 2000 !important;
 }
