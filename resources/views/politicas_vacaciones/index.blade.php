@@ -72,8 +72,18 @@
                                 <tr>
                                     {{-- Tipo de contrato --}}
                                     <td class="ps-4 fw-bold text-secondary">
-                                        <i class="fa-solid fa-file-contract me-2 text-primary"></i>
-                                        {{ ucfirst($politica->tipo_contrato) }}
+                                      <div class="d-flex align-items-center">
+                                         <i class="fa-solid fa-file-contract me-2 text-primary"></i>
+                                          {{-- Input conectado al formulario de actualización --}}
+                                          <input type="text" 
+                                             name="tipo_contrato" 
+                                             form="form-update-{{ $politica->id }}"
+                                             value="{{ $politica->tipo_contrato }}" 
+                                             class="form-control form-control-sm border-0 bg-light fw-bold"
+                                             style="max-width: 200px;"
+                                             placeholder="Nombre de la política..."
+                                            required>
+                                       </div>
                                     </td>
 
                                     {{-- Columna del Año --}}
@@ -174,7 +184,7 @@
                  <div class="row g-2 align-items-center mb-2">
                      <div class="col-7"><small>Al cumplir {{ $label }}:</small></div>
                         <div class="col-5">
-                         <input type="number" name="dias_permanente[{{ $num }}]" class="form-control form-control-sm input-escala" min="1" max="30">
+                         <input type="number" name="dias_permanente[{{ $num }}]" class="form-control form-control-sm input-escala" min="1" max="100">
                        </div>
                  </div>
                @endforeach
@@ -182,7 +192,7 @@
 
           <div id="seccion_otros" style="display: none;">
               <label class="form-label fw-bold text-secondary">Días Anuales</label>
-              <input type="number" name="dias_fijos" id="input_dias_fijos" class="form-control border-2" placeholder="Ej: 15" min="1" max="30">
+              <input type="number" name="dias_fijos" id="input_dias_fijos" class="form-control border-2" placeholder="Ej: 15" min="1" max="100">
           </div>
 
           <div class="d-grid gap-2 mt-4">
@@ -244,6 +254,37 @@
 </script>
 
 <script>
+ document.addEventListener('DOMContentLoaded', function() {
+    //EDITAR
+    // Seleccionamos todos los formularios que empiezan con 'form-update-'
+    const forms = document.querySelectorAll('form[id^="form-update-"]');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Buscamos el input de texto asociado a este formulario específico
+            // Nota: Como el input está fuera del form, usamos el atributo 'form' para encontrarlo
+            const id = this.id.replace('form-update-', '');
+            const inputNombre = document.querySelector(`input[name="tipo_contrato"][form="form-update-${id}"]`);
+
+            if (!inputNombre.value.trim()) {
+                e.preventDefault(); // Detiene el envío
+                
+                // Efecto visual de error
+                inputNombre.classList.add('is-invalid');
+                inputNombre.focus();
+                
+                // Opcional: Una alerta rápida
+                alert('El nombre de la política no puede estar vacío.');
+            } else {
+                inputNombre.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+    
+</script>
+
+<script>
     // Confirmación de eliminación con SweetAlert
     function confirmarEliminacion(id, nombreContrato) {
         Swal.fire({
@@ -287,4 +328,5 @@
 
 {{-- Fin de la sección content --}}
 @endsection
+
 
