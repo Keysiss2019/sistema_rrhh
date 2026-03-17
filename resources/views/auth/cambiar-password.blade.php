@@ -31,28 +31,31 @@
             @endif
 
             {{-- Formulario para actualizar contraseña --}}
-            <form method="POST" action="{{ route('password.actualizar') }}">
-                @csrf {{-- Token CSRF obligatorio --}}
+            <form id="changePasswordForm" method="POST" action="{{ route('password.actualizar') }}">
+              @csrf
 
-                {{-- Campo: Nueva contraseña --}}
-                <div class="form-group-custom">
-                    <label class="form-label fw-bold mb-2">Nueva Contraseña</label>
-                    <i class="fa-solid fa-lock icon-input"></i>
-                    <input type="password" name="password" class="input-custom" required minlength="8" placeholder="Mínimo 8 caracteres">
-                </div>
+              <div class="form-group-custom">
+                  <label class="form-label fw-bold mb-2">Nueva Contraseña</label>
+                  <div class="input-wrapper">
+                      <i class="fa-solid fa-lock icon-input"></i>
+                      <input type="password" id="password" name="password" class="input-custom" required placeholder="Mínimo 8 caracteres">
+                       <i class="fa-solid fa-eye icon-eye" id="togglePassword"></i>
+                   </div>
+               </div>
 
-                {{-- Campo: Confirmar contraseña --}}
-                <div class="form-group-custom">
-                    <label class="form-label fw-bold mb-2">Confirmar Contraseña</label>
-                    <i class="fa-solid fa-key icon-input"></i>
-                    <input type="password" name="password_confirmation" class="input-custom" required placeholder="Repite tu nueva contraseña">
-                </div>
+              <div class="form-group-custom mt-3">
+                  <label class="form-label fw-bold mb-2">Confirmar Contraseña</label>
+                  <div class="input-wrapper">
+                      <i class="fa-solid fa-key icon-input"></i>
+                      <input type="password" id="password_confirmation" name="password_confirmation" class="input-custom" required placeholder="Repite tu nueva contraseña">
+                  </div>
+             </div>
 
-                {{-- Botón de envío --}}
-                <button type="submit" class="btn-update">
-                    ACTUALIZAR CREDENCIALES
-                    <i class="fa-solid fa-circle-check ms-2"></i>
-                </button>
+              <button type="submit" class="btn-update mt-4" id="btnSubmit" disabled>
+                  <span id="btnText">ACTUALIZAR CREDENCIALES <i class="fa-solid fa-circle-check ms-2"></i></span>
+                   <span id="btnLoader" class="d-none">PROCESANDO... <i class="fa-solid fa-spinner fa-spin ms-2"></i></span>
+              </button>
+   
             </form>
         </div> {{-- Fin card-body --}}
     </div> {{-- Fin glass-card --}}
@@ -60,62 +63,71 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const passwordInput = document.querySelector('input[name="password"]');
-    const confirmInput = document.querySelector('input[name="password_confirmation"]');
-    const form = document.querySelector('form');
+    const form = document.getElementById('changePasswordForm');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('password_confirmation');
+    const togglePassword = document.getElementById('togglePassword');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
 
-    // Crear contenedor de feedback tipo lista
+    // Crear la lista de requisitos dinámicamente
     const feedback = document.createElement('ul');
-    feedback.style.listStyle = 'none';
-    feedback.style.paddingLeft = '0';
-    feedback.style.fontSize = '14px';
-    feedback.style.marginTop = '5px';
-    passwordInput.parentNode.appendChild(feedback);
+    feedback.className = "password-requirements";
+    passwordInput.closest('.form-group-custom').appendChild(feedback);
 
     const rules = [
         { regex: /.{8,}/, text: 'Mínimo 8 caracteres' },
-        { regex: /[a-z]/, text: 'Una letra minúscula' },
         { regex: /[A-Z]/, text: 'Una letra mayúscula' },
         { regex: /\d/, text: 'Al menos un número' },
-        { regex: /[.!@#$%^&*]/, text: 'Al menos un símbolo (.!@#$%^&*)' }
+        { regex: /[.!@#$%^&*]/, text: 'Un símbolo (.!@#$%^&*)' }
     ];
 
-    function updateFeedback() {
+    function validate() {
         const val = passwordInput.value;
+        const confVal = confirmInput.value;
         feedback.innerHTML = '';
+        
+        let allRulesMet = true;
+
         rules.forEach(rule => {
+            const isMet = rule.regex.test(val);
             const li = document.createElement('li');
-            li.textContent = rule.text;
-            if (rule.regex.test(val)) {
-                li.style.color = 'green';
-                li.textContent = '✅ ' + li.textContent;
-            } else {
-                li.style.color = 'red';
-                li.textContent = '❌ ' + li.textContent;
-            }
+            li.innerHTML = `${isMet ? '✅' : '❌'} ${rule.text}`;
+            li.style.color = isMet ? '#198754' : '#dc3545';
             feedback.appendChild(li);
+            if (!isMet) allRulesMet = false;
         });
+
+        // Validar coincidencia
+        const match = (val === confVal && confVal !== "");
+        confirmInput.classList.toggle('is-valid', match);
+        confirmInput.classList.toggle('is-invalid', !match && confVal !== "");
+
+        // Habilitar botón solo si todo es correcto
+        btnSubmit.disabled = !(allRulesMet && match);
     }
 
-    passwordInput.addEventListener('input', updateFeedback);
-
-    form.addEventListener('submit', function(e) {
-        const password = passwordInput.value;
-        const confirm = confirmInput.value;
-
-        // Validación final antes de enviar
-        const unmet = rules.filter(r => !r.regex.test(password));
-        if (unmet.length > 0) {
-            e.preventDefault();
-            alert('La contraseña no cumple con todos los requisitos.');
-            return;
-        }
-        if (password !== confirm) {
-            e.preventDefault();
-            alert('Las contraseñas no coinciden.');
-            return;
-        }
+    // Toggle visibilidad
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.type === 'password' ? 'text' : 'password';
+        passwordInput.type = type;
+        confirmInput.type = type;
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
     });
+
+    passwordInput.addEventListener('input', validate);
+    confirmInput.addEventListener('input', validate);
+
+    // Spinner al enviar
+    form.addEventListener('submit', function() {
+      btnSubmit.disabled = true;
+      document.getElementById('btnText').style.display = 'none'; // Usar style.display es más seguro que d-none a veces
+      const loader = document.getElementById('btnLoader');
+      loader.classList.remove('d-none');
+      loader.style.display = 'inline-block';
+   });
 });
 </script>
 
