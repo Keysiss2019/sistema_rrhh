@@ -47,14 +47,15 @@
                             <td>{{ $dep->jefeEmpleado?->nombre ?? '' }} {{ $dep->jefeEmpleado?->apellido ?? '' }}</td>
                             <td class="text-center">
                                 <!-- Botón Editar -->
-                                <button type="button"
+ <button type="button"
                                         class="btn btn-sm btn-outline-warning btn-edit-departamento"
                                         data-id="{{ $dep->id }}"
                                         data-nombre="{{ $dep->nombre }}"
                                         data-descripcion="{{ $dep->descripcion }}"
-                                        data-jefe-id="{{ $dep->jefe?->id ?? '' }}">
+                                        data-jefe-id="{{ $dep->jefeEmpleado?->id ?? '' }}">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
+
 
                                 <!-- Botón Eliminar -->
                                 <form action="{{ route('departamentos.destroy', $dep->id) }}" method="POST" class="d-inline">
@@ -85,14 +86,22 @@
         <form action="{{ route('departamentos.store') }}" method="POST">
             @csrf
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Nombre</label>
-                <input name="nombre" class="form-control" required>
-            </div>
+           <div class="mb-3">
+             <label class="form-label fw-bold">Nombre</label>
+             <input 
+              id="edit_nombre_departamento"
+              name="nombre"
+              class="form-control"
+              required>
+          </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Descripción</label>
-                <textarea name="descripcion" class="form-control" required></textarea>
+          <div class="mb-3">
+             <label class="form-label fw-bold">Descripción</label>
+              <textarea
+                  id="edit_descripcion_departamento"
+                  name="descripcion"
+                  class="form-control"
+                required></textarea>
             </div>
 
             <div class="mb-3">
@@ -123,37 +132,54 @@
             </div>
 
             <div class="modal-body">
-                <form id="formEditarDepartamento" method="POST">
+               <form id="formEditarDepartamento" method="POST" action="{{ session('edit_url') ?? '' }}">
                     @csrf
                     @method('PUT')
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nombre del Departamento</label>
-                        <input type="text" name="nombre" id="edit_nombre_departamento" class="form-control border-2" required>
+                       <input type="text" name="nombre" id="modal_edit_nombre_departamento" 
+                       class="form-control border-2" 
+                       value="{{ old('nombre') }}" required>
+                   </div>
+
+                  <div class="mb-3">
+                     <label class="form-label fw-bold">Descripción</label>
+                      <textarea name="descripcion" id="modal_edit_descripcion_departamento" 
+                      class="form-control border-2" rows="4" required>{{ old('descripcion') }}</textarea>
+                   </div>
+
+                   <div class="mb-3">
+                       <label class="form-label fw-bold">Jefe del Departamento</label>
+                       <select name="jefe_empleado_id" id="modal_edit_jefe_departamento" class="form-select select2">
+                          <option value="">-- Sin asignar --</option>
+                          @foreach($empleados as $emp)
+                              <option value="{{ $emp->id }}" 
+                                  {{ (old('jefe_empleado_id') == $emp->id || session('id_jefe_original') == $emp->id) ? 'selected' : '' }}>
+                                  {{ $emp->nombre }} {{ $emp->apellido }} 
+                                  {{ $emp->departamentoAsignado ? '(Ya es jefe)' : '' }}
+                               </option>
+                           @endforeach
+                      </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Descripción</label>
-                        <textarea name="descripcion" id="edit_descripcion_departamento" class="form-control border-2" rows="4" required></textarea>
-                    </div>
+                    @if(session('warning'))
+                     <div id="alert-disposable" class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                          <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                          {{ session('warning') }}
+                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                       </div>
+                   @endif
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Jefe del Departamento</label>
-                        <select name="jefe_empleado_id" id="edit_jefe_departamento" class="form-select select2">
-                            <option value="">-- Sin asignar --</option>
-                            @foreach($empleados as $emp)
-                                <option value="{{ $emp->id }}">{{ $emp->nombre }} {{ $emp->apellido }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-warning fw-bold">
-                            <i class="fa-solid fa-rotate me-2"></i> Actualizar Cambios
-                        </button>
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    </div>
-                </form>
+                  <div class="d-grid gap-2 mt-4">
+                      <button type="submit" class="btn btn-warning fw-bold text-dark">
+                         <i class="fa-solid fa-rotate me-2"></i> Actualizar Cambios
+                      </button>
+                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                         Cancelar
+                     </button>
+                  </div>
+              </form>
             </div>
 
         </div>
@@ -161,48 +187,60 @@
 </div>
 
 <!-- SCRIPTS -->
-<script>
+ <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Botón Editar
-    const editModal = new bootstrap.Modal(document.getElementById('modalEditarDepartamento'));
-    const editForm = document.getElementById('formEditarDepartamento');
+    // 1. Desaparecer alerta
+    const alertElement = document.getElementById('alert-disposable');
+    if (alertElement) {
+        setTimeout(() => {
+            let bsAlert = new bootstrap.Alert(alertElement);
+            bsAlert.close();
+        }, 4000);
+    }
 
+    // 2. REABRIR MODAL SI HAY ERROR (Mantiene datos gracias a old())
+   @if(session('warning'))
+        const modalElement = document.getElementById('modalEditarDepartamento');
+        if (modalElement) {
+            const editModal = new bootstrap.Modal(modalElement);
+            
+            // Forzamos a Select2 a reconocer el cambio de valor (el jefe original)
+            $('#modal_edit_jefe_departamento').trigger('change');
+            
+            editModal.show();
+        }
+    @endif
+
+    // 3. Lógica normal de botones editar
     document.querySelectorAll('.btn-edit-departamento').forEach(btn => {
         btn.addEventListener('click', function () {
-            document.getElementById('edit_nombre_departamento').value = this.dataset.nombre;
-            document.getElementById('edit_descripcion_departamento').value = this.dataset.descripcion;
-            document.getElementById('edit_jefe_departamento').value = this.dataset.jefeId;
+            // Limpiar inputs antes de cargar nuevos (evita mezclar datos viejos)
+            document.getElementById('modal_edit_nombre_departamento').value = this.dataset.nombre;
+            document.getElementById('modal_edit_descripcion_departamento').value = this.dataset.descripcion;
 
-            // Inicializar Select2 con buscador en el modal
-            $('#edit_jefe_departamento').select2({
-                placeholder: "Busque por nombre",
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#modalEditarDepartamento')
-            });
+            const jefeId = this.dataset.jefeId; 
+            const selectJefe = $('#modal_edit_jefe_departamento');
+            selectJefe.val(jefeId ? jefeId : '').trigger('change');
 
-            editForm.action = `/departamentos/${this.dataset.id}`;
+            document.getElementById('formEditarDepartamento').action = `/departamentos/${this.dataset.id}`;
+            
+            const editModal = new bootstrap.Modal(document.getElementById('modalEditarDepartamento'));
             editModal.show();
         });
     });
+});
 
-    // Offcanvas Nuevo Departamento
-    var offcanvas = document.getElementById('offcanvasNuevoDepartamento');
-    offcanvas.addEventListener('shown.bs.offcanvas', function () {
-        if (!$('.select2').hasClass('select2-hidden-accessible')) {
-            $('.select2').select2({
-                placeholder: "Seleccione un jefe...",
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#offcanvasNuevoDepartamento')
-            });
-
-            $('.select2').on('select2:open', function () {
-                $('.select2-search__field').attr('placeholder', 'Busque por nombre');
-            });
+ // Mensaje de éxito
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('success-alert');
+        if(alert){
+            setTimeout(() => {
+                // Aplicamos fade out usando clases de Bootstrap
+                alert.classList.remove('show');
+                alert.classList.add('hide');
+            }, 3000); // Desaparece después de 3 segundos
         }
     });
-});
 </script>
 
 <script>
