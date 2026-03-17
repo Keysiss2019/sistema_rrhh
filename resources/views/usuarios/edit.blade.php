@@ -29,19 +29,17 @@
             </div>
 
             <!-- Campo para asignar nueva contraseña opcional -->
-            <div class="mb-3">
-                <label class="form-label fw-bold text-secondary small">NUEVA CONTRASEÑA</label>
-                <div class="input-group shadow-sm">
-                    <input type="password" name="password" id="pass_edit" class="form-control border-2" placeholder="Dejar vacío para no cambiar">
-                    <!-- Botón para mostrar/ocultar la contraseña -->
-                    <button class="btn btn-outline-secondary border-2" type="button" onclick="togglePass('pass_edit', 'icon_edit')">
-                        <i class="fa-solid fa-eye" id="icon_edit"></i>
-                    </button>
-                </div>
-                <div class="form-text text-danger fw-bold small">
-                    <i class="fa-solid fa-circle-info me-1"></i> Si asignas una nueva clave, el usuario deberá cambiarla al iniciar sesión.
-                </div>
-            </div>
+           <div class="mb-4 p-3 border rounded bg-light">
+              <div class="form-check form-switch">
+                 <input class="form-check-input" type="checkbox" name="reset_password" id="resetPasswordCheck" value="1">
+                 <label class="form-check-label fw-bold text-dark" for="resetPasswordCheck">
+                     <i class="fa-solid fa-key me-1 text-warning"></i> Generar nueva contraseña temporal
+                  </label>
+           </div>
+           <div class="form-text small">
+               Si se activa, se enviará una clave genérica al correo del usuario y se le obligará a cambiarla al entrar.
+          </div>
+</div>
 
             <!-- Selección del rol del usuario -->
             <div class="mb-3">
