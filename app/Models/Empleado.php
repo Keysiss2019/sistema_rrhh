@@ -11,8 +11,7 @@ class Empleado extends Model
 
     protected $fillable = [
         'user_id', 'nombre', 'apellido', 'email', 'fecha_nacimiento',
-        'fecha_ingreso', 'fecha_baja', 'estado', 'cargo', 'departamento_id',
-        'dias_vacaciones_anuales',
+        'fecha_ingreso', 'fecha_baja', 'estado', 'cargo', 'departamento_id',  'dias_vacaciones_anuales',
     ];
 
     // Relación con departamento
@@ -38,4 +37,45 @@ class Empleado extends Model
       // Un empleado pertenece a un usuario (o tiene un usuario)
       return $this->hasOne(User::class, 'empleado_id');
     }
+
+    protected static function booted()
+    {
+      // Se ejecuta cada vez que guardas un empleado
+      static::saved(function ($empleado) {
+         // Buscamos si el departamento asignado a este empleado lo tiene como jefe
+         $departamentoAsignado = \App\Models\Departamento::where('id', $empleado->departamento_id)
+            ->where('jefe_empleado_id', $empleado->id)
+            ->first();
+
+        if ($departamentoAsignado) {
+            // Usamos query builder para evitar un bucle infinito de eventos
+            \DB::table('empleados')
+                ->where('id', $empleado->id)
+                ->update(['cargo' => 'JEFE']);
+        }
+        });
+    }
+
+    /**
+     * Este método intercepta la llamada a $empleado->cargo
+     */
+    public function getCargoAttribute($value)
+    {
+      // Verificamos si este empleado es jefe de algún departamento
+      // Usamos la relación departamentosComoJefe que ya tienes definida
+      if ($this->departamentosComoJefe()->exists()) {
+         return 'JEFE';
+        }
+
+       // Si no es jefe, devuelve el valor real que tiene en la tabla (Analista, etc.)
+       return $value;
+    }
+
+    public function firma()
+    {
+      // Buscamos la firma vinculada a este empleado que esté marcada como activa
+      return $this->hasOne(Firma::class, 'empleado_id')->where('activo', 1);
+    }
+
 }
+
