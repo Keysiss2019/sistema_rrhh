@@ -28,16 +28,18 @@
                         </div>
                     </div>
 
-                    {{-- Filtrar por fechas --}}
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold">FILTRAR POR FECHA</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0" id="btn_calendario" style="cursor: pointer;">
-                                <i class="fa-solid fa-calendar-days text-primary"></i>
-                            </span>
-                            <input type="text" id="rango_fechas" name="fecha_rango" class="form-control border-start-0 bg-white" value="{{ request('fecha_rango') }}" readonly>
-                        </div>
-                    </div>
+                    {{-- Filtrar por Mes --}}
+                  <div class="col-md-3">
+                      <label class="form-label small fw-bold">MES</label>
+                      <select name="mes" class="form-select" onchange="this.form.submit()">
+                         <option value="">Todos</option>
+                          @foreach(['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] as $index => $mes)
+                             <option value="{{ $index + 1 }}" {{ request('mes') == ($index + 1) ? 'selected' : '' }}>
+                                 {{ $mes }}
+                              </option>
+                          @endforeach
+                      </select>
+                   </div>
 
                     {{-- Botones --}}
                     <div class="col-md-2">
@@ -384,50 +386,25 @@ function ejecutarAccion(id, estado) {
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
-
-        // Inicializar Flatpickr en el input oculto
-
-        const picker = flatpickr("#rango_fechas", {
-
-            mode: "range",
-
-            dateFormat: "Y-m-d",
-
-            locale: "es",
-
-            altInput: true,
-
-            altFormat: "d/m/Y",
-
-            // Esto evita que se cree un cuadro de texto adicional
-
-            altInputClass: "d-none",
-
-            onClose: function(selectedDates, dateStr, instance) {
-
-                // Si el usuario selecciona el rango (2 fechas) o limpia el filtro
-
-                if (selectedDates.length === 2 || selectedDates.length === 0) {
-
-                    document.getElementById('form-filtros-unico').submit();
-
-                }
-
+    const picker = flatpickr("#rango_fechas", {
+        mode: "range",
+        dateFormat: "d/m/Y", // Formato que enviamos al controlador
+        conjunction: " to ",
+        locale: "es",
+        showMonths: 2,       // Facilita ver periodos largos
+        disableMobile: true,
+        // Eliminamos el plugin de mes para que no choque con el modo rango
+        onClose: function(selectedDates, dateStr, instance) {
+            // Enviamos el formulario solo si hay fechas seleccionadas
+            if (selectedDates.length > 0) {
+                document.getElementById('form-filtros-unico').submit();
             }
-
-        });
-
-
-
-        // Al hacer clic en el icono, abrimos el calendario
-
-        document.getElementById('btn_calendario').addEventListener('click', function() {
-
-            picker.open();
-
-        });
-
+        }
     });
 
+    document.getElementById('btn_calendario').addEventListener('click', function() {
+        picker.open();
+    });
+});
 </script>
 @endsection
