@@ -18,9 +18,11 @@ class Solicitud extends Model
 
     // Campos que se pueden llenar masivamente
     protected $fillable = [
-        'empleado_id',
+        'nombre',
         'solicitado_a',       
-        'cargo_autorizador',  
+        'lugar',  
+        'departamento',
+        'correo',
         'tipo',
         'motivo_otro',
         'detalles',
@@ -37,9 +39,22 @@ class Solicitud extends Model
     /**
      * Relación: Una solicitud pertenece a un empleado.
      */
-    public function empleado()
+     public function empleado()
     {
-        return $this->belongsTo(Empleado::class, 'empleado_id');
+     /**
+     * Explicación de los parámetros:
+     * 1. Empleado::class: El modelo con el que se relaciona.
+     * 2. 'correo': El nombre de la columna en tu tabla 'solicitudes'.
+     * 3. 'email': El nombre de la columna en tu tabla 'empleados'.
+     */
+       return $this->belongsTo(Empleado::class, 'correo', 'email');
+    }
+
+
+    public function firma()
+    {
+      // Relación 1 a 1: El empleado tiene una firma en la tabla 'firmas'
+      return $this->hasOne(Firma::class, 'empleado_id');
     }
 
     /**
@@ -49,4 +64,17 @@ class Solicitud extends Model
     {
         return $this->belongsTo(User::class, 'aprobado_por');
     }
+
+    public function aprobaciones()
+    {
+     // Esta es la relación dinámica que usaremos ahora
+      return $this->hasMany(SolicitudAprobacion::class, 'solicitud_id')->orderBy('paso_orden', 'asc');
+    }
+
+    // 1. La firma del que crea la solicitud (esta es fija del empleado)
+    public function firma_empleado()
+    {
+     return $this->belongsTo(Firma::class, 'firma_empleado_id');
+    }
+
 }
