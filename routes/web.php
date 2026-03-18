@@ -148,6 +148,11 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::put('/politicas-vacaciones/{id}', [PoliticaVacacionesController::class, 'update'])->name('politicas.update');
     Route::delete('/politicas-vacaciones/{id}', [PoliticaVacacionesController::class, 'destroy'])->name('politicas.destroy');
 
+     // --- MÓDULO: Firmas ---
+    Route::get('/firmas', [FirmaController::class, 'index'])->name('firmas.index');
+    Route::post('/firmas', [FirmaController::class, 'store'])->name('firmas.store');
+    Route::delete('/firmas/{id}', [FirmaController::class, 'destroy'])->name('firmas.destroy');
+    
     // Redirección si ya está logueado
     Route::get('/', function () {
        return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');

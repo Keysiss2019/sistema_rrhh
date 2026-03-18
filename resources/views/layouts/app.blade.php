@@ -48,7 +48,9 @@
                          <a href="{{ route('departamentos.index') }}" class="submenu-item">Departamentos</a>
                          <a href="{{ route('permisos_sistema.index') }}" class="submenu-item">Permisos del sistema</a>
                          <a href="{{ route('usuarios.index') }}" class="submenu-item">Usuarios</a>
-                      </div>
+                         <a href="{{ route('firmas.index') }}" class="submenu-item">Gestión de Firmas</a>
+
+                        </div>
                   </div>
 
                    <div class="menu-item">
