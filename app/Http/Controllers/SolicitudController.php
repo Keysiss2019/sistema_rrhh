@@ -34,61 +34,92 @@ class SolicitudController extends Controller
       $user = Auth::user();
       $rol = trim($user->rol->nombre);
       $empleadoId = $user->empleado->id ?? null;
-       $miDepto = $user->empleado->departamento->nombre ?? null;
-       // Obtenemos el nombre exacto que está en el perfil del empleado
-       // Si tu modelo Empleado tiene 'nombre' y 'apellido', los concatenamos
-       $nombreUsuario = $user->empleado ? ($user->empleado->nombre . ' ' . $user->empleado->apellido) : null;
+      $miDepto = $user->empleado->departamento->nombre ?? null;
+      $userEmail = $user->email;
 
-       $query = Solicitud::with('empleado');
+      $query = Solicitud::with('empleado');
 
-       // Filtros de visibilidad (Sin cambios)
-       if ($rol === 'Administrador' || $rol === 'GTH') {
-       } elseif ($rol === 'Jefe Inmediato') {
-           $query->where('departamento', $miDepto);
+      // --- 1. FILTROS DE SEGURIDAD/VISIBILIDAD (Tu lógica original) ---
+      if ($rol === 'Administrador' || $rol === 'GTH') {
+          // Ven todo
+        } elseif ($rol === 'Jefe Inmediato') {
+         $query->where('departamento', $miDepto);
         } else {
-           // Obtenemos los datos del usuario logueado
-          $nombreUsuario = $user->empleado ? ($user->empleado->nombre . ' ' . $user->empleado->apellido) : null;
-          $userEmail = $user->email;
-
-           $query->where(function($q) use ($nombreUsuario, $userEmail) {
-               // Busca por nombre
-              if (!empty(trim($nombreUsuario))) {
+         $nombreUsuario = $user->empleado ? ($user->empleado->nombre . ' ' . $user->empleado->apellido) : null;
+         $query->where(function($q) use ($nombreUsuario, $userEmail) {
+             if (!empty(trim($nombreUsuario))) {
                  $q->where('solicitudes.nombre', 'LIKE', '%' . trim($nombreUsuario) . '%');
                 }
-        
-               // O busca por correo (esto rescatará las solicitudes si el nombre varía)
                $q->orWhere('solicitudes.correo', $userEmail);
             });
         }
 
+       // --- 2. NUEVO: FILTROS DEL BUSCADOR Y FECHAS ---
+    
+       // Filtro por nombre (Buscador)
+       if ($request->filled('search')) {
+          $query->where('solicitudes.nombre', 'LIKE', '%' . $request->search . '%');
+        }
+
+       // 1. Filtro por nombre fechas
+       if ($request->filled('search')) {
+         $query->where('solicitudes.nombre', 'LIKE', '%' . $request->search . '%');
+        }
+
+        // 2. Filtro por MES (Nuevo)
+       if ($request->filled('mes')) {
+          $query->where(function($q) use ($request) {
+              $q->whereMonth('solicitudes.fecha_inicio', $request->mes)
+              ->orWhereMonth('solicitudes.fecha_fin', $request->mes);
+            });
+        }
+
+       // 3. Filtro por RANGO DE FECHAS (El que ya teníamos)
+       if ($request->filled('fecha_rango')) {
+          $input = trim($request->fecha_rango);
+          try {
+              if (str_contains($input, ' to ')) {
+                  $partes = explode(' to ', $input);
+                  $inicio = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[0]))->format('Y-m-d');
+                  $fin = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[1]))->format('Y-m-d');
+
+                   $query->where(function($q) use ($inicio, $fin) {
+                      $q->whereBetween('solicitudes.fecha_inicio', [$inicio, $fin])
+                      ->orWhereBetween('solicitudes.fecha_fin', [$inicio, $fin]);
+                     });
+                } else {
+                  $fechaUnica = \Carbon\Carbon::createFromFormat('d/m/Y', $input)->format('Y-m-d');
+                   $query->where('solicitudes.fecha_inicio', '<=', $fechaUnica)
+                  ->where('solicitudes.fecha_fin', '>=', $fechaUnica);
+                }
+            } catch (\Exception $e) {
+              \Log::error("Error en fecha: " . $e->getMessage());
+            }
+        }
+        
         $solicitudes = $query->leftJoin('departamentos', function($join) {
-          $join->on('solicitudes.departamento', '=', \DB::raw('departamentos.nombre COLLATE utf8mb4_unicode_ci'));
+            $join->on('solicitudes.departamento', '=', \DB::raw('departamentos.nombre COLLATE utf8mb4_unicode_ci'));
         })
-       ->select('solicitudes.*')
+        ->select('solicitudes.*')
         ->orderByRaw("
-        CASE 
-            -- 1. LO PRIMERO: MIS PENDIENTES (Botón Gestionar)
-            WHEN (departamentos.jefe_empleado_id = ? AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) = 0) THEN 1
-            WHEN (? = 'GTH' AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id AND paso_orden = 1) = 1 
-                 AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id AND paso_orden = 2) = 0) THEN 1
-
-            -- 2. SEGUNDO: PENDIENTES DE GTH (Para el jefe: lo que ya firmó pero no ha terminado)
-            WHEN (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) = 1 
-                 AND solicitudes.estado != 'rechazado' THEN 2
-
-            -- 3. TERCERO: COMPLETADOS (Ya tienen las 2 firmas o están aprobadas)
-            WHEN (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) >= 2 
-                 OR solicitudes.estado = 'aprobado' THEN 3
-
-            -- 4. AL FINAL: TODO LO DEMÁS (Ver detalle de otros procesos)
-            ELSE 4
-        END ASC
-       ", [$empleadoId, $rol])
+            CASE 
+                WHEN (departamentos.jefe_empleado_id = ? AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) = 0) THEN 1
+                WHEN (? = 'GTH' AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id AND paso_orden = 1) = 1 
+                     AND (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id AND paso_orden = 2) = 0) THEN 1
+                WHEN (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) = 1 
+                     AND solicitudes.estado != 'rechazado' THEN 2
+                WHEN (SELECT COUNT(*) FROM solicitud_aprobaciones WHERE solicitud_id = solicitudes.id) >= 2 
+                     OR solicitudes.estado = 'aprobado' THEN 3
+                ELSE 4
+            END ASC
+        ", [$empleadoId, $rol])
         ->orderBy('solicitudes.created_at', 'desc')
-        ->paginate(10);
+        ->paginate(10)
+        ->withQueryString();
 
-        return view('solicitudes.index', compact('solicitudes'));
+         return view('solicitudes.index', compact('solicitudes'));
     }
+
 
     /**
  * MÉTODO: store
