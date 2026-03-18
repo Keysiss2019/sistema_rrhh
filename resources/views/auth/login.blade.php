@@ -17,11 +17,13 @@
             <div class="col-md-6 d-none d-md-flex flex-column align-items-center justify-content-center bg-light-custom p-5">
 
                 {{-- Contenedor del logo --}}
-                <div class="logo-circle-bg mb-4">
+                <div class="logo-circle-bg mb-4 d-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm"
+                    style="width: 150px; height: 150px; margin: 0 auto; overflow: hidden;">
                     {{-- Logo de la institución --}}
                     <img src="{{ asset('images/ihci_logo.jpg') }}" 
                          alt="Logo IHCI" 
-                         class="img-fluid rounded-circle shadow-sm">
+                         class="img-fluid"
+                         style="max-width: 80%; height: auto;">
                 </div>
 
                 {{-- Título de bienvenida --}}
@@ -47,13 +49,6 @@
                     {{-- Token CSRF para seguridad --}}
                     @csrf
                     
-                    {{-- Mostrar mensaje de error global (usuario inactivo o empleado dado de baja) --}}
-                    @if ($errors->has('usuario'))
-                      <div class="alert alert-danger mb-3">
-                         {{ $errors->first('usuario') }}
-                      </div>
-                  @endif
-
                     {{-- Campo usuario --}}
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">USUARIO</label>
@@ -87,13 +82,12 @@
                             {{-- Campo password --}}
                             <input type="password" 
                                    name="password" 
-                                    id="password"
+                                   id="password"
                                    class="form-control bg-light border-0 py-2" 
                                    placeholder="" 
                                    required>
-
-                                {{-- Botón manual para mostrar/ocultar --}}
-                              <button class="btn btn-light border-0" type="button" id="togglePassword">
+                                   {{-- Botón manual para mostrar/ocultar --}}
+                           <button class="btn btn-light border-0" type="button" id="togglePassword">
                              <i class="fa-solid fa-eye text-muted" id="eyeIcon"></i>
                              </button>
                         </div>
@@ -105,13 +99,6 @@
                             ENTRAR 
                             <i class="fa-solid fa-arrow-right ms-2"></i>
                         </button>
-                    </div>
-
-                    {{-- Enlace para recuperación de contraseña --}}
-                    <div class="text-center mt-4">
-                      <a href="#" class="text-decoration-none small text-muted fw-bold">
-                         ¿Olvidaste tu contraseña?
-                      </a>
                     </div>
 
                 </form>
