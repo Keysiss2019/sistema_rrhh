@@ -17,6 +17,7 @@ use App\Http\Controllers\HoraExtraController;           // Controlador de horas 
 use App\Http\Controllers\DireccionHoraExtraController;  // Controlador de horas extras para aprobar
 use App\Http\Controllers\DepartmentController;         // Controlador para departamento
 use App\Http\Controllers\FirmaController;                 // Controlador para firmas
+use App\Http\Controllers\ConfigFirmaController;         // Controlador para firmas
 
 
 
@@ -121,14 +122,16 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     // --- RUTAS PARA HORAS EXTRAS (REGISTRO FT-GTH-002) ---
     Route::prefix('horas-extras')->group(function () {
-    // Para guardar desde el modal
-    Route::post('/store', [HoraExtraController::class, 'store'])->name('horas_extras.store');
+      // Para guardar desde el modal
+      Route::post('/store', [HoraExtraController::class, 'store'])->name('horas_extras.store');
     
-    // Para ver la lista de pendientes (la que vería el jefe)
-    Route::get('/pendientes', [HoraExtraController::class, 'pendientes'])->name('horas_extras.pendientes');
+      // Para ver la lista de pendientes (la que vería el jefe)
+      Route::get('/pendientes', [HoraExtraController::class, 'pendientes'])->name('horas_extras.pendientes');
     
-    // Para aprobar o rechazar (usamos validar para que coincida con el controlador anterior)
-    Route::patch('/{id}/validar', [HoraExtraController::class, 'validar'])->name('horas_extras.validar');
+      Route::get('/gestion', [HoraExtraController::class, 'gestion'])->name('horas_extras.gestion');
+
+      // Para aprobar o rechazar (usamos validar para que coincida con el controlador anterior)
+      Route::patch('/{id}/validar', [HoraExtraController::class, 'validar'])->name('horas_extras.validar');
     });
 
     // --- RUTAS PARA APROBAR HORAS EXTRAS (REGISTRO FT-GTH-002) ---
@@ -137,6 +140,14 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     Route::post('/direccion/horas-extras/{id}', [DireccionHoraExtraController::class, 'decidir'])
         ->name('direccion.horas_extras.decidir');
+
+     Route::prefix('horas-extras')->group(function () {
+      // Esta será tu nueva pantalla principal
+      Route::get('/gestion', [HoraExtraController::class, 'gestion'])->name('horas_extras.gestion');
+    
+      // Ruta para que el jefe procese (Aprobar/Rechazar)
+      Route::patch('/{id}/validar', [HoraExtraController::class, 'validar'])->name('horas_extras.validar');
+   });
 
     // --- MÓDULO: DEPARTAMENTO ---
     Route::resource('departamentos', DepartmentController::class)
