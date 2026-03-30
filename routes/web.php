@@ -141,7 +141,7 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::post('/direccion/horas-extras/{id}', [DireccionHoraExtraController::class, 'decidir'])
         ->name('direccion.horas_extras.decidir');
 
-     Route::prefix('horas-extras')->group(function () {
+    Route::prefix('horas-extras')->group(function () {
       // Esta será tu nueva pantalla principal
       Route::get('/gestion', [HoraExtraController::class, 'gestion'])->name('horas_extras.gestion');
     
