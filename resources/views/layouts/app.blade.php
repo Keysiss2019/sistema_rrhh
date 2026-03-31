@@ -35,7 +35,7 @@
             <!-- Logo del IHCI -->
             <div class="logo-nav">
                 <a href="{{ url('dashboard') }}">
-                    <img src="{{ asset('images/ihci_logo.jpg') }}" alt="IHCI">
+                    <img src="{{ asset('images/IHCI.png') }}" alt="IHCI">
                 </a>
             </div>
 
@@ -96,20 +96,39 @@
 
             <!-- Icono de usuario / Dropdown -->
             <div class="dropdown">
-                <button class="btn border-0" type="button" data-bs-toggle="dropdown">
-                    <i class="fa-solid fa-circle-user fa-2xl" style="color: var(--ihci-blue);"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item" href="#">Mi Perfil</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <!-- Formulario de logout -->
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button class="dropdown-item text-danger border-0 bg-transparent">Cerrar Sesión</button>
-                        </form>
-                    </li>
-                </ul>
+               <button class="btn border-0 p-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" style="box-shadow: none;">
+                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 40px; height: 40px; border: 2px solid white;">
+                      {{ strtoupper(substr(auth()->user()->usuario, 0, 1)) }}
+                  </div>
+               </button>
+    
+               <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 rounded-4" style="width: 280px; overflow: hidden;">
+        
+                    <!-- Sección de Identidad -->
+                   <div class="bg-light p-4 text-center">
+                      <div class="rounded-circle bg-info d-flex align-items-center justify-content-center text-white fw-bold mx-auto mb-3 shadow-sm" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                           {{ strtoupper(substr(auth()->user()->usuario, 0, 1)) }}
+                       </div>
+                       <h6 class="fw-bold mb-0 text-dark">{{ auth()->user()->usuario }}</h6>
+                       <p class="text-muted small mb-3">{{ auth()->user()->email }}</p>
+            
+                        <!-- ÚNICO BOTÓN DE GESTIÓN -->
+                       <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalGestionPerfil">
+                          Gestionar Perfil
+                       </button>
+                    </div>
+
+                   <!-- Sección de Salida -->
+                   <div class="p-3">
+                      <form action="{{ route('logout') }}" method="POST">
+                          @csrf
+                          <button type="submit" class="btn btn-light btn-sm w-100 rounded-3 py-2 text-danger fw-bold">
+                              <i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar sesión
+                          </button>
+                      </form>
+                   </div>
+
+                </div>
             </div>
         </div>
     </header>
