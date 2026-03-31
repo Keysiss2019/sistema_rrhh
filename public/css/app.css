@@ -903,3 +903,44 @@ body {
 .select2-container {
     z-index: 2000 !important;
 }
+
+
+/* =========================
+   Perfil
+========================= */
+.dropdown .btn i {
+    color: #ffffff !important; /* Icono blanco en el header azul */
+    transition: transform 0.2s;
+}
+
+.dropdown .btn:hover i {
+    transform: scale(1.1); /* Efecto sutil al pasar el mouse */
+}
+
+/* Para quitar la flechita por defecto de Bootstrap en el dropdown */
+.dropdown-toggle::after {
+    display: none !important;
+}
+
+/* Para añadir una sombra suave al panel y que se vea elevado */
+.dropdown-menu.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Opcional: Un pequeño borde sutil para definir el panel */
+.user-panel-dropdown {
+    border: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.input-group .btn {
+        border-color: #dee2e6;
+        background-color: #fff;
+        color: #6c757d;
+    }
+    .input-group .btn:hover {
+        background-color: #f8f9fa;
+        color: #002855;
+    }
+    .input-group .form-control:focus {
+        z-index: 3;
+    }
