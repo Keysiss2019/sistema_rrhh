@@ -1,8 +1,9 @@
+
 <!-- Offcanvas para editar un usuario existente -->
 <div class="offcanvas offcanvas-end border-0 shadow" tabindex="-1" id="offcanvasEditarUsuario">
 
     <!-- Cabecera del offcanvas -->
-    <div class="offcanvas-header bg-warning text-dark">
+    <div class="offcanvas-header modal-header text-white">
         <h5 class="offcanvas-title fw-bold">
             <i class="fa-solid fa-user-pen me-2"></i> Editar Usuario
         </h5>
@@ -62,8 +63,8 @@
 
             <!-- Botones de acción: Actualizar Usuario o Cancelar -->
             <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-warning btn-lg shadow fw-bold">
-                    <i class="fa-solid fa-sync me-2"></i> Actualizar Usuario
+                <button type="submit" class="btn text-white rounded-pill px-4" style="background-color: #054084;">
+                    <i class="fa-solid fa-sync me-2"></i> Actualizar 
                 </button>
                 <button type="button" class="btn btn-secondary btn-lg fw-bold" data-bs-dismiss="offcanvas">Cancelar</button>
             </div>

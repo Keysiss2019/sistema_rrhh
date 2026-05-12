@@ -1,4 +1,3 @@
-{{-- Extiende el layout principal de la aplicación --}}
 @extends('layouts.app')
 
 {{-- Inicio de la sección de contenido --}}
@@ -18,13 +17,6 @@
                         {{-- Icono y título del módulo --}}
                         <i class="fa-solid fa-shield-halved me-2"></i> Permisos del Sistema
                     </h4>
-
-                    {{-- Botón para volver al inicio --}}
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('dashboard') }}" class="btn btn-light btn-sm shadow-sm">
-                            <i class="fa-solid fa-house"></i> Inicio
-                        </a>
-                    </div>
                 </div>
 
                 {{-- Cuerpo de la tarjeta --}}
@@ -41,35 +33,39 @@
                     @endif
 
                     {{-- Sección de selección de rol --}}
+
                     <div class="row my-4">
-                        <div class="col-md-6 offset-md-3">
+                       <div class="col-md-6 offset-md-3">
+                          {{-- Formulario para cambiar el rol activo --}}
+                          <form method="GET" action="{{ route('permisos_sistema.index') }}">
+   
+                               <div class="input-group shadow-sm">
+                                 <a href="{{ route('permisos_sistema.index') }}" class="btn btn-secondary">
+                                     <i class="fa-solid fa-rotate-left"></i> Limpiar Selección
+                                  </a>
+                                  {{-- Etiqueta del selector --}}
+                                 <span class="input-group-text bg-primary text-white border-dark">
+                                     <i class="fa-solid fa-user-gear me-2"></i> Rol Actual:
+                                  </span>
 
-                            {{-- Formulario para cambiar el rol activo --}}
-                            <form method="GET" action="{{ route('permisos_sistema.index') }}">
-                                <div class="input-group shadow-sm">
+                                  {{-- Selector de roles --}}
+                                  <select name="role_id" class="form-select border-2 fw-bold" onchange="this.form.submit()" autocomplete="off">
+                                      <option value="" {{ !$roleId ? 'selected' : '' }} disabled>Seleccione un rol</option>
+                                       @foreach($roles as $rol)
+                                          <option value="{{ $rol->id }}" {{ $rol->id == $roleId ? 'selected' : '' }}>
+                                              {{ $rol->nombre }}
+                                          </option>
+                                       @endforeach
+                                  </select>
+                               </div>
 
-                                    {{-- Etiqueta del selector --}}
-                                    <span class="input-group-text bg-dark text-white border-dark">
-                                        <i class="fa-solid fa-user-gear me-2"></i> Rol Actual:
-                                    </span>
-
-                                    {{-- Selector de roles --}}
-                                    <select name="role_id" class="form-select border-2 fw-bold text-primary" onchange="this.form.submit()">
-                                        @foreach($roles as $rol)
-                                            <option value="{{ $rol->id }}" {{ $rol->id == $roleId ? 'selected' : '' }}>
-                                                {{ $rol->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                {{-- Texto de ayuda --}}
-                                <small class="text-muted d-block mt-2 text-center">
-                                    Cambia el rol para visualizar y editar sus accesos específicos.
-                                </small>
-                            </form>
-                        </div>
-                    </div>
+                               {{-- Texto de ayuda --}}
+                               <small class="text-muted d-block mt-2 text-center">
+                                  Cambia el rol para visualizar y editar sus accesos específicos.
+                               </small>
+                          </form>
+                      </div>
+                   </div>
 
                     {{-- Separador visual --}}
                     <hr class="text-muted opacity-25">
@@ -86,7 +82,7 @@
                             <table class="table table-hover align-middle border">
 
                                 {{-- Encabezado de la tabla --}}
-                                <thead class="table-dark">
+                                <thead class="table-secondary">
                                     <tr>
                                         <th class="ps-4 py-3">Módulo del Sistema</th>
                                         <th class="text-center" style="width: 180px;">Estado de Visibilidad</th>
@@ -96,11 +92,35 @@
                                 <tbody>
                                     {{-- Definición estática de los módulos --}}
                                     @foreach([
-                                        'seguridad' => ['label' => 'Módulo de Seguridad', 'icon' => 'fa-lock', 'color' => 'text-danger'],
-                                        'administracion' => ['label' => 'Módulo de Administración',   'icon' => 'fa-gears','color' => 'text-primary'],
-                                        'permisos_laborales' => ['label' => 'Módulo de Permisos Laborales', 'icon' => 'fa-file-signature', 'color' => 'text-success'],
-                                        'informes' => ['label' => 'Módulo de Informes y Estadísticas', 'icon' => 'fa-chart-line', 'color' => 'text-info'],
-                                        'proyectos' => ['label' => 'Módulo de Proyectos', 'icon' => 'fa-diagram-project', 'color' => 'text-warning']
+                                      'seguridad' => [
+                                          'label' => 'Módulo de Seguridad', 
+                                          'icon' => 'fa-lock', 
+                                          'color' => 'text-danger'
+                                        ],
+
+                                     'administración' => [
+                                         'label' => 'Módulo de Administración', 
+                                         'icon' => 'fa-gears', // Icono de engranajes para administración
+                                         'color' => 'text-primary' // Color azul para diferenciarlo
+                                        ],
+                                   
+                                        'permisos_laborales' => [
+                                          'label' => 'Módulo de Permisos Laborales', 
+                                          'icon' => 'fa-file-signature', 
+                                          'color' => 'text-success'
+                                        ],
+   
+                                        'informes' => [
+                                          'label' => 'Módulo de Informes y Estadísticas', 
+                                          'icon' => 'fa-chart-line', 
+                                          'color' => 'text-info'
+                                        ],
+   
+                                        'proyectos' => [
+                                         'label' => 'Módulo de Proyectos', 
+                                         'icon' => 'fa-diagram-project', 
+                                         'color' => 'text-warning'
+                                        ]
                                     ] as $key => $data)
 
                                     {{-- Fila del módulo --}}
@@ -140,7 +160,7 @@
                         {{-- Botón para guardar los cambios --}}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 mb-3">
                             <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
-                                <i class="fa-solid fa-save me-2"></i> Actualizar Permisos
+                                <i class="fa-solid fa-rotate me-2"></i> Actualizar
                             </button>
                         </div>
                     </form>

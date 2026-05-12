@@ -20,9 +20,10 @@
                         <i class="fa-solid fa-shield-halved me-2"></i> Gestión de Roles
                     </h4>
 
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2"> 
+ 
                         <!-- Botón Nuevo Rol (Offcanvas) -->
-                        <button class="btn btn-dark btn-sm shadow-sm"
+                        <button class="btn btn-primary btn-sm shadow-sm"
                                 type="button"
                                 data-bs-toggle="offcanvas"
                                 data-bs-target="#offcanvasNuevoRol">
@@ -49,12 +50,12 @@
                      TABLA DE ROLES
                     ============================ -->
                     <div class="table-responsive mt-3">
-                        <table class="table table-hover align-middle custom-table">
+                        <table class="table table-bordered table-hover align-middle shadow-sm">
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width:80px;">ID</th>
-                                    <th>Nombre del Rol</th>
-                                    <th>Descripción</th>
+                                    <th class="text-center">Nombre del Rol</th>
+                                    <th class="text-center">Descripción</th>
                                     <th class="text-center" style="width:150px;">Acciones</th>
                                 </tr>
                             </thead>
@@ -71,7 +72,7 @@
                                     </td>
 
                                     <!-- Nombre -->
-                                    <td class="fw-bold text-primary">
+                                    <td class=" ttext-muted small">
                                         {{ $rol->nombre }}
                                     </td>
 
@@ -86,7 +87,7 @@
 
                                             <!-- BOTÓN EDITAR (ABRE MODAL) -->
                                             <button type="button"
-                                                    class="btn btn-outline-warning btn-sm btn-edit"
+                                                    class="btn btn-outline-primary btn-sm btn-edit"
                                                     data-id="{{ $rol->id }}"
                                                     data-nombre="{{ $rol->nombre }}"
                                                     data-descripcion="{{ $rol->descripcion }}"
@@ -177,16 +178,16 @@
 </div>
 
 <!-- ============================
- MODAL EDITAR ROL
+ MODAL EDITAR ROL.
 ============================ -->
 <div class="modal fade"
      id="modalEditarRol"
      tabindex="-1">
 
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-centered ">
+        <div class="modal-content border-0 shadow-lg ">
 
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header text-white">
                 <h5 class="modal-title fw-bold">
                     <i class="fa-solid fa-pen-to-square me-2"></i> Editar Rol
                 </h5>
@@ -223,12 +224,12 @@
 
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit"
-                                class="btn btn-warning fw-bold">
+                                class="btn text-white rounded-pill px-4" style="background-color: #054084;">
                             <i class="fa-solid fa-rotate me-2"></i>
-                            Actualizar Cambios
+                            Actualizar
                         </button>
                         <button type="button"
-                                class="btn btn-light"
+                                class="btn btn-secondary btn-lg fw-bold"
                                 data-bs-dismiss="modal">
                             Cancelar
                         </button>

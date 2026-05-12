@@ -20,6 +20,11 @@
                 <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
                     <i class="fa-solid fa-triangle-exclamation me-2"></i>
                     <strong>¡Atención!</strong> 
+                    <ul class="mb-0">
+                     @foreach ($errors->all() as $error)
+                         <li>{{ $error }}</li>
+                     @endforeach
+                   </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
@@ -35,7 +40,7 @@
                     <div class="d-flex gap-2">
 
                         <!-- Botón para abrir offcanvas de nuevo usuario -->
-                        <button class="btn btn-dark btn-sm shadow-sm fw-bold" 
+                        <button class="btn btn-primary btn-sm shadow-sm fw-bold" 
                                 type="button" 
                                 data-bs-toggle="offcanvas" 
                                 data-bs-target="#offcanvasNuevoUsuario">
@@ -64,13 +69,13 @@
                     </div>
 
                     <!-- Tabla de usuarios -->
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle border">
-                            <thead class="table-light">
+                   <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle shadow-sm">
+                            <thead >
                                 <tr>
-                                    <th class="ps-4">USUARIO</th>
-                                    <th>EMPLEADO</th>
-                                    <th>ROL</th>
+                                    <th class="text-center">USUARIO</th>
+                                    <th class="text-center">EMPLEADO</th>
+                                    <th class="text-center">ROL</th>
                                     <th class="text-center">ESTADO</th>
                                     <th class="text-center" style="width: 160px;">ACCIONES</th>
                                 </tr>
@@ -104,14 +109,14 @@
                                     <td class="text-center">
                                         <div class="btn-group shadow-sm">
                                             <!-- Editar usuario -->
-                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                            <button type="button" class="btn btn-outline-primary btn-sm btn-edit"
                                                 onclick="abrirEditar('{{ $u->id }}', '{{ $u->usuario }}', '{{ $u->empleado->nombre }} {{ $u->empleado->apellido }}', '{{ $u->role_id }}', '{{ $u->estado }}')"
                                                 title="Editar Usuario">
                                                 <i class="fa-solid fa-edit"></i>
                                             </button>
 
                                             <!-- Cambiar estado -->
-                                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" 
                                                     onclick="confirmarEstado('{{ $u->id }}', '{{ $u->usuario }}', '{{ $u->estado }}')"
                                                     title="Cambiar Estado">
                                                 <i class="fa-solid fa-power-off"></i>

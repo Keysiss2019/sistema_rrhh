@@ -10,8 +10,8 @@
                 <i class="fa-solid fa-building me-2"></i> Gestión de Departamentos
             </h4>
 
-            <button class="btn btn-dark btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNuevoDepartamento">
-                <i class="fa-solid fa-plus-circle"></i> Nuevo Departamento
+            <button class="btn btn-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNuevoDepartamento">
+                <i class="fa-solid fa-plus-circle"></i> Nuevo
             </button>
         </div>
 
@@ -29,6 +29,7 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle shadow-sm">
+                    <thead>
                         <tr>
                             <th class="text-center">ID</th>
                             <th class="text-center">Departamento</th>
@@ -41,12 +42,12 @@
                         @foreach($departamentos as $dep)
                         <tr>
                             <td>#{{ $dep->id }}</td>
-                            <td>{{ $dep->nombre }}</td>
+                            <td >{{ $dep->nombre }}</td>
                             <td>{{ $dep->descripcion }}</td>
                             <td>{{ $dep->jefeEmpleado?->nombre ?? '' }} {{ $dep->jefeEmpleado?->apellido ?? '' }}</td>
                             <td class="text-center">
                                 <!-- Botón Editar -->
- <button type="button"
+                                <button type="button"
                                         class="btn btn-sm btn-outline-primary btn-edit-departamento"
                                         data-id="{{ $dep->id }}"
                                         data-nombre="{{ $dep->nombre }}"
@@ -86,22 +87,22 @@
             @csrf
 
            <div class="mb-3">
-             <label class="form-label fw-bold">Nombre</label>
-             <input 
-              id="edit_nombre_departamento"
-              name="nombre"
-              class="form-control"
-              required>
-          </div>
+    <label class="form-label fw-bold">Nombre</label>
+    <input 
+        id="edit_nombre_departamento"
+        name="nombre"
+        class="form-control"
+        required>
+</div>
 
-          <div class="mb-3">
-             <label class="form-label fw-bold">Descripción</label>
-              <textarea
-                  id="edit_descripcion_departamento"
-                  name="descripcion"
-                  class="form-control"
-                required></textarea>
-            </div>
+<div class="mb-3">
+    <label class="form-label fw-bold">Descripción</label>
+    <textarea
+        id="edit_descripcion_departamento"
+        name="descripcion"
+        class="form-control"
+        required></textarea>
+</div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Jefe del Departamento</label>
@@ -123,7 +124,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
 
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header  text-white">
                 <h5 class="modal-title fw-bold">
                     <i class="fa-solid fa-pen-to-square me-2"></i> Editar Departamento
                 </h5>
@@ -171,10 +172,10 @@
                    @endif
 
                   <div class="d-grid gap-2 mt-4">
-                      <button type="submit" class="btn btn-warning fw-bold text-dark">
-                         <i class="fa-solid fa-rotate me-2"></i> Actualizar Cambios
+                      <button type="submit"  class="btn text-white rounded-pill px-4" style="background-color: #054084;">
+                         <i class="fa-solid fa-rotate me-2"></i> Actualizar
                       </button>
-                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                     <button type="button" class="btn btn-secondary btn-lg fw-bold" data-bs-dismiss="modal">
                          Cancelar
                      </button>
                   </div>
@@ -228,18 +229,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
- // Mensaje de éxito
-    document.addEventListener('DOMContentLoaded', function() {
-        const alert = document.getElementById('success-alert');
-        if(alert){
-            setTimeout(() => {
-                // Aplicamos fade out usando clases de Bootstrap
-                alert.classList.remove('show');
-                alert.classList.add('hide');
-            }, 3000); // Desaparece después de 3 segundos
-        }
-    });
 </script>
 
 <script>
