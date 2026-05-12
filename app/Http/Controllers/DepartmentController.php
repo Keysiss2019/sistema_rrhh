@@ -11,6 +11,12 @@ use App\Models\Empleado;
 // Request para validaciones y datos del formulario
 use Illuminate\Http\Request;
 
+// Regla de validación personalizada de Laravel
+use Illuminate\Validation\Rule;
+
+// Facade para consultas directas a base de datos
+use Illuminate\Support\Facades\DB;
+
 class DepartmentController extends Controller
 {
     /**
@@ -57,11 +63,14 @@ class DepartmentController extends Controller
 
     /**
      * Actualiza un departamento existente
-     */
-  public function update(Request $request, $id)
+     **/
+
+    public function update(Request $request, $id)
     {
+      // Busca el departamento por ID o lanza error 404
       $departamento = Departamento::findOrFail($id);
 
+       // Validación de los datos enviados desde el formulario
        $request->validate([
           'nombre' => 'required|unique:departamentos,nombre,' . $departamento->id,
           'descripcion' => 'required',
@@ -70,22 +79,32 @@ class DepartmentController extends Controller
 
        // VALIDACIÓN: ¿El empleado ya es jefe de otro departamento?
        if ($request->jefe_empleado_id) {
+
+          // Busca si el empleado ya está asignado como jefe en otro departamento
           $otroDepto = Departamento::where('jefe_empleado_id', $request->jefe_empleado_id)
                                  ->where('id', '!=', $id) // Que no sea este mismo
                                  ->first();
         
+          // Si ya pertenece a otro departamento como jefe
           if ($otroDepto) {
               return redirect()->back()
              ->with('warning', "Este empleado ya es jefe del departamento: " . $otroDepto->nombre)
+
+             // Envía la URL de edición nuevamente
              ->with('edit_url', route('departamentos.update', $id))
+
              // Pasamos el ID del jefe que ya tenía el departamento
              ->with('id_jefe_original', $departamento->jefe_empleado_id) 
+
+             // Mantiene los datos del formulario
              ->withInput(); 
             }
         }
 
+        // Actualiza el departamento con los nuevos datos
         $departamento->update($request->all());
 
+       // Redirecciona con mensaje de éxito
        return redirect()->route('departamentos.index')
         ->with('success', "¡Departamento actualizado con éxito!");
     }
