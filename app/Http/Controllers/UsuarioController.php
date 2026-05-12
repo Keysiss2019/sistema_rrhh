@@ -5,22 +5,23 @@
 namespace App\Http\Controllers;
 
 // Importamos los modelos que vamos a usar
-use App\Models\User;      // Modelo de usuarios
-use App\Models\Empleado;  // Modelo de empleados relacionados
-use App\Models\Role;      // Modelo de roles de usuario
-use Illuminate\Http\Request; // Para manejar solicitudes HTTP
-use Illuminate\Support\Facades\Hash; // Para encriptar contraseñas
-use Illuminate\Support\Facades\Auth; // - Obtener el usuario autenticado (Auth::user)
-use Illuminate\Support\Facades\DB; 
-use Illuminate\Support\Facades\Mail;
-use App\Mail\PasswordTemporalMail;
-use Illuminate\Support\Str;
+use App\Models\User;                         // Modelo de usuarios
+use App\Models\Empleado;                    // Modelo de empleados relacionados
+use App\Models\Role;                       // Modelo de roles de usuario
+use Illuminate\Http\Request;              // Para manejar solicitudes HTTP
+use Illuminate\Support\Facades\Hash;      // Para encriptar contraseñas
+use Illuminate\Support\Facades\Auth;      // Permite obtener el usuario autenticado con Auth::user()
+use Illuminate\Support\Facades\DB;       // Facade para consultas directas a base de datos
+use Illuminate\Support\Facades\Mail;     // Facade para envío de correos
+use App\Mail\PasswordTemporalMail;       // Clase del correo de contraseña temporal
+use Illuminate\Support\Str;              // Clase para generar cadenas aleatorias
 
 class UsuarioController extends Controller
 {
     /**
      * LISTADO DE USUARIOS + DATOS PARA EL OFFCANVAS
      */
+
     /**
      * LISTADO DE USUARIOS
      */
@@ -31,25 +32,42 @@ class UsuarioController extends Controller
 
         // Buscador
         if ($request->filled('buscar')) {
+
+            // Captura el texto ingresado
             $buscar = $request->buscar;
+
+            // Busca por usuario o datos del empleado relacionado
             $query->where(function($q) use ($buscar) {
+
+                // Buscar por nombre de usuario
                 $q->where('usuario', 'like', "%$buscar%")
+
+                  // Buscar dentro de la relación empleado
                   ->orWhereHas('empleado', function ($queryEmp) use ($buscar) {
+
+                      // Buscar por nombre o apellido
                       $queryEmp->where('nombre', 'like', "%$buscar%")
                                ->orWhere('apellido', 'like', "%$buscar%");
                   });
             });
         }
 
+        // Paginar resultados
         $usuarios = $query->paginate(8);
 
         // Empleados que NO tienen usuario asignado (vínculo inverso)
         $empleados = Empleado::whereDoesntHave('user')
+
+            // Ordenar alfabéticamente
             ->orderBy('nombre', 'asc')
+
+            // Obtener resultados
             ->get();
 
+        // Obtener todos los roles
         $roles = Role::all();
 
+        // Retornar vista principal
         return view('usuarios.index', compact('usuarios', 'empleados', 'roles'));
     }
  
@@ -67,6 +85,8 @@ class UsuarioController extends Controller
        ]);
 
        try {
+
+          // Iniciar transacción de base de datos
           DB::beginTransaction();
 
           // 2. GENERAR CONTRASEÑA (Forma compatible con todas las versiones)
@@ -75,45 +95,77 @@ class UsuarioController extends Controller
 
           // 3. CREAR EL USUARIO
           $nuevoUsuario = User::create([
+
+              // Nombre de usuario
               'usuario'               => $request->usuario,
+
+              // Correo institucional
               'email'                 => $request->email,
+
+              // Contraseña encriptada
               'password'              => Hash::make($passwordPlano),
+
+              // Relación con empleado
               'empleado_id'           => $request->empleado_id,
+
+               // Rol asignado
                'role_id'               => $request->role_id,
+
+               // Estado inicial del usuario
                'estado'                => 'activo',
+
+              // Obliga a cambiar contraseña al iniciar sesión
               'debe_cambiar_password' => 1,
            ]);
 
+           // Si el usuario se creó correctamente
            if ($nuevoUsuario) {
+
              // 4. VINCULAR EMPLEADO
              DB::table('empleados')
                 ->where('id', $request->empleado_id)
                 ->update([
+
+                    // Vincular con el usuario
                     'user_id' => $nuevoUsuario->id,
+
+                    // Actualizar correo del empleado
                     'email'   => $request->email
                 ]);
 
               // 5. ENVIAR CORREO
-              Mail::to($nuevoUsuario->email)->send(new PasswordTemporalMail($nuevoUsuario, $passwordPlano));
+              Mail::to($nuevoUsuario->email)
+                  ->send(new PasswordTemporalMail($nuevoUsuario, $passwordPlano));
            }
 
+           // Confirmar transacción
            DB::commit();
+
+          // Redireccionar con mensaje de éxito
           return redirect()->route('usuarios.index')
                          ->with('success', 'Usuario creado. La contraseña fue enviada al correo.');
 
         } catch (\Exception $e) {
+
+          // Revertir cambios si ocurre un error
           DB::rollBack();
+
           // ESTO TE MOSTRARÁ EL ERROR REAL SI FALLA ALGO INTERNO
-          return back()->with('error', 'Error técnico: ' . $e->getMessage())->withInput();
+          return back()
+                ->with('error', 'Error técnico: ' . $e->getMessage())
+                ->withInput();
         }
    }
+
     /**
      * ACTUALIZAR USUARIO
      */
     public function update(Request $request, $id)
     {
+      // Buscar usuario por ID
       $usuario = User::findOrFail($id);
 
+      // Validación de datos
       $request->validate([
          'usuario' => 'required|unique:users,usuario,' . $id,
          'role_id' => 'required',
@@ -127,29 +179,43 @@ class UsuarioController extends Controller
 
       // LÓGICA DE CONTRASEÑA GENÉRICA
       if ($request->has('reset_password')) {
+
           // Generamos la clave (usamos random para compatibilidad)
           $passwordPlano = Str::random(6) . rand(10, 99); 
         
+          // Guardar nueva contraseña encriptada
           $usuario->password = Hash::make($passwordPlano);
-          $usuario->debe_cambiar_password = 1; // Forzamos cambio
+
+          // Forzar cambio de contraseña
+          $usuario->debe_cambiar_password = 1; 
         
           // Enviamos el correo (el mismo que usaste en store)
           if ($usuario->email) {
-              Mail::to($usuario->email)->send(new PasswordTemporalMail($usuario, $passwordPlano));
+
+              Mail::to($usuario->email)
+                  ->send(new PasswordTemporalMail($usuario, $passwordPlano));
             }
         }
 
+       // Guardar cambios
        $usuario->save();
 
       // Asegurar vínculo con empleado
       if ($usuario->empleado_id) {
+
          DB::table('empleados')
             ->where('id', $usuario->empleado_id)
-            ->update(['user_id' => $usuario->id]);
+            ->update([
+
+                // Relacionar empleado con usuario
+                'user_id' => $usuario->id
+            ]);
        }
 
+       // Retornar con mensaje de éxito
        return back()->with('success', 'Usuario actualizado correctamente.');
    }
+
     /**
      * ACTIVAR / INACTIVAR USUARIO
      */
@@ -160,6 +226,8 @@ class UsuarioController extends Controller
 
         // Cambiar estado alternando entre activo/inactivo
         $usuario->estado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
+
+        // Guardar cambio
         $usuario->save();
 
         // Retorna con mensaje de éxito
@@ -170,53 +238,69 @@ class UsuarioController extends Controller
      * ELIMINAR USUARIO
      */
     public function destroy($id)
-{
-    try {
-        // 1. Buscamos el usuario
-        $usuario = User::findOrFail($id);
+    {
+        try {
 
-        // 2. Intentamos desvincular al empleado (user_id = null)
-        // Esto es lo que evita el error de integridad
-        DB::table('empleados')
-            ->where('user_id', $id)
-            ->update(['user_id' => null]);
+            // 1. Buscamos el usuario
+            $usuario = User::findOrFail($id);
 
-        // 3. Borramos al usuario
-        $usuario->delete();
+            // 2. Intentamos desvincular al empleado (user_id = null)
+            // Esto es lo que evita el error de integridad
+            DB::table('empleados')
+                ->where('user_id', $id)
+                ->update([
 
-        return back()->with('success', 'El usuario ha sido eliminado y el empleado quedó libre.');
+                    // Eliminar vínculo
+                    'user_id' => null
+                ]);
 
-    } catch (\Illuminate\Database\QueryException $e) {
-        // 4. Si MySQL lanza un error (como el 1451), cae aquí
-        return back()->with('error', 'No se puede eliminar: el usuario todavía está vinculado a registros importantes.');
+            // 3. Borramos al usuario
+            $usuario->delete();
+
+            return back()->with(
+                'success',
+                'El usuario ha sido eliminado y el empleado quedó libre.'
+            );
+
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            // 4. Si MySQL lanza un error (como el 1451), cae aquí
+            return back()->with(
+                'error',
+                'No se puede eliminar: el usuario todavía está vinculado a registros importantes.'
+            );
         
-    } catch (\Exception $e) {
-        // 5. Cualquier otro error inesperado
-        return back()->with('error', 'Ocurrió un error inesperado al intentar eliminar.');
+        } catch (\Exception $e) {
+
+            // 5. Cualquier otro error inesperado
+            return back()->with(
+                'error',
+                'Ocurrió un error inesperado al intentar eliminar.'
+            );
+        }
     }
-}
 
-public function actualizarPassword(Request $request)
-{
-    // Validar que password y confirmación coincidan
-    $request->validate([
-        'password' => 'required|confirmed|min:8', // mejor 8 para seguridad
-    ]);
+    public function actualizarPassword(Request $request)
+    {
+        // Validar que password y confirmación coincidan
+        $request->validate([
+            'password' => 'required|confirmed|min:8', // mejor 8 para seguridad
+        ]);
 
-    // Obtener usuario autenticado
-    $user = Auth::user(); // ya logueado, no hace falta findOrFail
+        // Obtener usuario autenticado
+        $user = Auth::user(); // ya logueado, no hace falta findOrFail
 
-    // Asignar nueva contraseña y quitar flag
-    $user->password = Hash::make($request->password); // Hash manual
-    $user->debe_cambiar_password = 0;
-    $user->save(); // Guarda en BD
+        // Asignar nueva contraseña encriptada
+        $user->password = Hash::make($request->password);
 
-   
+        // Quitar bandera de cambio obligatorio
+        $user->debe_cambiar_password = 0;
 
-    // Redirigir directo al dashboard / sistema
-    return redirect('/dashboard')
-        ->with('success', 'Contraseña actualizada correctamente.');
-}
+        // Guardar cambios
+        $user->save(); 
 
-
+        // Redirigir directo al dashboard / sistema
+        return redirect('/dashboard')
+            ->with('success', 'Contraseña actualizada correctamente.');
+    }
 }
