@@ -19,34 +19,35 @@
                      style="max-width:950px; color:#000; border:1px solid #dee2e6;">
 
                     {{-- CABECERA DEL FORMATO --}}
-                    <table style="width:100%; border-collapse:collapse; margin-bottom:25px; border:1.5px solid black;">
-                        <tr>
-                            <!-- Logo de la empresa -->
-                            <td rowspan="4" style="width:20%; border:1px solid black; text-align:center; padding:10px;">
-                                <img src="{{ asset('images/ihci_logo.jpg') }}" style="max-height:55px;">
-                            </td>
-                            <!-- Encabezados del formato -->
-                            <td style="border:1px solid black; text-align:center; font-weight:bold;">FORMATO</td>
-                            <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">CÓDIGO</td>
-                            <td style="border:1px solid black; text-align:center; font-size:11px;">FT-GTH-002</td>
-                        </tr>
-                        <tr>
-                            <!-- Título del formato -->
-                            <td rowspan="3" style="border:1px solid black; text-align:center; font-weight:bold; padding:5px;">
-                                SOLICITUD DE AUTORIZACIÓN DE TIEMPO COMPENSADO
-                            </td>
-                            <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">VERSIÓN</td>
-                            <td style="border:1px solid black; text-align:center; font-size:11px;">1.1</td>
-                        </tr>
-                        <tr>
-                            <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">VIGENTE DESDE</td>
-                            <td style="border:1px solid black; text-align:center; font-size:11px;">28/3/2023</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">PÁGINA 1 DE 1</td>
-                        </tr>
-                    </table>
-
+                  <table style="width:100%; border-collapse:collapse; margin-bottom:25px; border:1.5px solid black; table-layout: fixed;">
+                      <tr>
+                          <td rowspan="4" style="width:20%; border:1px solid black; text-align:center; padding:10px;">
+                             <img src="{{ asset('images/ihci_logo.jpg') }}" style="max-height:55px;">
+                          </td>
+        
+                          <td rowspan="2" style="width:50%; border:1px solid black; text-align:center; font-weight:bold; font-size:12px;">FORMATO</td>
+        
+                            <td style="width:15%; border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">CÓDIGO</td>
+                           <td style="width:15%; border:1px solid black; text-align:center; font-size:11px;">FT-GTH-002</td>
+                      </tr>
+                    
+                      <tr>
+                          <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">VERSIÓN</td>
+                          <td style="border:1px solid black; text-align:center; font-size:11px;">1.1</td>
+                      </tr>
+                    
+                      <tr>
+                         <td rowspan="2" style="border:1px solid black; text-align:center; font-weight:bold; padding:5px; font-size:12px;">
+                             SOLICITUD DE AUTORIZACIÓN DE TIEMPO COMPENSADO
+                         </td>
+                          <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">VIGENTE DESDE</td>
+                          <td style="border:1px solid black; text-align:center; font-size:11px;">28/3/2023</td>
+                      </tr>
+  
+                      <tr>
+                         <td colspan="2" style="border:1px solid black; text-align:center; font-weight:bold; font-size:10px;">PÁGINA 1 DE 1</td>
+                       </tr>
+                   </table>
                     {{-- DATOS GENERALES DE LA SOLICITUD --}}
                     <div class="row mb-3" style="font-size:12px;">
                         <div class="row mb-3" style="font-size:12px; font-family: Arial, sans-serif; color: #333;">
@@ -341,53 +342,69 @@
     </div> {{-- Fin modal-dialog --}}
 </div> {{-- Fin modal --}}
 
-<script>
-function imprimirSolicitud(id) {
-    let contenido = document.getElementById('area-impresion-final-' + id).innerHTML;
 
-    // Creamos un iframe oculto
-    let iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '0px';
-    iframe.style.height = '0px';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    // Escribimos el contenido en el iframe
-    let doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-        <html>
-        <head>
-            <title>Imprimir Solicitud</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-            <style>
-                body { margin: 20px; font-family: Arial, sans-serif; }
-                table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
-                th, td { border: 1px solid black; padding: 5px; }
-                thead { display: table-header-group; }
-                tfoot { display: table-footer-group; }
-            </style>
-        </head>
-        <body>
-            ${contenido}
-        </body>
-        </html>
-    `);
-    doc.close();
-
-    // Lanzamos la impresión del iframe
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-
-    // Borramos el iframe después de imprimir
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-    }, 1000);
-}
-</script>
 
 <script>
+    //Imprimir
+    function imprimirSolicitud(id) {
+      let contenido = document.getElementById('area-impresion-final-' + id).innerHTML;
+
+     let iframe = document.createElement('iframe');
+     iframe.style.position = 'absolute';
+     iframe.style.width = '0px';
+     iframe.style.height = '0px';
+     iframe.style.border = '0';
+     document.body.appendChild(iframe);
+
+     let doc = iframe.contentWindow.document;
+     doc.open();
+     doc.write(`
+            <html>
+              <head>
+                 <title>&nbsp;</title>
+                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+                 <style>
+                     /* Estilos para limpiar la impresión */
+                     @page { 
+                         size: auto;   /* auto es el valor inicial */
+                         margin: 0mm;  /* Esto elimina los encabezados y pies de página del navegador */
+                        }
+
+                        body { 
+                          margin: 15mm; /* Margen real para el contenido del IHCI */
+                          font-family: Arial, sans-serif; 
+                          background-color: white !important; 
+                        }
+
+                       /* OCULTAR TODO LO QUE NO ES EL FORMATO */
+                       .no-print, .btn, .badge, button, .alert, 
+                       [class*="badge"], [class*="status"] { 
+                         display: none !important; 
+                        }
+ 
+                       table { width: 100%; border-collapse: collapse; }
+                          td, th { border: 1px solid black !important; padding: 5px; }
+                    </style>
+               </head>
+               <body>
+                  <div class="container-fluid">
+                     ${contenido}
+                   </div>
+               </body>
+            </html>
+        `);
+       doc.close();
+
+       iframe.contentWindow.onload = function() {
+         setTimeout(() => {
+             iframe.contentWindow.focus();
+             iframe.contentWindow.print();
+             document.body.removeChild(iframe);
+            }, 300);
+        };
+    }
+
+    //ALERTAS
     document.addEventListener('DOMContentLoaded', function() {
         // Seleccionamos todas las alertas presentes en la página
         var alerts = document.querySelectorAll('.alert');
