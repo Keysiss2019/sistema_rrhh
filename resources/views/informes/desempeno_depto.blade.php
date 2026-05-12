@@ -82,24 +82,20 @@
                         </div>
 
                         {{-- BOTONES DE DESCARGA --}}
-                        <div class="row text-center">
+                         <div class="row text-center mt-5">
                             <div class="col-md-6 mb-3">
-                               <div class="card btn-outline-danger border-2 p-4 btn-reporte" onclick="descargar('pdf')">
-                                  <div class="card-body">
-                                     <i class="fas fa-file-pdf fa-4x mb-3"></i>
-                                     <h4 class="fw-bold mb-1">Descargar PDF</h4>
-                                     <p class="small mb-0">Informe formal con promedios y firmas.</p>
-                                   </div>
-                              </div>
+                                <button type="button" onclick="descargar('pdf')" class="btn btn-outline-primary w-100 p-4 border-2  btn-reporte">
+                                    <i class="fas fa-file-pdf fa-4x mb-3"></i><br>
+                                    <b>Descargar PDF</b>
+                                    <p class="small mb-0">Informe formal con promedios.</p>
+                                </button>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <div class="card btn-outline-success border-2 p-4 btn-reporte" onclick="descargar('excel')" style="cursor: pointer;">
-                                   <div class="card-body">
-                                       <i class="fas fa-file-excel fa-4x mb-3 text-success"></i>
-                                       <h4 class="fw-bold mb-1">Descargar Excel</h4>
-                                       <p class="small mb-0">Consolidado de promedios para análisis de datos.</p>
-                                   </div>
-                              </div>
+                                <button type="button" onclick="descargar('excel')" class="btn btn-outline-success w-100 p-4 border-2 btn-reportes">
+                                    <i class="fas fa-file-excel fa-4x mb-3"></i><br>
+                                    <b>Descargar Excel</b>
+                                    <p class="small mb-0">Consolidado de promedios para análisis de datos.</p>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -114,20 +110,34 @@
         cursor: pointer;
         transition: all 0.3s ease;
         border-style: dashed !important;
-        color: #6c757d;
+        /* AGREGAMOS EL COLOR DEL BORDE AQUÍ */
+        border-color: #0b3d68 !important; 
+        color: #0b3d68;
     }
+    
+    .btn-reportes {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-style: dashed !important;
+        /* AGREGAMOS EL COLOR DEL BORDE AQUÍ */
+        border-color: #075537 !important;
+        color: #075537;
+    }
+
     .btn-reporte:hover {
         transform: translateY(-5px);
         border-style: solid !important;
-    }
-    .btn-outline-danger:hover {
-        background-color: #1665c0;
+        background-color: #0b3d68 !important;
         color: white !important;
     }
-    .btn-outline-success:hover {
-        background-color: #198754;
+
+    .btn-reportes:hover {
+        transform: translateY(-5px);
+        border-style: solid !important;
+        background-color: #075537 !important;
         color: white !important;
     }
+
     .card-header { background-color: #003366 !important; }
 </style>
 
