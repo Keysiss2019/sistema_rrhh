@@ -5,6 +5,9 @@ namespace App\Http\Controllers; //Define que esta clase pertenece al espacio de 
 use Illuminate\Http\Request;    //Importación de la clase Request.
 use App\Models\Role;            // Importación del modelo Role.
 use App\Models\RolModulo;       //Importación del modelo RolModulo.
+use App\Models\Modulo;          //Importación del modelo Modulo.
+
+
 
 
 class PermisosSistemaController extends Controller
@@ -18,25 +21,19 @@ class PermisosSistemaController extends Controller
     */
     public function index(Request $request)
     {
-        // 1. Obtener todos los roles registrados en el sistema
-        $roles = Role::all();
+     $roles = \App\Models\Role::all();
+    
+     // Si no hay role_id en la URL, $roleId será null
+     $roleId = $request->query('role_id'); 
 
-        // 2. Obtener el rol seleccionado desde la petición
-        // Si no se envía role_id, se selecciona el primer rol por defecto
-        $roleId = $request->get('role_id', $roles->first()->id);
+     $permisos = [];
+        if ($roleId) {
+         $permisos = RolModulo::where('role_id', $roleId)
+                    ->pluck('visible', 'modulo')
+                    ->toArray();
+       }
 
-        // 3. Obtener los permisos actuales del rol seleccionado
-        // El resultado es un arreglo tipo:
-        // ['seguridad' => 1, 'informes' => 0, ...]
-        $permisos = RolModulo::where('role_id', $roleId)
-            ->pluck('visible', 'modulo');
-
-        // 4. Retornar la vista con los datos necesarios
-        return view('seguridad.permisos', compact(
-            'roles',
-            'roleId',
-            'permisos'
-        ));
+      return view('seguridad.permisos', compact('roles', 'roleId', 'permisos'));
     }
 
     /*
@@ -61,6 +58,7 @@ class PermisosSistemaController extends Controller
         // Esto evita permisos no autorizados o inexistentes
         $modulosSistema = [
             'seguridad',
+            'administración',
             'permisos_laborales',
             'informes',
             'proyectos'
