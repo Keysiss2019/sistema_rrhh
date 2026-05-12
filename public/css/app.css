@@ -19,7 +19,7 @@ body {
    NAVBAR / BARRA DE NAVEGACIÓN
    =========================== */
 .navbar-ihci {
-    background: rgb(7, 26, 63);               /* Fondo azul para navbar */
+    background: rgb(115, 117, 120);                     /* Fondo azul para navbar */
     border-bottom: 3px solid var(--ihci-blue); /* Línea azul inferior */
     padding: 0.5rem 1rem;                  /* Espaciado interno */
 }
@@ -51,17 +51,20 @@ body {
     z-index: 1010;         /* Siempre encima de otros elementos */
     transition: transform 0.3s ease; /* Animación suave para efectos futuros */
 
-     /* ===========================
+    /* ===========================
        ESTILOS PARA REDONDEAR (NUEVO)
        =========================== */
-     border-radius: 20%;    /* Hace la imagen circular */
+    border-radius: 20%;    /* Hace la imagen circular */
     object-fit: cover;     /* Asegura que el logo no se estire dentro del círculo */
+  
+   
 }
 
 /* ===========================
    MENÚ PRINCIPAL DE MÓDULOS
    =========================== */
 .nav-modules {
+    
     display: flex;         /* Flex horizontal */
     gap: 20px;             /* Espacio entre cada módulo */
     margin: 0;
@@ -70,9 +73,10 @@ body {
 }
 
 .menu-item {
+    
     position: relative;    /* Para submenú absoluto */
     font-weight: 600;      /* Texto semi-negrita */
-    color:#ffffff;        /* Color azul institucional */
+    color: #ffffff;      /* Color azul institucional */
     cursor: pointer;       /* Cursor de mano */
     padding: 10px 5px;     /* Espaciado interno */
     transition: color 0.3s; /* Animación de color al hover */
@@ -193,49 +197,84 @@ body {
    Pantalla roles
    =========================== */
 /* Estilo general de la sección */
+/* Estilo general de la sección */
 .roles-section {
-    background-color: #f8f9fa; /* Fondo gris claro para toda la sección */
-    min-height: 100vh; /* Se asegura que ocupe toda la altura de la pantalla */
+    background-color: #f5f7f9;
+    min-height: 100vh;
+    padding: 20px; /* Añadido para que no pegue a las orillas */
 }
 
-/* Tabla personalizada */
+/* Tabla personalizada con BORDES INTERNOS */
+.custom-table {
+    border-collapse: collapse !important; /* Crucial para que los bordes se unan */
+    width: 100%;
+    border: 1px solid #e2e8f0 !important; /* Borde exterior */
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden; /* Para que los bordes redondeados funcionen */
+}
+
 .custom-table thead {
-    background-color: #f1f4f9; /* Color de fondo de encabezado */
-    color: #495057; /* Color de texto */
-    text-transform: uppercase; /* Texto en mayúsculas */
-    font-size: 0.85rem; /* Tamaño de letra más pequeño */
-    letter-spacing: 0.5px; /* Espaciado entre letras */
+    background-color: #4e72ad !important; /* Tu color azul de roles */
+    color: #ffffff !important; /* Texto blanco para mejor contraste */
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.custom-table thead th {
+    padding: 15px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Bordes internos del header */
+    text-align: center;
+}
+
+/* --- CUERPO DE LA TABLA --- */
+.custom-table tbody td {
+    padding: 14px 12px !important;
+    background-color: #ffffff !important;
+    
+    /* ✅ BORDES INTERNOS (Verticales y Horizontales) */
+    border-bottom: 1px solid #e2e8f0 !important; 
+    border-right: 1px solid #e2e8f0 !important; 
+}
+
+/* Quitamos el último borde derecho */
+.custom-table tbody td:last-child, 
+.custom-table thead th:last-child {
+    border-right: none !important;
 }
 
 .custom-table tbody tr {
-    transition: all 0.2s ease; /* Animación suave al pasar el mouse */
+    transition: all 0.2s ease;
 }
 
 .custom-table tbody tr:hover {
-    background-color: #f2f7ff !important; /* Cambia fondo al pasar el mouse */
-    transform: scale(1.002); /* Muy leve zoom para efecto visual */
+    background-color: #f2f7ff !important;
+    transform: scale(1.002);
+    z-index: 1; /* Para que el zoom no se oculte tras otras filas */
 }
 
 /* Botones de acción */
 .btn-group .btn {
-    border-radius: 8px; /* Esquinas redondeadas de los botones */
-    margin: 0 2px; /* Separación horizontal entre botones */
-    padding: 6px 10px; /* Tamaño interno del botón */
+    border-radius: 8px;
+    margin: 0 2px;
+    padding: 6px 10px;
 }
 
 /* Offcanvas Estilo */
 .offcanvas {
-    width: 400px !important; /* Ancho fijo del offcanvas */
+    width: 400px !important;
 }
 
 .offcanvas-header {
-    border-bottom: 1px solid rgba(255,255,255,0.1); /* Línea sutil inferior del header */
+    border-bottom: 1px solid rgba(0,0,0,0.1); /* Cambiado a oscuro para fondos claros */
 }
 
 .form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15); /* Sombra azul suave al enfocar */
-    border-color: #0d6efd; /* Borde azul al enfocar */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    border-color: #0568fd;
 }
+
 
 
 /* ===========================
@@ -243,69 +282,63 @@ body {
    =========================== */
 
 .tabla-personalizada {
-    border-collapse: separate !important; /* Las celdas no se pegan entre sí; permite usar espacio entre filas */
-    border-spacing: 0 8px !important;    /* Espaciado vertical de 8px entre filas, sin horizontal */
-    background-color: transparent !important; /* Fondo transparente, deja ver lo que esté debajo */
-    border: none !important;             /* Sin borde general alrededor de la tabla */
+    /* CAMBIO: Volvemos a colapsar para que los bordes se toquen y formen líneas */
+    border-collapse: collapse !important; 
+    background-color: transparent !important;
+    width: 100%;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-/* --- ENCABEZADO REDONDEADO --- */
+/* --- ENCABEZADO --- */
 .tabla-personalizada thead th {
-    background-color: #224cf4 !important; /* Fondo azul intenso para los encabezados */
-    color: #ffffff !important;            /* Texto blanco */
-    text-transform: uppercase;            /* Convierte texto a mayúsculas */
-    font-size: 0.8rem;                    /* Tamaño pequeño de letra */
-    font-weight: bold;                     /* Negrita */
-    padding: 15px !important;             /* Espaciado interno de las celdas */
-    border: none !important;              /* Quita bordes por defecto */
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important; /* Bordes internos semitransparentes a la derecha */
+    background-color: #224cf4 !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 15px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Redondear esquina superior izquierda */
-.tabla-personalizada thead th:first-child {
-    border-top-left-radius: 12px !important;    /* Esquina superior izquierda redondeada */
-    border-bottom-left-radius: 12px !important; /* Esquina inferior izquierda redondeada (al mantener la tabla elevada) */
+/* Bordes redondeados solo en las esquinas exteriores del thead */
+.tabla-personalizada thead tr th:first-child {
+    border-top-left-radius: 12px !important;
 }
-
-/* Redondear esquina superior derecha y quitar borde lateral */
-.tabla-personalizada thead th:last-child {
-    border-top-right-radius: 12px !important;   /* Esquina superior derecha redondeada */
-    border-bottom-right-radius: 12px !important;/* Esquina inferior derecha redondeada */
-    border-right: none !important;              /* Quita el borde derecho para que quede limpio */
+.tabla-personalizada thead tr th:last-child {
+    border-top-right-radius: 12px !important;
 }
 
 /* --- CUERPO DE LA TABLA (FILAS) --- */
 .tabla-personalizada td {
-    background-color: #f8f9fa !important;      /* Fondo gris muy claro para cada celda */
-    border-right: 1px solid #e2e8f0 !important; /* Borde derecho sutil para separar columnas */
+    background-color: #ffffff !important; /* Fondo blanco para que resalte */
+    padding: 16px 12px !important;
     
-    /* Bordes blancos para simular separación entre filas */
-    border-top: 2px solid #ffffff !important;   /* Línea blanca arriba de la celda */
-    border-bottom: 2px solid #ffffff !important;/* Línea blanca abajo de la celda */
+    /* ESTA ES LA LÍNEA DIVISORIA */
+    border-bottom: 1px solid #e2e8f0 !important; 
     
-    padding: 12px !important;                  /* Espacio interno de cada celda */
+    /* Quitamos los bordes laterales internos para un look más moderno/limpio */
+    border-right:1px solid #e2e8f0 !important; 
 }
 
-/* Redondear inicio de la fila de datos */
-.tabla-personalizada td:first-child {
-    border-left: none !important;             /* Quita el borde izquierdo de la primera celda */
-    border-top-left-radius: 12px !important;  /* Esquina superior izquierda redondeada */
-    border-bottom-left-radius: 12px !important;/* Esquina inferior izquierda redondeada */
+/* Bordes redondeados en la ÚLTIMA fila para cerrar el diseño */
+.tabla-personalizada tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 12px !important;
 }
-
-/* Redondear fin de la fila de datos y quitar borde lateral */
-.tabla-personalizada td:last-child {
-    border-top-right-radius: 12px !important; /* Esquina superior derecha redondeada */
-    border-bottom-right-radius: 12px !important;/* Esquina inferior derecha redondeada */
-    border-right: none !important;            /* Quita el borde derecho de la última celda */
+.tabla-personalizada tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 12px !important;
 }
 
 /* Efecto hover elegante */
-.tabla-personalizada tr:hover td {
-    background-color: #f0f4ff !important;      /* Fondo azul muy claro al pasar el mouse */
-    border-top-color: #224cf4 !important;      /* Borde superior azul del estilo del encabezado */
-    border-bottom-color: #224cf4 !important;   /* Borde inferior azul del estilo del encabezado */
-    cursor: pointer;                            /* Cambia el cursor para indicar que es interactivo */
+.tabla-personalizada tbody tr:hover td {
+    background-color: #f0f4ff !important; /* Azul muy tenue */
+    transition: background-color 0.2s ease;
+}
+
+/* Estilo para los Badges dentro de la tabla (opcional para que no se vean pegados) */
+.tabla-personalizada .badge {
+    margin-bottom: 2px;
 }
 
 
@@ -756,9 +789,6 @@ body {
 /* =========================
    CUERPO DEL FORMATO
 ========================= */
-/* =========================
-   CUERPO DEL FORMATO
-========================= */
 .cuerpo-formato {
     margin-top: 15px;      /* Separación desde el encabezado */
     font-size: 12px;       /* Tamaño de fuente del cuerpo del formato */
@@ -900,7 +930,6 @@ body {
     z-index: 2000 !important;
 }
 
-
 /* =========================
    Perfil
 ========================= */
@@ -940,3 +969,83 @@ body {
     .input-group .form-control:focus {
         z-index: 3;
     }
+
+ /* =========================
+   Perfil
+========================= */
+ /* Oculta la descripción (Showing 1 to 5...) */
+.custom-pagination .small.text-muted,
+.custom-pagination nav div:first-child {
+  display: none !important;
+}
+
+/* Asegura que los botones se vean como un grupo unido */
+.custom-pagination nav {
+  display: flex;
+  justify-content: center;
+}
+    
+/* Si las flechas se ven raras o gigantes */
+.custom-pagination svg {
+    width: 15px;
+}
+
+/* estilo para el filtro del buscador */
+.animacion-fade {
+ animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+ from { opacity: 0; transform: translateX(-10px); }
+ to { opacity: 1; transform: translateX(0); }
+}
+/* --- VISTA IMPRESIÓN --- */
+@media print {
+    /* 1. Ocultamos TODO el cuerpo de la página */
+    body * {
+        visibility: hidden;
+        height: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 2. Hacemos visible SOLO el modal y su contenido */
+    #modalDetalleSaldo, 
+    #modalDetalleSaldo * {
+        visibility: visible;
+        height: auto;
+    }
+
+    /* 3. Posicionamos el modal al inicio de la hoja */
+    #modalDetalleSaldo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+    }
+
+    /* 4. Quitamos el encabezado oscuro y el botón imprimir del papel */
+    .modal-header, 
+    .modal-footer, 
+    .btn-close,
+    .btn-primary {
+        display: none !important;
+    }
+
+    /* 5. Aseguramos que el contenido d-print-block se muestre */
+    .d-print-block {
+        display: block !important;
+    }
+
+    /* 6. Eliminamos bordes y sombras para que salga limpio en el papel */
+    .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* 7. Ajuste para evitar que se imprima el fondo gris del modal */
+    .modal-backdrop {
+        display: none !important;
+    }
+}
