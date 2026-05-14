@@ -43,24 +43,27 @@
                                 </select>
                             </div>
 
-                            {{-- 3. TIPO DE PERÍODO --}}
-                            <div class="col-md-2">
-                                <label class="form-label fw-bold text-dark">3. Período</label>
-                                <select class="form-select form-select-lg border-2 shadow-sm" name="periodo" id="periodo" onchange="actualizarInterfaz()">
-                                    <option value="anual" selected>Anual</option>
-                                    <option value="mensual">Mensual</option>
-                                </select>
-                            </div>
+                           {{-- 3. PERÍODO --}}
+<div class="col-md-2">
+    <label class="form-label fw-bold text-dark">3. Período</label>
+    <select class="form-select form-select-lg border-2 shadow-sm" name="periodo" id="periodo" onchange="actualizarInterfaz()">
+        <option value="" selected disabled>Elija...</option>
+        <option value="anual">Anual</option>
+        <option value="mensual">Mensual</option>
+    </select>
+</div>
 
-                            {{-- 4. AÑO FISCAL --}}
-                            <div class="col-md-2" id="div_anio">
-                                <label class="form-label fw-bold text-dark">4. Año</label>
-                                <select class="form-select form-select-lg border-2 shadow-sm" name="anio" id="anio_valor">
-                                    @foreach($anios as $a)
-                                        <option value="{{ $a }}" {{ $a == date('Y') ? 'selected' : '' }}>{{ $a }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+{{-- 4. AÑO FISCAL --}}
+<div class="col-md-2 d-none" id="div_anio">
+    <label class="form-label fw-bold text-dark">4. Año</label>
+    <select class="form-select form-select-lg border-2 shadow-sm" name="anio" id="anio_valor">
+        <option value="" selected disabled>Elija...</option>
+        @foreach($anios as $a)
+            <option value="{{ $a }}">{{ $a }}</option>
+        @endforeach
+    </select>
+</div>
+
 
                             {{-- 5. MES (Oculto por defecto) --}}
                             <div class="col-md-2 d-none" id="div_mes">
@@ -131,17 +134,27 @@
         });
     }
 
-    function actualizarInterfaz() {
-        const periodo = document.getElementById('periodo').value;
-        const divMes = document.getElementById('div_mes');
-        
-        if (periodo === 'mensual') {
-            divMes.classList.remove('d-none');
-        } else {
-            divMes.classList.add('d-none');
-            document.getElementById('mes_valor').value = "";
-        }
+   function actualizarInterfaz() {
+    const periodo = document.getElementById('periodo').value;
+    const divAnio = document.getElementById('div_anio');
+    const divMes = document.getElementById('div_mes');
+    
+    // Si se eligió cualquier período (anual o mensual), mostramos el Año
+    if (periodo === 'anual' || periodo === 'mensual') {
+        divAnio.classList.remove('d-none');
+    } else {
+        divAnio.classList.add('d-none');
+        document.getElementById('anio_valor').value = ""; // Limpiar selección si se oculta
     }
+
+    // El Mes solo se muestra si el período es estrictamente 'mensual'
+    if (periodo === 'mensual') {
+        divMes.classList.remove('d-none');
+    } else {
+        divMes.classList.add('d-none');
+        document.getElementById('mes_valor').value = ""; // Limpiar selección si se oculta
+    }
+}
 
    function generarReporte(tipo) {
     const empleado = document.getElementById('empleado_id').value;
@@ -157,6 +170,10 @@
     if (periodo === 'mensual' && !mes) {
         Swal.fire('Atención', 'Debe seleccionar el mes para el reporte mensual.', 'warning');
         return;
+    }
+    if (!anio) {
+     Swal.fire('Atención', 'Debe seleccionar el año fiscal.', 'warning');
+     return;
     }
 
     // 2. Mostrar indicador de carga
