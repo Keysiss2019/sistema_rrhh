@@ -470,7 +470,7 @@
     |--------------------------------------------------------------------------
     */
 
-function generarReporte(formato) {
+    function generarReporte(formato) {
     const empleado = document.getElementById('empleado_id').value;
     const periodo  = document.getElementById('periodo').value;
     const anio     = document.getElementById('anio_valor').value;

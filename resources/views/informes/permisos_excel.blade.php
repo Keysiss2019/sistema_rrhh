@@ -40,7 +40,7 @@
         </tr>
         @endforeach
     </tbody>
-<tfoot style="background-color: #ffffff;">
+    <tfoot style="background-color: #ffffff;">
     {{-- FILA DE TOTALES: Asegúrate de que estas variables tengan valor --}}
     <tr>
         <td colspan="3" style="text-align: right; font-weight: bold; background-color: #ffffff;">TOTALES:</td>
@@ -81,5 +81,5 @@
         <td style="background-color: #ffffff;"></td>
         <td style="background-color: #ffffff;"></td>
     </tr>
-</tfoot>
+    </tfoot>
 </table>

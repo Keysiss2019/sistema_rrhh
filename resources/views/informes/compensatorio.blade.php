@@ -44,25 +44,25 @@
                             </div>
 
                            {{-- 3. PERÍODO --}}
-<div class="col-md-2">
-    <label class="form-label fw-bold text-dark">3. Período</label>
-    <select class="form-select form-select-lg border-2 shadow-sm" name="periodo" id="periodo" onchange="actualizarInterfaz()">
-        <option value="" selected disabled>Elija...</option>
-        <option value="anual">Anual</option>
-        <option value="mensual">Mensual</option>
-    </select>
-</div>
+                          <div class="col-md-2">
+                             <label class="form-label fw-bold text-dark">3. Período</label>
+                             <select class="form-select form-select-lg border-2 shadow-sm" name="periodo" id="periodo" onchange="actualizarInterfaz()">
+                                 <option value="" selected disabled>Elija...</option>
+                                 <option value="anual">Anual</option>
+                                  <option value="mensual">Mensual</option>
+                              </select>
+                          </div>
 
-{{-- 4. AÑO FISCAL --}}
-<div class="col-md-2 d-none" id="div_anio">
-    <label class="form-label fw-bold text-dark">4. Año</label>
-    <select class="form-select form-select-lg border-2 shadow-sm" name="anio" id="anio_valor">
-        <option value="" selected disabled>Elija...</option>
-        @foreach($anios as $a)
-            <option value="{{ $a }}">{{ $a }}</option>
-        @endforeach
-    </select>
-</div>
+                          {{-- 4. AÑO FISCAL --}}
+                          <div class="col-md-2 d-none" id="div_anio">
+                             <label class="form-label fw-bold text-dark">4. Año</label>
+                              <select class="form-select form-select-lg border-2 shadow-sm" name="anio" id="anio_valor">
+                                  <option value="" selected disabled>Elija...</option>
+                                    @foreach($anios as $a)
+                                       <option value="{{ $a }}">{{ $a }}</option>
+                                    @endforeach
+                               </select>
+                           </div>
 
 
                             {{-- 5. MES (Oculto por defecto) --}}
