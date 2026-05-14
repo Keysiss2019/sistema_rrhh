@@ -38,22 +38,21 @@
                         <div class="row g-4">
 
                         {{-- =========================================================
-      NUEVO: SELECCIÓN DE TIPO DE SOLICITUD
-========================================================== --}}
-<div class="col-md-2">
-    <label class="form-label fw-bold text-dark">
-        Tipo de Solicitud
-    </label>
-    <select 
-        class="form-select form-select-lg border-2 shadow-sm" 
-        name="tipo_solicitud" 
-        id="tipo_solicitud"
-    >
-        <option value="TODOS">Todos</option>
-        <option value="Vacaciones">Vacaciones</option>
-        <option value="Permiso">Permisos</option>
-    </select>
-</div>
+                          NUEVO: SELECCIÓN DE TIPO DE SOLICITUD
+                        ========================================================== --}}
+                        <div class="col-md-2">
+                          <label class="form-label fw-bold text-dark">
+                             Tipo de Solicitud
+                          </label>
+                          <select 
+                              class="form-select form-select-lg border-2 shadow-sm" 
+                              name="tipo_solicitud" 
+                              id="tipo_solicitud" >
+                              <option value="TODOS">Todos</option>
+                              <option value="Vacaciones">Vacaciones</option>
+                              <option value="Permiso">Permisos</option>
+                             </select>
+                       </div>
 
                             {{-- =========================================================
                                  1. FILTRO POR DEPARTAMENTO
@@ -472,34 +471,58 @@
     */
 
 function generarReporte(formato) {
-        // Obtener valores de los campos
-        const empleado = document.getElementById('empleado_id').value;
-        const periodo  = document.getElementById('periodo').value;
-        const anio     = document.getElementById('anio_valor').value;
-        const mes      = document.getElementById('mes_valor').value;
-        const tipo     = document.getElementById('tipo_solicitud').value;
+    const empleado = document.getElementById('empleado_id').value;
+    const periodo  = document.getElementById('periodo').value;
+    const anio     = document.getElementById('anio_valor').value;
+    const mes      = document.getElementById('mes_valor').value;
+    const tipo     = document.getElementById('tipo_solicitud').value;
 
-        // Validaciones básicas
-        if (!empleado) return Swal.fire('Atención', 'Seleccione un colaborador', 'warning');
-        if (!periodo)  return Swal.fire('Atención', 'Seleccione el período', 'warning');
-        if (!anio)     return Swal.fire('Atención', 'Seleccione el año', 'warning');
+    if (!empleado || !periodo || !anio) {
+        return Swal.fire('Atención', 'Complete los filtros obligatorios', 'warning');
+    }
 
-        // Construir URL de descarga
-        // Asegúrate de que esta ruta coincida con la de tu archivo web.php
-        let url = formato === 'pdf' ? "{{ route('informes.permisos.pdf') }}" : "{{ route('informes.permisos.excel') }}";
-        
-        // Agregar parámetros
-        const params = new URLSearchParams({
+    $.ajax({
+        url: "{{ route('informes.validar.permisos') }}",
+        method: 'GET',
+        data: {
             empleado_id: empleado,
-            periodo: periodo,
             anio: anio,
             mes: mes,
+            periodo: periodo,
             tipo_solicitud: tipo
-        });
+        },
+        success: function(response) {
+            if (response.count > 0) {
+                let baseUrl = formato === 'pdf' 
+                    ? "{{ route('informes.permisos.pdf') }}" 
+                    : "{{ route('informes.permisos.excel') }}";
+                
+                const params = new URLSearchParams({
+                    empleado_id: empleado,
+                    periodo: periodo,
+                    anio: anio,
+                    mes: mes,
+                    tipo_solicitud: tipo
+                });
 
-        // Abrir en nueva pestaña
-        window.open(`${url}?${params.toString()}`, '_blank');
-    }
+                const finalUrl = `${baseUrl}?${params.toString()}`;
+
+                if (formato === 'pdf') {
+                    const visor = window.open(finalUrl, 'visor_reporte');
+                    if (visor) visor.focus();
+                } else {
+                    window.location.href = finalUrl; // Descarga directa
+                }
+            } else {
+                Swal.fire('Sin registros', 'No se encontraron registros para esta selección.', 'info');
+            }
+        },
+        error: function(xhr) {
+            console.error(xhr.responseText);
+            Swal.fire('Error', 'No se pudo conectar con el servidor. Revise la consola.', 'error');
+        }
+    });
+}
 </script>
 
 @endsection {{-- Fin de la sección content --}}

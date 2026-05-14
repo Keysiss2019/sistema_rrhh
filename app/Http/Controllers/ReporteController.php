@@ -1,18 +1,23 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; // Namespace donde se encuentra el controlador dentro de la aplicación
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-use App\Models\Departamento;
-use App\Models\Empleado;
-use App\Models\HoraExtra;
-use App\Models\Solicitud;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\ExportarDesempenoDepto;
-use App\Exports\IndividualExport;
-use App\Exports\CompensatorioExport;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB; // Facade para realizar consultas directas a la base de datos
+use Illuminate\Http\Request; // Clase para manejar peticiones HTTP y formularios
+
+use App\Models\Departamento; // Modelo de departamentos
+use App\Models\Empleado; // Modelo de empleados
+use App\Models\HoraExtra; // Modelo de horas extras
+use App\Models\Solicitud; // Modelo de solicitudes/permisos
+
+use Barryvdh\DomPDF\Facade\Pdf; // Librería para generar archivos PDF
+
+use App\Exports\ExportarDesempenoDepto; // Exportación Excel de desempeño por departamento
+use App\Exports\IndividualExport; // Exportación Excel de reportes individuales
+use App\Exports\CompensatorioExport; // Exportación Excel de compensatorios
+use App\Exports\PermisosExport; // Exportación Excel de permisos y vacaciones
+
+use Maatwebsite\Excel\Facades\Excel; // Facade para generar y descargar archivos Excel
 
 class ReporteController extends Controller
 {
@@ -200,59 +205,119 @@ class ReporteController extends Controller
         return view('informes.permisos', compact('departamentos', 'empleados', 'anios'));
     }
 
-public function validarPermisos(Request $request) {
-    $empleado = Empleado::findOrFail($request->empleado_id);
-    $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+    public function validarPermisos(Request $request) {
+        $empleado = Empleado::findOrFail($request->empleado_id);
+        $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
 
-    $query = Solicitud::where('nombre', $nombreCompleto)
+        $query = Solicitud::where('nombre', $nombreCompleto)
+            ->where('estado', 'aprobado')
+            ->whereYear('fecha_inicio', $request->anio);
+
+        $tipo = strtolower($request->tipo_solicitud);
+
+        if ($tipo === 'vacaciones') {
+            $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
+        } else {
+            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
+                  ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+        }
+
+        if ($request->filled('mes')) {
+            $query->whereMonth('fecha_inicio', $request->mes);
+        }
+
+        return response()->json(['count' => $query->count()]);
+    }
+
+    public function generarPermisosPdf(Request $request) {
+     $empleado = Empleado::findOrFail($request->empleado_id);
+     $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+
+     $query = Solicitud::where('nombre', $nombreCompleto)
         ->where('estado', 'aprobado')
         ->whereYear('fecha_inicio', $request->anio);
 
-    // EXCLUSIONES CRÍTICAS:
-    // No queremos ni Compensatorios ni Vacaciones en este reporte de "Permisos"
-    $query->where('tipo', 'NOT LIKE', '%TIEMPO COMPENSATORIO%')
-          ->where('tipo', 'NOT LIKE', '%VACACIONES%');
+     // --- LÓGICA DINÁMICA DE FILTRADO ---
+     $tipoRequest = strtolower($request->tipo_solicitud);
 
-    if ($request->periodo === 'mensual' && $request->filled('mes')) {
-        $query->whereMonth('fecha_inicio', $request->mes);
+     if (str_contains($tipoRequest, 'vacaciones')) {
+         // Si se pide vacaciones, buscamos coincidencias
+         $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
+         $tituloReporte = "HISTORIAL DE VACACIONES";
+       } else {
+         // Si son permisos, excluimos vacaciones y compensatorios
+         $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
+              ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+         $tituloReporte = "HISTORIAL DE PERMISOS";
+        }
+
+      // Filtro de mes si aplica
+      if ($request->filled('mes')) {
+          $query->whereMonth('fecha_inicio', $request->mes);
+        }
+
+       $solicitudes = $query->orderBy('fecha_inicio', 'asc')->get();
+
+       // --- CÁLCULO DE TOTALES (Simplificado con sum) ---
+       $totalDias = $solicitudes->sum('dias');
+       $totalHoras = $solicitudes->sum('horas');
+
+      // Generar el PDF
+      return Pdf::loadView('informes.pdf_permisos', [
+          'empleado'    => $empleado,
+          'solicitudes' => $solicitudes,
+          'anio'        => $request->anio,
+           'titulo'      => $tituloReporte, // Pasa el título dinámico a la vista
+           'mes'         => $request->filled('mes') ? $this->obtenerNombreMes($request->mes) : "Anual Acumulado",
+          'total_dias'  => $totalDias,
+         'total_horas' => $totalHoras
+         ])->setPaper('letter', 'portrait')
+          ->stream("{$tituloReporte}_{$empleado->apellido}.pdf");
     }
 
-    return response()->json(['count' => $query->count()]);
-}
+    public function exportarPermisosExcel(Request $request) {
+        $empleado = Empleado::findOrFail($request->empleado_id);
+        $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+        
+        $query = Solicitud::where('nombre', $nombreCompleto)
+            ->where('estado', 'aprobado')
+            ->whereYear('fecha_inicio', $request->anio);
 
-public function generarPermisosPdf(Request $request) {
-    $empleado = Empleado::findOrFail($request->empleado_id);
-    $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+        $tipo = strtolower($request->tipo_solicitud);
 
-    $query = Solicitud::where('nombre', $nombreCompleto)
-        ->where('estado', 'aprobado')
-        ->whereYear('fecha_inicio', $request->anio);
+        if ($tipo === 'vacaciones') {
+            $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
+            $tituloReporte = "Historial de Vacaciones";
+        } else {
+            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
+                  ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+            $tituloReporte = "Historial de Permisos";
+        }
 
-    // Exclusiones obligatorias para este reporte específico
-    $exclusiones = ['VACACIONES', 'TIEMPO COMPENSATORIO', 'COMPENSATORIO'];
-    foreach ($exclusiones as $excluir) {
-        $query->where('tipo', 'NOT LIKE', '%' . $excluir . '%');
+        if ($request->filled('mes')) {
+            $query->whereMonth('fecha_inicio', $request->mes);
+        }
+
+        $solicitudes = $query->orderBy('fecha_inicio', 'asc')->get();
+        $firma = DB::table('firmas')->where('activo', 1)->first();
+
+        $data = [
+            'empleado'    => $empleado,
+            'solicitudes' => $solicitudes,
+            'anio'        => $request->anio,
+            'titulo'      => $tituloReporte,
+            'mes'         => $request->filled('mes') ? $this->obtenerNombreMes($request->mes) : 'Anual Acumulado',
+            'total_dias'  => $solicitudes->sum('dias'),
+            'total_horas' => $solicitudes->sum('horas'),
+            'firmaBlob'   => $firma ? $firma->imagen_path : null
+        ];
+
+        $nombreArchivo = ($tipo === 'vacaciones') ? "Vacaciones" : "Permisos";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\PermisosExport($data), 
+            "{$nombreArchivo}_{$empleado->apellido}.xlsx"
+        );
     }
 
-    $solicitudes = $query->orderBy('fecha_inicio', 'asc')->get();
-
-    // --- CÁLCULO DE SUMA TOTAL ---
-    $sumaDias = 0;
-    $sumaHoras = 0;
-
-    foreach ($solicitudes as $s) {
-        // Suma simple de las columnas de la base de datos
-        $sumaDias += $s->dias ?? 0;
-        $sumaHoras += $s->horas ?? 0;
-    }
-
-    return Pdf::loadView('informes.pdf_permisos', [
-        'empleado'    => $empleado,
-        'solicitudes' => $solicitudes,
-        'anio'        => $request->anio,
-        'mes'         => $request->filled('mes') ? $this->obtenerNombreMes($request->mes) : "Anual Acumulado",
-        'total_dias'  => $sumaDias,
-        'total_horas' => $sumaHoras
-    ])->setPaper('letter', 'portrait')->stream("Historial_Permisos.pdf");
-}
 }
