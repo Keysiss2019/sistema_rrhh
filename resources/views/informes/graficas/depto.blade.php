@@ -59,6 +59,7 @@
                 <div class="col-md-2">
                     <label class="font-weight-bold text-gray-800">Año:</label>
                     <select id="anio_valor" class="form-control">
+                        <option value="" selected disabled>Elija...</option>
                         @foreach($anios as $anio)
                             <option value="{{ $anio }}">{{ $anio }}</option>
                         @endforeach
@@ -67,8 +68,9 @@
 
                 {{-- Selector de Mes --}}
                 <div class="col-md-3">
-                    <label class="font-weight-bold text-gray-800">Mes (Opcional):</label>
+                    <label class="font-weight-bold text-gray-800">Mes:</label>
                     <select id="mes_valor" class="form-control">
+                        <option value="" selected disabled>Elija...</option>
                         <option value="">Todo el Año (Acumulado)</option>
                         <option value="1">Enero</option>
                         <option value="2">Febrero</option>
