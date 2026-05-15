@@ -18,85 +18,313 @@
     </style>
 </head>
 <body>
+
+   {{-- =========================================================
+        ENCABEZADO PRINCIPAL DEL REPORTE
+   ========================================================== --}}
    <table style="width: 100%; border-bottom: 2px solid #003366; padding-bottom: 10px; margin-bottom: 20px;">
        <tr>
-           {{-- Logo a la izquierda --}}
+
+           {{-- =========================================================
+                LOGO INSTITUCIONAL IZQUIERDO
+           ========================================================== --}}
            <td style="width: 80px; vertical-align: middle;">
+
              @php
+                 /*
+                 |--------------------------------------------------------------------------
+                 | Obtener logo institucional
+                 |--------------------------------------------------------------------------
+                 | Se convierte la imagen a Base64 para que DomPDF
+                 | pueda renderizarla correctamente dentro del PDF.
+                 |--------------------------------------------------------------------------
+                 */
+
+                 // Ruta física del logo
                  $path = public_path('images/IHCI.png');
-                  $type = pathinfo($path, PATHINFO_EXTENSION);
-                  $data = file_get_contents($path);
-                  $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+                 // Obtiene la extensión del archivo
+                 $type = pathinfo($path, PATHINFO_EXTENSION);
+
+                 // Lee el contenido binario de la imagen
+                 $data = file_get_contents($path);
+
+                 // Convierte la imagen a Base64
+                 $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                @endphp
+
+               {{-- Imagen del logo --}}
                <img src="{{ $base64 }}" style="width: 70px; height: auto;">
            </td>
 
-           {{-- Texto Central --}}
+           {{-- =========================================================
+                TEXTO CENTRAL DEL ENCABEZADO
+           ========================================================== --}}
            <td style="text-align: center; vertical-align: middle;">
+
+             {{-- Nombre institucional --}}
              <div style="font-size: 18px; font-weight: bold; color: #003366; text-transform: uppercase;">
                  Instituto Hondureño de Cultura Interamericana
               </div>
-              <div style="font-size: 14px; margin-top: 5px;">Reporte Institucional de Desempeño por Departamento</div>
+
+              {{-- Título del reporte --}}
+              <div style="font-size: 14px; margin-top: 5px;">
+                  Reporte Institucional de Desempeño por Departamento
+              </div>
            </td>
         
-           {{-- Espacio para equilibrar o logo de certificación si tuvieran --}}
+           {{-- =========================================================
+                ESPACIO DERECHO
+                (Puede usarse para otro logo o certificación)
+           ========================================================== --}}
            <td style="width: 80px;"></td>
        </tr>
    </table>
    
-
+   {{-- =========================================================
+        INFORMACIÓN GENERAL DEL REPORTE
+   ========================================================== --}}
     <table class="info-reporte">
+
+        {{-- Primera fila --}}
         <tr>
-            <td><strong>Departamento:</strong> {{ $departamento->nombre }}</td>
-            <td align="right"><strong>Período:</strong> {{ $periodo_texto }}</td>
+
+            {{-- Nombre del departamento --}}
+            <td>
+                <strong>Departamento:</strong> 
+                {{ $departamento->nombre }}
+            </td>
+
+            {{-- Período evaluado --}}
+            <td align="right">
+                <strong>Período:</strong> 
+                {{ $periodo_texto }}
+            </td>
         </tr>
+
+        {{-- Segunda fila --}}
         <tr>
-            <td><strong>Generado el:</strong> {{ date('d/m/Y ') }}</td>
-            <td align="right"><strong>Año Fiscal:</strong> {{ $anio }}</td>
+
+            {{-- Fecha de generación --}}
+            <td>
+                <strong>Generado el:</strong> 
+                {{ date('d/m/Y ') }}
+            </td>
+
+            {{-- Año fiscal --}}
+            <td align="right">
+                <strong>Año Fiscal:</strong> 
+                {{ $anio }}
+            </td>
         </tr>
     </table>
 
+    {{-- =========================================================
+         TABLA PRINCIPAL DE EVALUACIONES
+    ========================================================== --}}
     <table class="tabla">
+
+        {{-- Encabezado de tabla --}}
         <thead>
             <tr>
-                <th width="60%">Actividad / Proyecto Evaluado</th>
-                <th width="20%">Fecha de Registro</th>
-                <th width="20%" style="text-align: center;">Puntuación</th>
+
+                {{-- Actividad evaluada --}}
+                <th width="60%">
+                    Actividad / Proyecto Evaluado
+                </th>
+
+                {{-- Fecha --}}
+                <th width="20%">
+                    Fecha de Registro
+                </th>
+
+                {{-- Puntuación --}}
+                <th width="20%" style="text-align: center;">
+                    Puntuación
+                </th>
             </tr>
         </thead>
+
+       {{-- =========================================================
+            CUERPO DE TABLA
+       ========================================================== --}}
        <tbody>
+
+       {{-- 
+            Recorre todos los registros de evaluación 
+       --}}
        @forelse($datos as $d)
+
           <tr>
-              <td>{{ $d->actividad }}</td>
-              <td>{{ \Carbon\Carbon::parse($d->fecha)->format('d/m/Y') }}</td>
-              <td align="center"><strong>{{ number_format($d->resultado, 2) }}%</strong></td>
+
+              {{-- Nombre de actividad --}}
+              <td>
+                  {{ $d->actividad }}
+              </td>
+
+              {{-- Fecha formateada --}}
+              <td>
+                  {{ \Carbon\Carbon::parse($d->fecha)->format('d/m/Y') }}
+              </td>
+
+              {{-- Resultado porcentual --}}
+              <td align="center">
+                  <strong>
+                      {{ number_format($d->resultado, 2) }}%
+                  </strong>
+              </td>
           </tr>
+
+        {{-- =========================================================
+             SI NO EXISTEN REGISTROS
+        ========================================================== --}}
         @empty
+
           <tr>
-              <td colspan="3" align="center">No se encontraron registros de evaluación para este período.</td>
+
+              {{-- Mensaje sin datos --}}
+              <td colspan="3" align="center">
+                  No se encontraron registros de evaluación para este período.
+              </td>
            </tr>
+
         @endforelse
         </tbody>
+
+        {{-- =========================================================
+             PIE DE TABLA
+        ========================================================== --}}
         <tfoot>
+
             <tr class="total-row">
-                <td colspan="2" align="right">RENDIMIENTO GLOBAL DEL DEPARTAMENTO:</td>
-                <td align="center" style="color: #003366;">{{ number_format($promedio_depto, 2) }}%</td>
+
+                {{-- Texto del promedio --}}
+                <td colspan="2" align="right">
+                    RENDIMIENTO GLOBAL DEL DEPARTAMENTO:
+                </td>
+
+                {{-- Promedio general --}}
+                <td align="center" style="color: #003366;">
+                    {{ number_format($promedio_depto, 2) }}%
+                </td>
             </tr>
         </tfoot>
     </table>
 
-    <div style="margin-top: 20px; font-style: italic; color: #555;">
-        * Este reporte consolida todas las evaluaciones (Autoevaluaciones y Evaluaciones de Jefe) completadas en el periodo seleccionado.
-    </div>
+    {{-- =========================================================
+         SECCIÓN DE FIRMA
+    ========================================================== --}}
+     <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
+         <tr>
 
-    <div class="firmas">
-        <br><br><br>
-        
-        <div class="espacio-firma">Sello Gerencia de Talento Humano</div>
-    </div>
+        <td style="text-align: center;">
 
+            {{-- Contenedor de firma --}}
+            <div style="display: inline-block; width: 300px;">
+
+                {{-- Área de imagen de firma --}}
+                <div style="height: 100px; margin-bottom: 5px; position: relative;">
+
+                    @php
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Inicializar variable de firma
+                        |--------------------------------------------------------------------------
+                        */
+                        $base64Image = null;
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Validar si existe firma activa
+                        |--------------------------------------------------------------------------
+                        */
+                        if (isset($firma) && $firma->imagen_path) {
+
+                            // Obtiene los datos de la imagen
+                            $imageData = $firma->imagen_path;
+                            
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Si la imagen viene como recurso/stream
+                            |--------------------------------------------------------------------------
+                            */
+                            if (is_resource($imageData)) {
+
+                                // Convierte stream a contenido binario
+                                $imageData = stream_get_contents($imageData);
+                            }
+                            
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Convierte la imagen en Base64
+                            |--------------------------------------------------------------------------
+                            */
+                            $base64Image = 'data:image/png;base64,' . base64_encode($imageData);
+                        }
+                    @endphp
+
+                    {{-- =========================================================
+                         SI EXISTE FIRMA
+                    ========================================================== --}}
+                    @if($base64Image)
+
+                        {{-- Imagen de firma --}}
+                        <img 
+                            src="{{ $base64Image }}" 
+                            style="max-height: 100px; max-width: 250px;"
+                        >
+
+                    {{-- =========================================================
+                         SI NO EXISTE FIRMA
+                    ========================================================== --}}
+                    @else
+
+                        {{-- Espacio vacío para firma --}}
+                        <div style="padding-top: 40px; color: #ccc; font-size: 8pt; border: 1px dashed #ddd;">
+
+                            ESPACIO PARA FIRMA <br> 
+                            (No se encontró registro activo)
+                        </div>
+
+                    @endif
+                </div>
+                
+                {{-- =========================================================
+                     LÍNEA Y TEXTO DE RESPONSABLE
+                ========================================================== --}}
+                <div style="border-top: 1.5px solid #000; padding-top: 5px;">
+
+                    {{-- Nombre del área --}}
+                    <strong style="font-size: 9pt; text-transform: uppercase; display: block;">
+                        Gerencia de Talento Humano
+                    </strong>
+
+                    {{-- Institución --}}
+                    <span style="font-size: 8pt; color: #444;">
+                        IHCI
+                    </span>
+                </div>
+            </div>
+        </td>
+          </tr>
+    </table>
+
+    {{-- =========================================================
+         PIE DEL DOCUMENTO
+    ========================================================== --}}
     <div class="footer">
+
+        {{-- Texto institucional --}}
         Documento de carácter institucional - Generado por Sistema RRHH IHCI
+
+        {{-- Nota aclaratoria --}}
+        <div style="margin-top: 20px; font-style: italic; color: #555;">
+
+          * Este reporte consolida todas las evaluaciones 
+          (Autoevaluaciones y Evaluaciones de Jefe) 
+          completadas en el periodo seleccionado.
+        </div>
     </div>
 
 </body>

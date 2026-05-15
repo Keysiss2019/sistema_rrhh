@@ -36,38 +36,43 @@ class ReporteController extends Controller
         return view('informes.desempeno_depto', compact('departamentos', 'anios'));
     }
 
-    public function generarPdf(Request $request) {
-        $depto_id = $request->departamento_id;
-        $anio = $request->anio;
-        $periodo = $request->periodo;
-        $mes = $request->mes;
-        $departamento = Departamento::find($depto_id);
+    // --- SECCIÓN Desempeño por depto. ---
+  public function generarPdf(Request $request) {
+    $depto_id = $request->departamento_id;
+    $anio = $request->anio;
+    $periodo = $request->periodo;
+    $mes = $request->mes;
+    $departamento = Departamento::find($depto_id);
 
-        $query = DB::table('asignacion_evaluaciones as ae')
-            ->join('empleados as e', 'ae.empleado_id', '=', 'e.id') 
-            ->leftJoin('proyectos as p', 'ae.proyecto_id', '=', 'p.id')
-            ->select(
-                DB::raw("COALESCE(p.nombre, ae.tipo) as actividad"), 
-                DB::raw("MAX(ae.created_at) as fecha"), 
-                DB::raw("AVG(ae.puntuacion_total) as resultado")
-            )
-            ->where('e.departamento_id', $depto_id) 
-            ->whereYear('ae.created_at', $anio)
-            ->groupBy('actividad');
+    // --- NUEVO: Obtener la firma activa ---
+    $firma = DB::table('firmas')->where('activo', 1)->first();
 
-        if ($periodo == 'mensual' && $mes) {
-            $query->whereMonth('ae.created_at', $mes);
-            $periodo_texto = "Mensual (" . $mes . ")";
-        } else {
-            $periodo_texto = "Anual Acumulado";
-        }
+    $query = DB::table('asignacion_evaluaciones as ae')
+        ->join('empleados as e', 'ae.empleado_id', '=', 'e.id') 
+        ->leftJoin('proyectos as p', 'ae.proyecto_id', '=', 'p.id')
+        ->select(
+            DB::raw("COALESCE(p.nombre, ae.tipo) as actividad"), 
+            DB::raw("MAX(ae.created_at) as fecha"), 
+            DB::raw("AVG(ae.puntuacion_total) as resultado")
+        )
+        ->where('e.departamento_id', $depto_id) 
+        ->whereYear('ae.created_at', $anio)
+        ->groupBy('actividad');
 
-        $datos = $query->get();
-        $promedio_depto = $datos->avg('resultado');
-
-        $pdf = Pdf::loadView('informes.pdf_desempeno', compact('datos', 'departamento', 'anio', 'periodo_texto', 'promedio_depto'));
-        return $pdf->download("Reporte_Desempeño_{$departamento->nombre}.pdf");
+    if ($periodo == 'mensual' && $mes) {
+        $query->whereMonth('ae.created_at', $mes);
+        $periodo_texto = "Mensual (" . $mes . ")";
+    } else {
+        $periodo_texto = "Anual Acumulado";
     }
+
+    $datos = $query->get();
+    $promedio_depto = $datos->avg('resultado');
+
+    // --- AGREGAR 'firma' al compact ---
+    $pdf = Pdf::loadView('informes.pdf_desempeno', compact('datos', 'departamento', 'anio', 'periodo_texto', 'promedio_depto', 'firma'));
+    return $pdf->download("Reporte_Desempeño_{$departamento->nombre}.pdf");
+  }
 
     public function generarExcel(Request $request) {
         $depto_id = $request->departamento_id;
