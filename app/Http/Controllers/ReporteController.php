@@ -71,7 +71,7 @@ class ReporteController extends Controller
 
     // --- AGREGAR 'firma' al compact ---
     $pdf = Pdf::loadView('informes.pdf_desempeno', compact('datos', 'departamento', 'anio', 'periodo_texto', 'promedio_depto', 'firma'));
-    return $pdf->download("Reporte_Desempeño_{$departamento->nombre}.pdf");
+    return $pdf->stream("Reporte_Desempeño_{$departamento->nombre}.pdf");
   }
 
    public function generarExcel(Request $request) {
