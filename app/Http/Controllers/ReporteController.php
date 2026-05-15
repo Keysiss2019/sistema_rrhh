@@ -141,7 +141,7 @@ class ReporteController extends Controller
         $promedio_global = $datos->avg('resultado') ?? 0;
 
         $pdf = Pdf::loadView('informes.pdf_individual', ['datos' => $datos, 'empleado' => $empleado, 'anio' => $request->anio, 'promedio_global' => $promedio_global, 'firma' => $firma]);
-        return $pdf->download("Evaluacion_{$empleado->nombre}_{$empleado->apellido}.pdf");
+        return $pdf->stream("Evaluacion_{$empleado->nombre}_{$empleado->apellido}.pdf");
     }
 
     public function generarIndividualExcel(Request $request) {

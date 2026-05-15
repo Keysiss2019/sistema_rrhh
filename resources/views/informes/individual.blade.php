@@ -177,37 +177,46 @@
         }
     }
 
-    function descargar(tipo) {
-        const empleado = document.getElementById('empleado_id').value;
-        const periodo = document.getElementById('periodo').value;
-        const anio = document.getElementById('anio_valor').value;
-        const mes = document.getElementById('mes_valor').value;
+   function descargar(tipo) {
+    const empleado = document.getElementById('empleado_id').value;
+    const periodo = document.getElementById('periodo').value;
+    const anio = document.getElementById('anio_valor').value;
+    const mes = document.getElementById('mes_valor').value;
 
-        if (!empleado || !periodo || !anio) {
-            Swal.fire('Atención', 'Seleccione un colaborador, período y año.', 'warning');
-            return;
-        }
-
-        Swal.fire({ title: 'Verificando...', didOpen: () => { Swal.showLoading(); } });
-
-        fetch(`{{ route('informes.validar') }}?empleado_id=${empleado}&anio=${anio}&periodo=${periodo}&mes=${mes}`)
-            .then(response => response.json())
-            .then(data => {
-                Swal.close();
-                if (data.count > 0) {
-                    let ruta = (tipo === 'pdf') 
-                        ? "{{ route('informes.individual.pdf') }}" 
-                        : "{{ route('informes.individual.excel') }}";
-                    
-                    window.location.href = `${ruta}?empleado_id=${empleado}&anio=${anio}&periodo=${periodo}&mes=${mes}`;
-                } else {
-                    Swal.fire('Sin registros', 'No se encontraron evaluaciones para este empleado.', 'info');
-                }
-            })
-            .catch(error => {
-                Swal.close();
-                Swal.fire('Error', 'No se pudo validar la información.', 'error');
-            });
+    if (!empleado || !periodo || !anio) {
+        Swal.fire('Atención', 'Seleccione un colaborador, período y año.', 'warning');
+        return;
     }
+
+    Swal.fire({ title: 'Verificando...', didOpen: () => { Swal.showLoading(); } });
+
+    fetch(`{{ route('informes.validar') }}?empleado_id=${empleado}&anio=${anio}&periodo=${periodo}&mes=${mes}`)
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            if (data.count > 0) {
+                let ruta = (tipo === 'pdf') 
+                    ? "{{ route('informes.individual.pdf') }}" 
+                    : "{{ route('informes.individual.excel') }}";
+                
+                const urlFinal = `${ruta}?empleado_id=${empleado}&anio=${anio}&periodo=${periodo}&mes=${mes}`;
+
+                if (tipo === 'pdf') {
+                    // ABRE EN PESTAÑA NUEVA (Asegúrate de usar stream() en el controlador)
+                    window.open(urlFinal, '_blank');
+                } else {
+                    // DESCARGA DIRECTA (Evita la pestaña blanca)
+                    window.location.href = urlFinal;
+                }
+                
+            } else {
+                Swal.fire('Sin registros', 'No se encontraron evaluaciones para este empleado.', 'info');
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('Error', 'No se pudo validar la información.', 'error');
+        });
+}
 </script>
 @endsection
