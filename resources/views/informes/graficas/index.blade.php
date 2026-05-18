@@ -38,7 +38,7 @@
 
         {{-- 3. Permisos y Vacaciones --}}
         <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('graficas.asistencias') }}" class="text-decoration-none">
+            <a href="{{ route('graficas.permisos') }}" class="text-decoration-none">
                 <div class="card border-left-success shadow h-100 py-2 card-hover">
                     <div class="card-body text-center">
                         <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>

@@ -366,7 +366,9 @@ class ReporteController extends Controller
     return view('informes.graficas.index');
     }
 
-    // Gráficas por depto
+    // ==========================================
+   //  GRÁFICA DEPTO
+  // ==========================================
     public function graficaDepto() {
     $departamentos = Departamento::all();
     
@@ -418,8 +420,10 @@ class ReporteController extends Controller
        ]);
     }
 
-    //Gráfica individual
-public function graficaIndividual() {
+    // ==========================================
+   //  GRÁFICA INDIVIDUAL
+  // ==========================================
+   public function graficaIndividual() {
     $departamentos = Departamento::orderBy('nombre', 'asc')->get();
     $anios = DB::table('asignacion_evaluaciones')
             ->selectRaw('YEAR(created_at) as anio')
@@ -428,10 +432,10 @@ public function graficaIndividual() {
             ->pluck('anio');
 
     return view('informes.graficas.individual', compact('departamentos', 'anios'));
-}
+   }
 
-// Nueva función para filtrar empleados por depto (AJAX)
-public function getEmpleadosPorDepto($depto_id) {
+   // Nueva función para filtrar empleados por depto (AJAX)
+   public function getEmpleadosPorDepto($depto_id) {
     // Traemos todos los campos para evitar errores de nombres
     $empleados = DB::table('empleados')
                 ->where('departamento_id', $depto_id)
@@ -439,9 +443,9 @@ public function getEmpleadosPorDepto($depto_id) {
                 ->get();
     
     return response()->json($empleados);
-}
+   }
 
-public function dataGraficaIndividual(Request $request) {
+   public function dataGraficaIndividual(Request $request) {
     $query = DB::table('asignacion_evaluaciones as ae')
         ->leftJoin('proyectos as p', 'ae.proyecto_id', '=', 'p.id')
         ->select(
@@ -461,14 +465,109 @@ public function dataGraficaIndividual(Request $request) {
         'labels' => $datos->pluck('actividad'),
         'valores' => $datos->pluck('resultado'),
     ]);
-}
+  }
 
+   // ==========================================
+  //  GRÁFICA DE PERMISOS
+  // ==========================================
+  public function graficaPermisos() {
+    $departamentos = Departamento::all();
+    $empleados = Empleado::orderBy('nombre', 'asc')->get();
+    
+    // Obtenemos los años directamente de la tabla solicitudes (excluyendo compensatorios si deseas)
+    $anios = DB::table('solicitudes')
+            ->where('tipo', '!=', 'A cuenta de tiempo compensatorio')
+            ->selectRaw('YEAR(fecha_inicio) as anio')
+            ->distinct()
+            ->orderBy('anio', 'desc')
+            ->pluck('anio');
 
-public function graficaAsistencias() {
-    return view('informes.graficas.asistencias');
-}
+    if ($anios->isEmpty()) { 
+        $anios = collect([date('Y')]); 
+    }
 
-public function graficaCompensatorio() { 
+    return view('informes.graficas.permisos', compact('departamentos', 'empleados', 'anios'));
+  }
+
+   public function dataGraficaPermisos(Request $request) {
+        $empleado = Empleado::findOrFail($request->empleado_id);
+        $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+
+        // Consulta base para el empleado y año seleccionado
+        $query = DB::table('solicitudes')
+            ->where('nombre', $nombreCompleto)
+            ->where('estado', 'aprobado')
+            ->whereYear('fecha_inicio', $request->anio);
+
+        // Convertimos a minúsculas para evaluar de forma segura
+        $tipoRequest = strtolower($request->tipo_solicitud);
+
+        if ($tipoRequest === 'vacaciones') {
+            $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
+        } 
+        elseif ($tipoRequest === 'permiso') {
+            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
+                  ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+        } 
+        else {
+            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+        }
+
+        if ($request->filled('mes')) {
+            $query->whereMonth('fecha_inicio', $request->mes);
+        }
+
+        // Obtenemos la suma bruta de días y horas por cada tipo
+        $datos = $query->select(
+                            'tipo', 
+                            DB::raw('SUM(dias) as total_dias'),
+                            DB::raw('SUM(horas) as total_horas')
+                        )
+                      ->groupBy('tipo')
+                      ->get();
+
+        // 1. PRIMER PASO: Calculamos el gran total de horas equivalentes de todas las solicitudes combinadas
+        $granTotalHoras = $datos->sum(function($row) {
+            return ($row->total_dias * 8) + $row->total_horas;
+        });
+
+        // 2. SEGUNDO PASO: Estructuramos los datos calculando el porcentaje individual
+        $dataFinal = $datos->map(function($row) use ($granTotalHoras) {
+            
+            // Convertimos los días a horas (1 día = 8 horas laborales) y sumamos las horas sueltas
+            $horasTotalesEquivalentes = ($row->total_dias * 8) + $row->total_horas;
+
+            // Cálculo matemático del porcentaje (Evitamos división por cero)
+            $porcentaje = $granTotalHoras > 0 ? round(($horasTotalesEquivalentes / $granTotalHoras) * 100, 1) : 0;
+
+            // Armamos el texto combinando el tiempo real y su porcentaje equivalente
+            if ($row->total_dias > 0) {
+                $textoVisual = $row->total_dias . ($row->total_dias == 1 ? ' día' : ' días');
+                if ($row->total_horas > 0) {
+                    $textoVisual .= ' y ' . $row->total_horas . ' hrs';
+                }
+            } else {
+                $textoVisual = $row->total_horas . ' horas';
+            }
+            
+            // Le pegamos el porcentaje al final del texto para que se vea claro en la barra
+            $textoFinalConPorcentaje = $textoVisual . " (" . $porcentaje . "%)";
+            
+            return [
+                'tipo'            => $row->tipo,
+                'horas_graficar'  => $horasTotalesEquivalentes,
+                'texto_pantalla'  => $textoFinalConPorcentaje
+            ];
+        })->sortByDesc('horas_graficar');
+
+        return response()->json([
+            'labels'    => $dataFinal->pluck('tipo'),
+            'valores'   => $dataFinal->pluck('horas_graficar'),
+            'etiquetas' => $dataFinal->pluck('texto_pantalla'),
+        ]);
+    }
+
+   public function graficaCompensatorio() { 
     return view('informes.graficas.compensatorio'); 
     }
 }
