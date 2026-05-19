@@ -118,7 +118,7 @@ class SolicitudController extends Controller
     }
 
     $solicitudes = $query->orderBy('created_at', 'desc')
-                        ->paginate(10)
+                        ->paginate(5)
                         ->withQueryString();
 
     return view('solicitudes.index', compact('solicitudes'));
