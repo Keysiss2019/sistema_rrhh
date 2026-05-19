@@ -385,7 +385,7 @@ private function sumarHorasReloj($arreglo) {
        $saldo->save();
     }
 
-    // En tu Controller
+    // Gestión de las horas
     public function gestion(Request $request)
     {
      $user = auth()->user();
@@ -437,11 +437,41 @@ private function sumarHorasReloj($arreglo) {
        // 5. CÁLCULOS DE SALDOS
        $totalAcumuladas = 0; $totalPagadas = 0; $totalConsumidas = 0; $totalPendientesSolicitud = 0;
     
-        if ($empleadoAConsultar) {
-         $totalAcumuladas = \App\Models\HoraExtra::where('empleado_id', $empleadoAConsultar->id)->where('estado', 'aprobado')->sum('horas_acumuladas');
-         $totalPagadas = \App\Models\HoraExtra::where('empleado_id', $empleadoAConsultar->id)->where('estado', 'aprobado')->sum('horas_pagadas');
-         $totalConsumidas = \App\Models\Solicitud::where('correo', $empleadoAConsultar->email)->where('tipo', 'A CUENTA DE TIEMPO COMPENSATORIO')->where('estado', 'aprobado')->sum('horas');
-         $totalPendientesSolicitud = \App\Models\Solicitud::where('correo', $empleadoAConsultar->email)->where('tipo', 'A CUENTA DE TIEMPO COMPENSATORIO')->whereIn('estado', ['pendiente', 'proceso'])->sum('horas');
+       if ($empleadoAConsultar) {
+          // 1. Horas acumuladas (Ganadas) aprobadas
+          $totalAcumuladas = \App\Models\HoraExtra::where('empleado_id', $empleadoAConsultar->id)
+          ->where('estado', 'aprobado')
+          ->sum('horas_acumuladas');
+
+          // 2. Horas pagadas aprobadas
+          $totalPagadas = \App\Models\HoraExtra::where('empleado_id', $empleadoAConsultar->id)
+          ->where('estado', 'aprobado')
+          ->sum('horas_pagadas');
+
+          // 3. HORAS CONSUMIDAS (Pasando los días a horas [dias * 8] + las horas directas)
+         // Filtramos estrictamente por el correo del empleado, estado aprobado y tipo correcto
+          $solicitudesAprobadas = \App\Models\Solicitud::where('correo', $empleadoAConsultar->correo ?? $empleadoAConsultar->email)
+           ->where('tipo', 'A CUENTA DE TIEMPO COMPENSATORIO')
+           ->where('estado', 'aprobado')
+           ->get();
+
+           foreach ($solicitudesAprobadas as $solicitud) {
+              // Si el registro guardó días (ej: 2 días), lo multiplicamos por 8 horas laborales
+              $horasDesdeDias = ((float)$solicitud->dias) * 8.0; 
+        
+              // Sumamos tanto las horas calculadas por días como las horas que se hayan metido directamente
+              $totalConsumidas += $horasDesdeDias + ((float)$solicitud->horas);
+            }
+
+           // 4. HORAS PENDIENTES (Por si quieres mostrar lo que está en proceso con la misma lógica)
+           $solicitudesPendientes = \App\Models\Solicitud::where('correo', $empleadoAConsultar->correo ?? $empleadoAConsultar->email)
+           ->where('tipo', 'A CUENTA DE TIEMPO COMPENSATORIO')
+           ->whereIn('estado', ['pendiente', 'en proceso'])
+           ->get();
+
+          foreach ($solicitudesPendientes as $solicitud) {
+              $totalPendientesSolicitud += (((float)$solicitud->dias) * 8.0) + ((float)$solicitud->horas);
+            }
         }
     
       $saldoRestante = $totalAcumuladas - $totalConsumidas;
