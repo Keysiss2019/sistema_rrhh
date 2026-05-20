@@ -35,25 +35,6 @@
                 {{-- Cuerpo de la tarjeta --}}
                 <div class="card-body px-4">
 
-                    {{-- Mensaje de éxito --}}
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mt-3" 
-                             role="alert" id="success-alert">
-                            <i class="fa-solid fa-circle-check me-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
-
-                    {{-- Mensaje de ERROR (Este es el que te falta) --}}
-                  @if(session('error'))
-                     <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mt-3" role="alert">
-                         <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                         {{ session('error') }}
-                           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                       </div>
-                    @endif
-
                     {{-- Tabla de políticas --}}
                     <div class="table-responsive mt-4">
                         <table class="table table-bordered table-hover align-middle shadow-sm">
@@ -93,9 +74,9 @@
 
                                     {{-- Formulario para actualizar días --}}
                                     <td class="text-center">
-                                        <form method="POST" 
-                                              action="{{ route('politicas.update', $politica->id) }}" 
-                                              id="form-update-{{ $politica->id }}">
+                                         <form method="POST" 
+                                               action="{{ route('politicas.update', $politica->id) }}" 
+                                               id="form-update-{{ $politica->id }}">
                                             @csrf
                                             @method('PUT')
 
@@ -105,7 +86,7 @@
                                                        value="{{ $politica->dias_anuales }}" 
                                                        class="form-control text-center border-2 border-primary-subtle fw-bold">
                                             </div>
-                                        </form>
+                                         </form>
                                     </td>
 
                                     {{-- Acciones --}}
@@ -262,7 +243,6 @@
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
             // Buscamos el input de texto asociado a este formulario específico
-            // Nota: Como el input está fuera del form, usamos el atributo 'form' para encontrarlo
             const id = this.id.replace('form-update-', '');
             const inputNombre = document.querySelector(`input[name="tipo_contrato"][form="form-update-${id}"]`);
 
@@ -273,15 +253,54 @@
                 inputNombre.classList.add('is-invalid');
                 inputNombre.focus();
                 
-                // Opcional: Una alerta rápida
-                alert('El nombre de la política no puede estar vacío.');
+                // Cambiado por un aviso sutil de SweetAlert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Campo Requerido',
+                    text: 'El nombre de la política no puede estar vacío.',
+                    confirmButtonColor: '#0d6efd'
+                });
             } else {
                 inputNombre.classList.remove('is-invalid');
             }
         });
     });
-});
+
+    // =========================================================================
+    // ALERTAS DE SESIÓN FLASHEADAS (Controladas centralizadamente por SweetAlert)
+    // =========================================================================
     
+    // Alerta de Éxito - Estilo exacto: "¡Logrado!" centrado grande con check circular
+    @if(session('success'))
+        Swal.fire({
+            title: '¡Logrado!',
+            text: "{{ session('success') }}",
+            icon: 'success',
+            iconColor: '#a5dc86', 
+            showConfirmButton: false, 
+            timer: 3000,
+            timerProgressBar: false,
+            customClass: {
+                popup: 'rounded-4 p-5 shadow-lg',
+                title: 'fw-bold text-dark fs-2 mb-3',
+                htmlContainer: 'text-muted fs-5'
+            }
+        });
+    @endif
+
+    // Alerta de Error de servidor/sesión
+    @if(session('error'))
+        Swal.fire({
+            title: '¡Error!',
+            text: "{{ session('error') }}",
+            icon: 'error',
+            confirmButtonColor: '#dc3545',
+            customClass: {
+                popup: 'rounded-4 shadow-lg'
+            }
+        });
+    @endif
+});
 </script>
 
 <script>
@@ -289,17 +308,20 @@
     function confirmarEliminacion(id, nombreContrato) {
         Swal.fire({
             title: '¿Eliminar política?',
-            text: "Esta acción no se puede deshacer.",
+            text: `Esta acción eliminará de forma permanente la política asociada a "${nombreContrato}". No se puede deshacer.`,
             icon: 'warning',
+            iconColor: '#f8bb86',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
             reverseButtons: true,
             customClass: {
-                popup: 'rounded-4 shadow',
-                title: 'fw-bold'
+                popup: 'rounded-4 p-4 shadow-sm',
+                title: 'fw-bold text-secondary',
+                confirmButton: 'px-4 py-2 fw-bold me-2',
+                cancelButton: 'px-4 py-2 fw-bold'
             }
         }).then((result) => {
             if (result.isConfirmed) {
@@ -307,27 +329,9 @@
             }
         });
     }
-
-    // Ocultar alerta de éxito automáticamente
-    document.addEventListener('DOMContentLoaded', function () {
-      // Seleccionamos todas las alertas (éxito y error)
-     const alerts = document.querySelectorAll('.alert');
-    
-      alerts.forEach(function(alert) {
-          setTimeout(() => {
-              // Efecto de desvanecimiento suave
-              alert.style.transition = "opacity 0.5s ease";
-              alert.style.opacity = "0";
-            
-              // Eliminar del DOM después del desvanecimiento
-               setTimeout(() => alert.remove(), 500);
-           }, 4000); // 4 segundos de visibilidad
-       });
-   });
 </script>
 
 {{-- Fin de la sección content --}}
 @endsection
-
 
 
