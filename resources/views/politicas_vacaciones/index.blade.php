@@ -23,7 +23,7 @@
                     <div class="d-flex gap-2">
                         
                         {{-- Botón para abrir offcanvas de nueva política --}}
-                        <button class="btn btn-dark btn-sm shadow-sm fw-bold"
+                        <button class="btn btn-primary btn-sm shadow-sm fw-bold"
                                 type="button"
                                 data-bs-toggle="offcanvas"
                                 data-bs-target="#offcanvasNuevaPolitica">
@@ -115,7 +115,7 @@
                                             {{-- Botón guardar cambios --}}
                                             <button type="submit" 
                                                     form="form-update-{{ $politica->id }}"
-                                                    class="btn btn-outline-warning btn-sm" 
+                                                    class="btn btn-outline-primary btn-sm" 
                                                     title="Guardar Cambios">
                                                 <i class="fa-solid fa-floppy-disk"></i>
                                             </button>
