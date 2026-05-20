@@ -1,34 +1,42 @@
-@extends('layouts.app') {{-- Indica que esta vista hereda la estructura base definida en layouts.app --}}
+@extends('layouts.app') {{-- Indica que esta vista hereda la plantilla principal layouts.app --}}
 
-@section('content') {{-- Inicia la sección "content" que será inyectada en el layout principal --}}
-<div class="container-fluid py-4">
-    <div class="card shadow border-0">
+@section('content') {{-- Inicio de la sección content que se mostrará en el layout --}}
 
-        <!-- HEADER DEL MÓDULO -->
+<div class="container-fluid py-4"> {{-- Contenedor principal con espaciado vertical --}}
+    
+    <div class="card shadow border-0"> {{-- Tarjeta principal del módulo --}}
+
+        {{-- ================================
+             ENCABEZADO DEL MÓDULO
+        ================================= --}}
         <div class="card-header bg-primary text-white d-flex justify-content-between">
+            
+            {{-- Título principal --}}
             <h4 class="mb-0">
                 <i class="fa-solid fa-building me-2"></i> Gestión de Departamentos
             </h4>
 
-            <button class="btn btn-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNuevoDepartamento">
+            {{-- Botón para abrir el formulario lateral de nuevo departamento --}}
+            <button class="btn btn-primary btn-sm"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasNuevoDepartamento">
+
                 <i class="fa-solid fa-plus-circle"></i> Nuevo
             </button>
         </div>
 
-        <!-- CUERPO -->
+        {{-- ================================
+             CUERPO PRINCIPAL
+        ================================= --}}
         <div class="card-body">
 
-         <!-- Mensaje de exito -->
-            @if(session('success'))
-             <div id="success-alert" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                 <i class="fa-solid fa-circle-check me-2"></i>
-                 {{ session('success') }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-              </div>
-           @endif
-
+            {{-- Tabla responsive --}}
             <div class="table-responsive">
+
+                {{-- Tabla de departamentos --}}
                 <table class="table table-bordered table-hover align-middle shadow-sm">
+
+                    {{-- Encabezados de tabla --}}
                     <thead>
                         <tr>
                             <th class="text-center">ID</th>
@@ -38,35 +46,72 @@
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
+
+                    {{-- Cuerpo dinámico de la tabla --}}
                     <tbody>
+
+                        {{-- Recorrido de departamentos --}}
                         @foreach($departamentos as $dep)
+
                         <tr>
-                            <td>#{{ $dep->id }}</td>
-                            <td >{{ $dep->nombre }}</td>
-                            <td>{{ $dep->descripcion }}</td>
-                            <td>{{ $dep->jefeEmpleado?->nombre ?? '' }} {{ $dep->jefeEmpleado?->apellido ?? '' }}</td>
+
+                            {{-- ID del departamento --}}
                             <td class="text-center">
-                                <!-- Botón Editar -->
+                                #{{ $dep->id }}
+                            </td>
+
+                            {{-- Nombre del departamento --}}
+                            <td>
+                                {{ $dep->nombre }}
+                            </td>
+
+                            {{-- Descripción --}}
+                            <td>
+                                {{ $dep->descripcion }}
+                            </td>
+
+                            {{-- Nombre del jefe asignado --}}
+                            <td>
+                                {{ $dep->jefeEmpleado?->nombre ?? '' }}
+                                {{ $dep->jefeEmpleado?->apellido ?? '' }}
+                            </td>
+
+                            {{-- Botones de acciones --}}
+                            <td class="text-center">
+
+                                {{-- Botón editar --}}
                                 <button type="button"
                                         class="btn btn-sm btn-outline-primary btn-edit-departamento"
+
+                                        {{-- Datos enviados al modal --}}
                                         data-id="{{ $dep->id }}"
                                         data-nombre="{{ $dep->nombre }}"
                                         data-descripcion="{{ $dep->descripcion }}"
                                         data-jefe-id="{{ $dep->jefeEmpleado?->id ?? '' }}">
+
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
 
+                                {{-- Formulario eliminar --}}
+                                <form action="{{ route('departamentos.destroy', $dep->id) }}"
+                                      method="POST"
+                                      class="d-inline delete-form">
 
-                                <!-- Botón Eliminar -->
-                                <form action="{{ route('departamentos.destroy', $dep->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">
+                                    @csrf {{-- Token CSRF --}}
+                                    @method('DELETE') {{-- Método DELETE --}}
+
+                                    {{-- Botón eliminar --}}
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger btn-delete-departamento"
+                                            data-nombre="{{ $dep->nombre }}">
+
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
+
                             </td>
                         </tr>
+
                         @endforeach
                     </tbody>
                 </table>
@@ -76,106 +121,208 @@
     </div>
 </div>
 
-<!-- OFFCANVAS NUEVO DEPARTAMENTO -->
+{{-- =====================================================
+     OFFCANVAS NUEVO DEPARTAMENTO
+===================================================== --}}
 <div class="offcanvas offcanvas-end" id="offcanvasNuevoDepartamento">
+
+    {{-- Encabezado --}}
     <div class="offcanvas-header bg-primary text-white">
+
         <h5>Nuevo Departamento</h5>
-        <button class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+
+        {{-- Botón cerrar --}}
+        <button class="btn-close btn-close-white"
+                data-bs-dismiss="offcanvas"></button>
     </div>
+
+    {{-- Cuerpo del formulario --}}
     <div class="offcanvas-body">
-        <form action="{{ route('departamentos.store') }}" method="POST">
-            @csrf
 
-           <div class="mb-3">
-    <label class="form-label fw-bold">Nombre</label>
-    <input 
-        id="edit_nombre_departamento"
-        name="nombre"
-        class="form-control"
-        required>
-</div>
+        {{-- Formulario guardar --}}
+        <form action="{{ route('departamentos.store') }}"
+              method="POST">
 
-<div class="mb-3">
-    <label class="form-label fw-bold">Descripción</label>
-    <textarea
-        id="edit_descripcion_departamento"
-        name="descripcion"
-        class="form-control"
-        required></textarea>
-</div>
+            @csrf {{-- Seguridad CSRF --}}
 
+            {{-- Campo nombre --}}
             <div class="mb-3">
-                <label class="form-label fw-bold">Jefe del Departamento</label>
-                <select name="jefe_empleado_id" class="form-select select2">
-                    <option value="">-- Sin asignar --</option>
+
+                <label class="form-label fw-bold">
+                    Nombre
+                </label>
+
+                <input 
+                    id="edit_nombre_departamento"
+                    name="nombre"
+                    class="form-control"
+                    required>
+            </div>
+
+            {{-- Campo descripción --}}
+            <div class="mb-3">
+
+                <label class="form-label fw-bold">
+                    Descripción
+                </label>
+
+                <textarea
+                    id="edit_descripcion_departamento"
+                    name="descripcion"
+                    class="form-control"
+                    required></textarea>
+            </div>
+
+            {{-- Selector jefe --}}
+            <div class="mb-3">
+
+                <label class="form-label fw-bold">
+                    Jefe del Departamento
+                </label>
+
+                <select name="jefe_empleado_id"
+                        class="form-select select2">
+
+                    <option value="">
+                        -- Sin asignar --
+                    </option>
+
+                    {{-- Listado de empleados --}}
                     @foreach($empleados as $emp)
-                        <option value="{{ $emp->id }}">{{ $emp->nombre }} {{ $emp->apellido }}</option>
+
+                        <option value="{{ $emp->id }}">
+                            {{ $emp->nombre }} {{ $emp->apellido }}
+                        </option>
+
                     @endforeach
                 </select>
             </div>
 
-            <button class="btn btn-primary w-100">Guardar</button>
+            {{-- Botón guardar --}}
+            <button class="btn btn-primary w-100">
+                Guardar
+            </button>
+
         </form>
     </div>
 </div>
 
-<!-- MODAL EDITAR DEPARTAMENTO -->
-<div class="modal fade" id="modalEditarDepartamento" tabindex="-1">
+{{-- =====================================================
+     MODAL EDITAR DEPARTAMENTO
+===================================================== --}}
+<div class="modal fade"
+     id="modalEditarDepartamento"
+     tabindex="-1">
+
     <div class="modal-dialog modal-dialog-centered">
+
         <div class="modal-content border-0 shadow-lg">
 
-            <div class="modal-header  text-white">
+            {{-- Encabezado modal --}}
+            <div class="modal-header text-white">
+
                 <h5 class="modal-title fw-bold">
-                    <i class="fa-solid fa-pen-to-square me-2"></i> Editar Departamento
+                    <i class="fa-solid fa-pen-to-square me-2"></i>
+                    Editar Departamento
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                {{-- Botón cerrar --}}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
             </div>
 
+            {{-- Cuerpo modal --}}
             <div class="modal-body">
-               <form id="formEditarDepartamento" method="POST" action="{{ session('edit_url') ?? '' }}">
+
+               {{-- Formulario editar --}}
+               <form id="formEditarDepartamento"
+                     method="POST"
+                     action="{{ session('edit_url') ?? '' }}">
+
                     @csrf
                     @method('PUT')
 
+                    {{-- Campo nombre --}}
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre del Departamento</label>
-                       <input type="text" name="nombre" id="modal_edit_nombre_departamento" 
-                       class="form-control border-2" 
-                       value="{{ old('nombre') }}" required>
-                   </div>
 
-                  <div class="mb-3">
-                     <label class="form-label fw-bold">Descripción</label>
-                      <textarea name="descripcion" id="modal_edit_descripcion_departamento" 
-                      class="form-control border-2" rows="4" required>{{ old('descripcion') }}</textarea>
-                   </div>
+                        <label class="form-label fw-bold">
+                            Nombre del Departamento
+                        </label>
 
-                   <div class="mb-3">
-                       <label class="form-label fw-bold">Jefe del Departamento</label>
-                       <select name="jefe_empleado_id" id="modal_edit_jefe_departamento" class="form-select select2">
-                          <option value="">-- Sin asignar --</option>
-                          @foreach($empleados as $emp)
-                              <option value="{{ $emp->id }}" 
-                                  {{ (old('jefe_empleado_id') == $emp->id || session('id_jefe_original') == $emp->id) ? 'selected' : '' }}>
-                                  {{ $emp->nombre }} {{ $emp->apellido }} 
-                                  {{ $emp->departamentoAsignado ? '(Ya es jefe)' : '' }}
-                               </option>
-                           @endforeach
-                      </select>
+                       <input type="text"
+                              name="nombre"
+                              id="modal_edit_nombre_departamento" 
+                              class="form-control border-2" 
+                              value="{{ old('nombre') }}"
+                              required>
                     </div>
 
-                    @if(session('warning'))
-                     <div id="alert-disposable" class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
-                          <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                          {{ session('warning') }}
-                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                       </div>
-                   @endif
+                    {{-- Campo descripción --}}
+                    <div class="mb-3">
 
-                  <div class="d-grid gap-2 mt-4">
-                      <button type="submit"  class="btn text-white rounded-pill px-4" style="background-color: #054084;">
-                         <i class="fa-solid fa-rotate me-2"></i> Actualizar
+                     <label class="form-label fw-bold">
+                        Descripción
+                     </label>
+
+                      <textarea name="descripcion"
+                                id="modal_edit_descripcion_departamento" 
+                                class="form-control border-2"
+                                rows="4"
+                                required>{{ old('descripcion') }}</textarea>
+                   </div>
+
+                    {{-- Selector jefe --}}
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Jefe del Departamento
+                        </label>
+
+                        <select name="jefe_empleado_id"
+                                id="modal_edit_jefe_departamento"
+                                class="form-select select2">
+
+                           <option value="">
+                               -- Sin asignar --
+                           </option>
+
+                           {{-- Recorrido de empleados --}}
+                           @foreach($empleados as $emp)
+
+                               <option value="{{ $emp->id }}" 
+
+                                   {{-- Mantener seleccionado --}}
+                                   {{ (old('jefe_empleado_id') == $emp->id || session('id_jefe_original') == $emp->id) ? 'selected' : '' }}>
+
+                                   {{ $emp->nombre }} {{ $emp->apellido }} 
+
+                                   {{-- Validación si ya es jefe --}}
+                                   {{ $emp->departamentoAsignado ? '(Ya es jefe)' : '' }}
+
+                                </option>
+
+                            @endforeach
+                       </select>
+                     </div>
+
+                    {{-- Botones acciones --}}
+                    <div class="d-grid gap-2 mt-4">
+
+                      {{-- Actualizar --}}
+                      <button type="submit"
+                              class="btn text-white rounded-pill px-4"
+                              style="background-color: #054084;">
+
+                         <i class="fa-solid fa-rotate me-2"></i>
+                         Actualizar
                       </button>
-                     <button type="button" class="btn btn-secondary btn-lg fw-bold" data-bs-dismiss="modal">
+
+                      {{-- Cancelar --}}
+                     <button type="button"
+                             class="btn btn-secondary btn-lg fw-bold"
+                             data-bs-dismiss="modal">
+
                          Cancelar
                      </button>
                   </div>
@@ -186,62 +333,154 @@
     </div>
 </div>
 
-<!-- SCRIPTS -->
- <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // 1. Desaparecer alerta
-    const alertElement = document.getElementById('alert-disposable');
-    if (alertElement) {
-        setTimeout(() => {
-            let bsAlert = new bootstrap.Alert(alertElement);
-            bsAlert.close();
-        }, 4000);
-    }
+{{-- =====================================================
+     SCRIPT PRINCIPAL
+===================================================== --}}
+<script>
 
-    // 2. REABRIR MODAL SI HAY ERROR (Mantiene datos gracias a old())
-   @if(session('warning'))
-        const modalElement = document.getElementById('modalEditarDepartamento');
-        if (modalElement) {
-            const editModal = new bootstrap.Modal(modalElement);
-            
-            // Forzamos a Select2 a reconocer el cambio de valor (el jefe original)
-            $('#modal_edit_jefe_departamento').trigger('change');
-            
-            editModal.show();
-        }
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* =====================================================
+       ALERTA DE ÉXITO
+    ===================================================== */
+    @if(session('success'))
+
+        Swal.fire({
+            title: '¡Logrado!',
+            text: "{{ session('success') }}",
+            icon: 'success',
+            iconColor: '#a5dc86',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: false,
+
+            customClass: {
+                popup: 'rounded-4 p-5 shadow-lg',
+                title: 'fw-bold text-dark fs-2 mb-3',
+                htmlContainer: 'text-muted fs-5'
+            }
+        });
+
     @endif
 
-    // 3. Lógica normal de botones editar
-    document.querySelectorAll('.btn-edit-departamento').forEach(btn => {
-        btn.addEventListener('click', function () {
-            // Limpiar inputs antes de cargar nuevos (evita mezclar datos viejos)
-            document.getElementById('modal_edit_nombre_departamento').value = this.dataset.nombre;
-            document.getElementById('modal_edit_descripcion_departamento').value = this.dataset.descripcion;
+    /* =====================================================
+       ALERTA WARNING Y REABRIR MODAL
+    ===================================================== */
+    @if(session('warning'))
 
-            const jefeId = this.dataset.jefeId; 
+        // Mostrar alerta warning
+        Swal.fire({
+            title: '¡Advertencia!',
+            text: "{{ session('warning') }}",
+            icon: 'warning',
+            confirmButtonColor: '#054084',
+
+            customClass: {
+                popup: 'rounded-4 shadow-lg'
+            }
+        });
+
+        // Reabrir modal automáticamente
+        const modalElement = document.getElementById('modalEditarDepartamento');
+
+        if (modalElement) {
+
+            const editModal = new bootstrap.Modal(modalElement);
+
+            // Refrescar Select2
+            $('#modal_edit_jefe_departamento').trigger('change');
+
+            editModal.show();
+        }
+
+    @endif
+
+    /* =====================================================
+       CONFIRMACIÓN ELIMINAR
+    ===================================================== */
+    document.querySelectorAll('.btn-delete-departamento').forEach(btn => {
+
+        btn.addEventListener('click', function () {
+
+            const form = this.closest('.delete-form');
+            const nombreDep = this.dataset.nombre;
+
+            Swal.fire({
+
+                title: '¿Eliminar departamento?',
+
+                text: `Esta acción eliminará de forma permanente el departamento "${nombreDep}". No se puede deshacer.`,
+
+                icon: 'warning',
+                iconColor: '#f8bb86',
+
+                showCancelButton: true,
+
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+
+                reverseButtons: true,
+
+                customClass: {
+                    popup: 'rounded-4 p-4 shadow-sm',
+                    title: 'fw-bold text-secondary',
+                    confirmButton: 'px-4 py-2 fw-bold me-2',
+                    cancelButton: 'px-4 py-2 fw-bold'
+                }
+
+            }).then(result => {
+
+                // Si confirma eliminación
+                if (result.isConfirmed) {
+
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    /* =====================================================
+       MODAL EDITAR DINÁMICO
+    ===================================================== */
+    document.querySelectorAll('.btn-edit-departamento').forEach(btn => {
+
+        btn.addEventListener('click', function () {
+
+            // Cargar nombre
+            document.getElementById('modal_edit_nombre_departamento').value =
+                this.dataset.nombre;
+
+            // Cargar descripción
+            document.getElementById('modal_edit_descripcion_departamento').value =
+                this.dataset.descripcion;
+
+            // Obtener jefe actual
+            const jefeId = this.dataset.jefeId;
+
+            // Referencia Select2
             const selectJefe = $('#modal_edit_jefe_departamento');
+
+            // Seleccionar jefe
             selectJefe.val(jefeId ? jefeId : '').trigger('change');
 
-            document.getElementById('formEditarDepartamento').action = `/departamentos/${this.dataset.id}`;
-            
-            const editModal = new bootstrap.Modal(document.getElementById('modalEditarDepartamento'));
+            // Asignar ruta dinámica
+            document.getElementById('formEditarDepartamento').action =
+                `/departamentos/${this.dataset.id}`;
+
+            // Mostrar modal
+            const editModal = new bootstrap.Modal(
+                document.getElementById('modalEditarDepartamento')
+            );
+
             editModal.show();
         });
     });
+
 });
+
 </script>
 
-<script>
-  // Mensaje de éxito
-    document.addEventListener('DOMContentLoaded', function() {
-        const alert = document.getElementById('success-alert');
-        if(alert){
-            setTimeout(() => {
-                // Aplicamos fade out usando clases de Bootstrap
-                alert.classList.remove('show');
-                alert.classList.add('hide');
-            }, 3000); // Desaparece después de 3 segundos
-        }
-    });
-</script>
-@endsection
+@endsection {{-- Fin de la sección content --}}
