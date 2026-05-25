@@ -14,6 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
 use App\Models\Role; //Importa la clase Role
+use App\Models\Proyecto; //Importa la clase proyecto
 
 /**
  * Modelo User
@@ -103,5 +104,14 @@ class User extends Authenticatable
         if (!empty($value)) {
             $this->attributes['password'] = Hash::needsRehash($value) ? Hash::make($value) : $value;
         }
+    }
+
+    /**
+     * RELACIÓN: Muchos a Muchos
+     * Los proyectos a los que está asignado el usuario a través de 'proyecto_designados'.
+     */
+    public function proyectos()
+    {
+        return $this->belongsToMany(Proyecto::class, 'proyecto_designados', 'user_id', 'proyecto_id');
     }
 } // Fin de la clase User

@@ -30,9 +30,10 @@ class Tarea extends Model
     {
         // Cuando una tarea se marca como completada o cambia su peso
         static::updated(function ($tarea) {
-            if ($tarea->proyecto) {
-                $tarea->proyecto->actualizarProgreso();
-            }
+            // Solo actualizar si realmente ha cambiado algo relevante
+           if ($tarea->isDirty(['completada', 'peso']) && $tarea->proyecto) {
+            $tarea->proyecto->actualizarProgreso();
+           }
         });
     }
 

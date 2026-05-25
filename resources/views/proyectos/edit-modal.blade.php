@@ -1,10 +1,9 @@
 <div class="modal fade" id="modalEditarProyecto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="offcanvas-header modal-header  text-white mb-2 py-3">
+            <div class="offcanvas-header modal-header text-white mb-2 py-3">
                 <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Proyecto / Meta + Equipo</h5>
-                <button type="button" class="btn-close"
-                        data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <form id="formEditarProyecto" method="POST">
@@ -14,6 +13,7 @@
                 <div id="hidden-designados-edit"></div>
 
                 <div class="modal-body">
+                    <div id="msj-modal-edit"></div>
 
                     <div class="row">
                         <div class="col-md-8 mb-3">
@@ -75,25 +75,26 @@
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn text-white rounded-pill px-4" style="background-color: #054084;"> <i class="fa-solid fa-rotate me-2"></i>Actualizar</button>
+                    <button type="submit" class="btn text-white rounded-pill px-4" style="background-color: #054084;"> 
+                        <i class="fa-solid fa-rotate me-2"></i>Actualizar
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-//Mensaje de alerta 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 2000;">
-  <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div class="toast-body">
-        <i class="fas fa-check-circle me-2"></i> <span id="toast-mensaje"></span>
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-  
+    <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i> <span id="toast-mensaje"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
     </div>
-  </div>
 </div>
+
 <script>
 var listaColaboradoresModal = [];
 
@@ -115,26 +116,22 @@ document.getElementById('formEditarProyecto').addEventListener('submit', functio
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            // 1. Cerrar el modal de edición
             const modalEl = document.getElementById('modalEditarProyecto');
             const modalBS = bootstrap.Modal.getInstance(modalEl);
             if(modalBS) modalBS.hide();
 
-            // 2. Mostrar la alerta estilo SweetAlert2
             Swal.fire({
                 title: '¡Actualizado!',
                 text: data.message,
                 icon: 'success',
-                confirmButtonColor: '#0d6efd', // Color azul de tu sistema
+                confirmButtonColor: '#0d6efd',
                 confirmButtonText: 'Aceptar'
             }).then((result) => {
-                // 3. Recargar la página al darle click a "Aceptar"
                 if (result.isConfirmed) {
                     location.reload();
                 }
             });
         } else {
-            // Alerta en caso de error
             Swal.fire({
                 title: 'Error',
                 text: data.message || 'No se pudo actualizar',
@@ -151,7 +148,6 @@ document.getElementById('formEditarProyecto').addEventListener('submit', functio
     });
 });
 
-// FUNCIÓN PARA PINTAR EL MENSAJE EN EL MODAL
 function mostrarMensajeModal(mensaje, tipo = 'danger') {
     const contenedor = document.getElementById('msj-modal-edit');
     if (!contenedor) return;
@@ -166,90 +162,58 @@ function mostrarMensajeModal(mensaje, tipo = 'danger') {
     document.querySelector('#modalEditarProyecto .modal-body').scrollTop = 0;
 }
 
-
 function editarProyecto(id, boton) {
-    if (!boton) return;
-    const originalHTML = boton.innerHTML;
-    
-    // Limpiar mensaje anterior si existe
-    const contenedorMsj = document.getElementById('msj-modal-edit');
-    if(contenedorMsj) contenedorMsj.innerHTML = '';
-
     boton.disabled = true;
-    boton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
+    
     fetch(`/proyectos/${id}/edit`)
         .then(response => {
-            if (!response.ok) return response.json().then(err => { throw err; });
+            if (!response.ok) throw new Error('Error en el servidor: ' + response.status);
             return response.json();
         })
         .then(data => {
-            const p = data.proyecto;
-
-            document.getElementById('edit_nombre').value = p.nombre || '';
-            document.getElementById('edit_fecha_inicio').value = p.fecha_inicio || '';
-            document.getElementById('edit_fecha_fin').value = p.fecha_fin || '';
-            document.getElementById('formEditarProyecto').action = `/proyectos/${p.id}`;
-
-            listaColaboradoresModal = data.colaboradores_actuales || [];
-
-            const tablaBody = document.querySelector('#tablaTareasEdit tbody');
-            tablaBody.innerHTML = '';
-            if (p.tareas && Array.isArray(p.tareas)) {
-                p.tareas.forEach((t, index) => {
-                    tablaBody.insertAdjacentHTML('beforeend', generarFilaTareaEdit(index, t));
-                });
+            console.log("Datos recibidos:", data);
+            
+            // Si esto imprime [] en la consola, el error está 100% en la consulta SQL del controlador
+            if (data.tareas.length === 0) {
+                alert("¡ALERTA! El servidor respondió, pero la lista de tareas llegó vacía. Revisa el log de Laravel.");
+            } else {
+                alert("Tareas recibidas: " + data.tareas.length);
+                // Aquí iría tu lógica de renderizado...
             }
-
-            sincronizarHiddenInputs();
-            actualizarSelectsTareas();
-            
-            const modalEl = document.getElementById('modalEditarProyecto');
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-            
-            // Si quieres confirmar que cargó:
-            // mostrarMensajeModal("Datos cargados", "success");
         })
-        .catch(error => {
-            console.error("Error:", error);
-            const msgError = error.error || error.message || "Error desconocido";
-            
-            // Abrimos el modal aunque falle para mostrar el error dentro
-            const modalEl = document.getElementById('modalEditarProyecto');
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-            mostrarMensajeModal("Error al obtener datos: " + msgError, 'danger');
+        .catch(err => {
+            console.error(err);
+            alert("Error: " + err.message);
         })
-        .finally(() => {
-            boton.disabled = false;
-            boton.innerHTML = originalHTML;
-        });
+        .finally(() => boton.disabled = false);
 }
 
-function generarFilaTareaEdit(index, tarea = null) {
-    const asignadoId = tarea ? String(tarea.asignado_user_id) : '';
-    const options = listaColaboradoresModal.map(u => 
-        `<option value="${u.id}" ${String(u.id) === asignadoId ? 'selected' : ''}>${u.nombre}</option>`
-    ).join('');
+function generarFilaTareaEdit(index, t) {
+    return `<tr>
+        <input type="hidden" name="tareas[${index}][id]" value="${t.id}">
+        <td><input name="tareas[${index}][titulo]" class="form-control" value="${t.titulo}"></td>
+        <td>
+            <select name="tareas[${index}][asignado_user_id]" class="form-select select-asignado">
+                ${listaColaboradoresModal.map(u => `<option value="${u.id}" ${u.id == t.asignado_user_id ? 'selected' : ''}>${u.nombre}</option>`).join('')}
+            </select>
+        </td>
+        <td><input type="date" name="tareas[${index}][fecha_inicio]" class="form-control" value="${t.fecha_inicio}"></td>
+        <td><input type="date" name="tareas[${index}][fecha_fin]" class="form-control" value="${t.fecha_fin}"></td>
+        <td><input type="number" name="tareas[${index}][peso]" class="form-control" value="${t.peso}"></td>
+        <td><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">X</button></td>
+    </tr>`;
+}
 
-    return `
-        <tr>
-            ${tarea ? `<input type="hidden" name="tareas[${index}][id]" value="${tarea.id}">` : ''}
-            <td><input name="tareas[${index}][titulo]" class="form-control form-control-sm" value="${tarea ? tarea.titulo : ''}" required></td>
-            <td>
-                <select name="tareas[${index}][asignado_user_id]" class="form-select form-select-sm select-asignado" required>
-                    <option value="">-- Seleccionar --</option>
-                    ${options}
-                </select>
-            </td>
-            <td><input type="date" name="tareas[${index}][fecha_inicio]" class="form-control form-control-sm" value="${tarea ? tarea.fecha_inicio : ''}" required></td>
-            <td><input type="date" name="tareas[${index}][fecha_fin]" class="form-control form-control-sm" value="${tarea ? tarea.fecha_fin : ''}" required></td>
-            <td><input type="number" name="tareas[${index}][peso]" class="form-control form-control-sm" value="${tarea ? tarea.peso : '10'}"></td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        </tr>`;
+function sincronizarHiddenInputs() {
+    const cont = document.getElementById('hidden-designados-edit');
+    cont.innerHTML = listaColaboradoresModal.map(c => `<input type="hidden" name="designados[]" value="${c.id}">`).join('');
+}
+
+function actualizarSelectsTareas() {
+    document.querySelectorAll('.select-asignado').forEach(s => {
+        let val = s.value;
+        s.innerHTML = listaColaboradoresModal.map(u => `<option value="${u.id}" ${u.id == val ? 'selected' : ''}>${u.nombre}</option>`).join('');
+    });
 }
 
 function cargarEmpleadosDepto(deptoId) {
@@ -290,24 +254,6 @@ function gestionarSeleccionColaborador(id, nombre) {
     actualizarSelectsTareas();
 }
 
-function sincronizarHiddenInputs() {
-    const contHidden = document.getElementById('hidden-designados-edit');
-    contHidden.innerHTML = '';
-    listaColaboradoresModal.forEach(c => {
-        contHidden.innerHTML += `<input type="hidden" name="designados[]" value="${c.id}">`;
-    });
-}
-
-function actualizarSelectsTareas() {
-    document.querySelectorAll('.select-asignado').forEach(select => {
-        const valorActual = select.value;
-        let options = '<option value="">-- Seleccionar --</option>';
-        options += listaColaboradoresModal.map(u => 
-            `<option value="${u.id}" ${String(u.id) === String(valorActual) ? 'selected' : ''}>${u.nombre}</option>`
-        ).join('');
-        select.innerHTML = options;
-    });
-}
 
 function agregarFilaManual() {
     const tbody = document.querySelector('#tablaTareasEdit tbody');
