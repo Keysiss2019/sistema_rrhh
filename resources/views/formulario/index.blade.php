@@ -184,9 +184,7 @@
                     </button>
                 </div>
 
-                <div class="modal-body">
-
-                    {{-- NOMBRE --}}
+                {{-- NOMBRE --}}
               <div class="modal-body">
                     {{-- Alerta de error específica dentro del modal --}}
                     @if($errors->has('nombre'))
@@ -203,14 +201,14 @@
                     </div>
 
                     @if($errors->has('nombre'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-        <i class="fas fa-exclamation-triangle mr-2"></i>
-        <strong>Error:</strong> {{ $errors->first('nombre') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-@endif
+                      <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                          <i class="fas fa-exclamation-triangle mr-2"></i>
+                         <strong>Error:</strong> {{ $errors->first('nombre') }}
+                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                      </div>
+                   @endif
 
                     {{-- PROYECTO --}}
                     <div class="mb-3">
@@ -260,7 +258,7 @@
 
 
 {{-- SCRIPTS --}}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
 $(document).ready(function() {
     console.log("Sistema de Asignación IHCI Iniciado");

@@ -81,6 +81,9 @@ class FormularioController extends Controller
 
            DB::commit();
 
+             // Al crear el nuevo formulario, establecemos la sesión en true
+           session(['esNuevo' => true]);
+
            // Enviamos la URL de redirección solo si todo salió bien
            return response()->json([
               'success' => true,
@@ -238,7 +241,7 @@ class FormularioController extends Controller
      // 2. Lógica para el botón: 
      // Si venimos del 'store', la sesión tendrá 'esNuevo'. 
      // Si entramos normal para editar, no tendrá nada y será 'false'.
-     $esNuevo = session('esNuevo', false); 
+     $esNuevo = session()->pull('esNuevo', false);
 
       // 3. Enviamos AMBAS variables a la vista
       return view('formulario.show', compact('formulario', 'esNuevo'));
@@ -268,24 +271,40 @@ class FormularioController extends Controller
 
   // Método para agregar una nueva pregunta al formulario
   public function agregarPregunta(Request $request, $id)
-   {
-     // Crea un nuevo registro en la tabla formulario_preguntas
-     \App\Models\FormularioPregunta::create([
+  {
+    // 1. Validar que no haya duplicados en el array enviado
+    $preguntas = $request->preguntas;
+    
+    // Convertimos a minúsculas y quitamos espacios para comparar bien
+    $preguntasNormalizadas = array_map(function($p) { return trim(strtolower($p)); }, $preguntas);
 
-         // ID del formulario al que pertenece la pregunta
-         'formulario_id' => $id,
-
-         // Texto de la pregunta ingresada desde el formulario
-         'pregunta' => $request->pregunta,
- 
-          // Categoría seleccionada para la pregunta
-          'categoria' => $request->categoria
-       ]);
-
-       // Regresa a la misma página mostrando mensaje de éxito
-       // Se usa back() para permitir seguir agregando preguntas
-       return back()->with('success', 'Pregunta añadida.');
+    if (count($preguntasNormalizadas) !== count(array_unique($preguntasNormalizadas))) {
+        return back()->with('error', '¡Error! Has incluido preguntas duplicadas en la lista.');
     }
+
+    // 2. Validar contra la Base de Datos (Seguridad extra)
+    foreach ($preguntas as $texto) {
+        $existeEnBD = \App\Models\FormularioPregunta::where('formulario_id', $id)
+            ->where('pregunta', $texto)
+            ->exists();
+
+        if ($existeEnBD) {
+            return back()->with('error', "La pregunta '$texto' ya existe en este formulario.");
+        }
+    }
+
+    // 3. Guardar
+    $categorias = $request->categorias ?? [];
+    foreach ($preguntas as $index => $texto) {
+        \App\Models\FormularioPregunta::create([
+            'formulario_id' => $id,
+            'pregunta'      => $texto,
+            'categoria'     => $categorias[$index] ?? 'General'
+        ]);
+    }
+
+    return back()->with('success', 'Preguntas añadidas correctamente.');
+   }
 
 
     // Método para eliminar una pregunta existente

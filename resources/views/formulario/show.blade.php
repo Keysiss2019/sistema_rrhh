@@ -165,24 +165,43 @@
 <div class="modal fade" id="modalPregunta" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
+            {{-- Asegúrate que la ruta sea correcta --}}
             <form action="{{ route('formulario.agregarPregunta', $formulario->id) }}" method="POST">
                 @csrf
+                {{-- Alertas --}}
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Nueva Pregunta / Criterio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body text-left">
-                    <div class="mb-3">
-                        <label>Descripción del Criterio</label>
-                        <textarea name="pregunta" class="form-control" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label>Categoría</label>
-                        <input type="text" name="categoria" class="form-control">
-                    </div>
+                <div class="modal-body">
+                 <div id="contenedor-preguntas">
+                      <label class="form-label">Preguntas a agregar:</label>
+                      <div class="input-group mb-2">
+                          <input type="text" name="preguntas[]" class="form-control" placeholder="Pregunta..." required>
+                          <input type="text" name="categorias[]" class="form-control" placeholder="Categoría" style="max-width: 120px;">
+                       </div>
+                 </div>
+                   <button type="button" id="btnAgregarPregunta" class="btn btn-sm btn-success mt-2">
+                     + Agregar otra pregunta
+                    </button>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Guardar Pregunta</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Preguntas</button>
                 </div>
             </form>
         </div>
@@ -221,21 +240,91 @@
 </div>
 
 <script>
-    function confirmarEliminacion(id) {
-        Swal.fire({
-            title: '¿Eliminar criterio?',
-            text: "Esta acción no se puede deshacer.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('delete-form-' + id).submit();
+    // Si la sesión tiene un error, reabrimos el modal
+    @if(session('error'))
+        document.addEventListener("DOMContentLoaded", function() {
+            var modalPregunta = new bootstrap.Modal(document.getElementById('modalPregunta'));
+            modalPregunta.show();
+
+            // Ocultar la alerta automáticamente después de 3 segundos
+            setTimeout(function() {
+                var alerta = document.querySelector('.alert-danger');
+                if (alerta) {
+                    alerta.style.display = 'none';
+                }
+            }, 3000); // 3000 milisegundos = 3 segundos
+        });
+    @endif
+</script>
+
+<script>
+    //MODAL AGREGAR PREGUNTA
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('btnAgregarPregunta');
+        const contenedor = document.getElementById('contenedor-preguntas');
+
+        if(btn) {
+            btn.addEventListener('click', function() {
+                const nuevoCampo = document.createElement('div');
+                nuevoCampo.className = 'input-group mb-2';
+                nuevoCampo.innerHTML = `
+                    <input type="text" name="preguntas[]" class="form-control" placeholder="Escribe la pregunta..." required>
+                    <input type="text" name="categorias[]" class="form-control" placeholder="Categoría" style="max-width: 120px;">
+                    <button type="button" class="btn btn-danger btn-eliminar">X</button>
+                `;
+                contenedor.appendChild(nuevoCampo);
+            });
+        }
+
+        // Delegación de eventos para eliminar (funciona incluso para elementos añadidos dinámicamente)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-eliminar')) {
+                e.target.parentElement.remove();
             }
-        })
+        });
+    });
+
+    // --- VALIDACIÓN DE DUPLICADOS ---
+    document.addEventListener('submit', function(e) {
+    if (e.target.matches('form[action*="agregarPregunta"]')) {
+        const inputs = e.target.querySelectorAll('input[name="preguntas[]"]');
+        const valores = [];
+        let duplicado = false;
+
+        inputs.forEach(input => {
+            const val = input.value.trim().toLowerCase();
+            if (val === "") return;
+            if (valores.includes(val)) duplicado = true;
+            valores.push(val);
+        });
+
+        if (duplicado) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: '¡Oops!',
+                text: 'Has repetido una pregunta en el formulario.',
+            });
+        }
     }
+    });
+
+   // Función para eliminar criterios existentes (la que ya tenías)
+   function confirmarEliminacion(id) {
+    Swal.fire({
+        title: '¿Eliminar criterio?',
+        text: "Esta acción no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('delete-form-' + id).submit();
+        }
+    });
+   }
 </script>
 @endsection
