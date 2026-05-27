@@ -51,6 +51,7 @@
 <div class="modal fade" id="modalAsignar{{ $f->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
+          
             <form action="{{ route('asignaciones.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="formulario_id" value="{{ $f->id }}">
@@ -162,95 +163,41 @@
         </div>
     </div>
 </div>
-@endforeach
+@endforeach 
+
 
 {{-- MODAL NUEVO FORMULARIO --}}
 <div class="modal fade" id="modalNuevoFormulario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-
-            <form action="{{ route('formulario.store') }}" method="POST">
+            <form id="formNuevoFormulario">
                 @csrf
-
-                <div class="offcanvas-header bg-primary text-white py-4 px-4">
-                   <h5 class="offcanvas-title fw-bold">
-                        <i class="fas fa-file-alt"></i>
-                        Nuevo Formulario
-                    </h5>
-
-                    <button type="button"
-                            class="btn-close btn-close-white"
-                            data-bs-dismiss="modal">
-                    </button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Nuevo Formulario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
-                {{-- NOMBRE --}}
-              <div class="modal-body">
-                    {{-- Alerta de error específica dentro del modal --}}
-                    @if($errors->has('nombre'))
-                        <div class="alert alert-danger py-2 shadow-sm">
-                            <i class="fas fa-times-circle mr-2"></i> {{ $errors->first('nombre') }}
-                        </div>
-                    @endif
-
+                <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nombre del Formulario</label>
-                        <input type="text" name="nombre" 
-                               class="form-control @error('nombre') is-invalid @enderror" 
-                               value="{{ old('nombre') }}" required>
+                        <input type="text" name="nombre" id="inputNombre" class="form-control" required>
                     </div>
-
-                    @if($errors->has('nombre'))
-                      <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                          <i class="fas fa-exclamation-triangle mr-2"></i>
-                         <strong>Error:</strong> {{ $errors->first('nombre') }}
-                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                          </button>
-                      </div>
-                   @endif
-
-                    {{-- PROYECTO --}}
                     <div class="mb-3">
-                        <label class="form-label fw-bold">
-                            Proyecto o Meta Finalizado
-                        </label>
-
-                        <select name="proyecto_id"
-                                class="form-select"
-                                required>
-
-                            <option value="">
-                                Seleccione un proyecto o meta
-                            </option>
-
+                        <label class="form-label fw-bold">Proyecto o Meta Finalizado</label>
+                        <select name="proyecto_id" id="selectProyecto" class="form-select" required>
+                            <option value="">Seleccione un proyecto</option>
                             @foreach($proyectos as $proyecto)
-
-                                <option value="{{ $proyecto->id }}">
-                                    {{ $proyecto->nombre }}
-                                </option>
-
+                                <option value="{{ $proyecto->id }}">{{ $proyecto->nombre }}</option>
                             @endforeach
-
                         </select>
                     </div>
-
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-
-                    <button type="button" id="btnGuardarFormulario" class="btn btn-primary">
-                      Guardar Formulario
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnGuardarFormulario" class="btn btn-primary">Guardar Formulario</button>
                 </div>
-
             </form>
-
         </div>
     </div>
 </div>
@@ -258,107 +205,201 @@
 
 
 {{-- SCRIPTS --}}
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. Escuchar el cambio en el selector de tipo de evaluación
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('selector-tipo-eval')) {
-            let select = e.target;
-            let modal = select.closest('.modal-content'); // Buscamos el contenedor del modal
-            let tipo = select.value;
-            
-            let seccion2 = modal.querySelector('.seccion-paso-2');
-            let seccion3 = modal.querySelector('.seccion-paso-3');
-            let colJefes = modal.querySelector('.seccion-jefes-col');
+document.addEventListener("DOMContentLoaded", function() {
 
-            if (tipo) {
-                seccion2.style.display = 'block';
-                seccion3.style.display = 'block';
-                colJefes.style.display = (tipo === 'Autoevaluacion') ? 'none' : 'block';
-            } else {
-                seccion2.style.display = 'none';
-                seccion3.style.display = 'none';
+ /*
+    |--------------------------------------------------------------------------
+    | REABRIR MODAL AIGNACIÓN
+    |--------------------------------------------------------------------------
+    */
+    @if (
+        old('formulario_id') &&
+        (
+            $errors->any() ||
+            session('success') ||
+            session('warning') ||
+            session('error')
+        )
+    )
+
+        let modalEl = document.getElementById(
+            'modalAsignar{{ old("formulario_id") }}'
+        );
+
+        if (modalEl) {
+
+            let modal = new bootstrap.Modal(modalEl);
+
+            modal.show();
+        }
+
+    @endif
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SWEET ALERTS
+    |--------------------------------------------------------------------------
+    */
+
+    @if(session('success'))
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: '{{ session("success") }}',
+            confirmButtonColor: '#3085d6',
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+    @endif
+
+
+    @if(session('warning'))
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Advertencia',
+            text: '{{ session("warning") }}',
+            confirmButtonColor: '#f0ad4e',
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+    @endif
+
+
+    @if(session('error'))
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session("error") }}',
+            confirmButtonColor: '#d33'
+        });
+
+    @endif
+
+
+    @if($errors->any())
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            html: `
+                <ul style="text-align:left;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            `,
+            confirmButtonColor: '#d33'
+        });
+
+    @endif
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT TIPO EVALUACIÓN
+    |--------------------------------------------------------------------------
+    */
+    document.body.addEventListener('change', function(e) {
+
+        if (e.target.classList.contains('selector-tipo-eval')) {
+
+            let valor = e.target.value;
+
+            let modalContent = e.target.closest('.modal-content');
+
+            modalContent
+                .querySelectorAll('.contenedor-dinamico')
+                .forEach(el => {
+                    el.style.display = 'block';
+                });
+
+            let seccionJefes = modalContent.querySelector('.seccion-jefes-col');
+
+            if (seccionJefes) {
+
+                seccionJefes.style.display =
+                    (valor === 'Evaluacion Jefe')
+                        ? 'block'
+                        : 'none';
             }
         }
     });
 
-    // 2. Escuchar el clic en los botones de departamento
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-filtro-general')) {
-            let btn = e.target.closest('.btn-filtro-general');
-            let modal = btn.closest('.modal-content');
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILTROS
+    |--------------------------------------------------------------------------
+    */
+    document.body.addEventListener('click', function(e) {
+
+        let btn = e.target.closest('.btn-filtro-general');
+
+        if (btn) {
+
+            e.preventDefault();
+
+            let modalContent = btn.closest('.modal-content');
+
             let deptId = btn.getAttribute('data-dept');
 
-            // Quitar clase active de todos los botones en ESTE modal
-            modal.querySelectorAll('.btn-filtro-general').forEach(b => b.classList.remove('active'));
+            modalContent
+                .querySelectorAll('.btn-filtro-general')
+                .forEach(b => b.classList.remove('active'));
+
             btn.classList.add('active');
 
-            // Filtrar colaboradores y jefes
-            let items = modal.querySelectorAll('.item-colaborador, .item-jefe');
-            items.forEach(item => {
-                if (deptId === 'todos' || item.getAttribute('data-dept') === deptId) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+            modalContent
+                .querySelectorAll('.item-colaborador, .item-jefe')
+                .forEach(item => {
+
+                    let itemDept = item.getAttribute('data-dept');
+
+                    item.style.display =
+                        (deptId === 'todos' || itemDept === deptId)
+                            ? 'block'
+                            : 'none';
+                });
         }
     });
-});
 
-//ALERTAS 
-$(document).ready(function() {
-    // Escuchamos el clic en el botón de guardar del modal
-    $('#btnGuardarFormulario').on('click', function(e) {
-        e.preventDefault();
 
-        // Obtenemos los datos del modal
-        let form = $(this).closest('form');
-        let formData = {
-            nombre: form.find('input[name="nombre"]').val(),
-            proyecto_id: form.find('select[name="proyecto_id"]').val(),
-            _token: '{{ csrf_token() }}'
-        };
+    /*
+    |--------------------------------------------------------------------------
+    | REABRIR MODAL NUEVO FORMULARIO
+    |--------------------------------------------------------------------------
+    */
+    const btn = document.getElementById('btnGuardarFormulario');
+    
+    btn.addEventListener('click', function() {
+        console.log("Botón presionado (JS Puro)");
 
-        $.ajax({
-            url: form.attr('action'),
-            type: "POST",
-            data: formData,
-            dataType: 'json',
-            success: function(response) {
-                // Si es exitoso, redirigimos a la edición de preguntas
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Logrado!',
-                    text: 'Formulario creado, redirigiendo...',
-                    showConfirmButton: false,
-                    timer: 1000
-                }).then(() => {
-                    window.location.href = response.redirect;
-                });
-            },
-            error: function(xhr) {
-                // Si el error es 422 (Validación de Laravel)
-                if (xhr.status === 422) {
-                    let errors = xhr.responseJSON.errors;
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Nombre Duplicado',
-                        text: errors.nombre ? errors.nombre[0] : 'Este formulario ya existe.',
-                        confirmButtonColor: '#d33'
-                    });
-                } else {
-                    // Cualquier otro error técnico
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo procesar la solicitud.',
-                        confirmButtonColor: '#d33'
-                    });
-                }
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('input[name="_token"]').value);
+        formData.append('nombre', document.getElementById('inputNombre').value);
+        formData.append('proyecto_id', document.getElementById('selectProyecto').value);
+
+        fetch("{{ route('formulario.store') }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect;
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.errors.nombre[0] });
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
     });
 });

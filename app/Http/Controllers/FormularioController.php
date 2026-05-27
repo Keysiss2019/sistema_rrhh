@@ -97,87 +97,124 @@ class FormularioController extends Controller
     }
 
     //Guarda la asignación del formulario
-    public function asignarStore(Request $request)
-    {
-       $request->validate([
+   public function asignarStore(Request $request)
+   {
+    $request->flashOnly(['formulario_id']);
+
+    $request->validate([
         'formulario_id' => 'required',
         'empleado_id'   => 'required|array',
         'tipo'          => 'required',
         'peso_jefe'     => 'nullable|array',
-        'proyecto_id'   => 'nullable' // Validamos con el nombre correcto
-       ]);
+        'proyecto_id'   => 'nullable'
+    ]);
 
-       try {
+    try {
+
         DB::beginTransaction();
+
         $creados = 0;
         $omitidos = 0;
 
-        // Definimos la variable única para todo el proceso
-        // Si no viene en el request, la rescatamos de la tabla proyectos
+        // Obtener proyecto
         $proyecto_id = $request->proyecto_id ?? DB::table('proyectos')
             ->where('formulario_id', $request->formulario_id)
             ->value('id');
 
         foreach ($request->empleado_id as $emp_id) {
-            
-            // --- AUTOEVALUACIÓN ---
+
+            /*
+            |--------------------------------------------------------------------------
+            | AUTOEVALUACIÓN
+            |--------------------------------------------------------------------------
+            */
             if ($request->tipo === 'Autoevaluacion') {
+
                 $existe = DB::table('asignacion_evaluaciones')
-                            ->where('formulario_id', $request->formulario_id)
-                            ->where('empleado_id', $emp_id)
-                            ->where('evaluador_id', $emp_id)
-                            ->where('tipo', 'Autoevaluacion')
-                            ->exists();
+                    ->where('formulario_id', $request->formulario_id)
+                    ->where('empleado_id', $emp_id)
+                    ->where('evaluador_id', $emp_id)
+                    ->where('tipo', 'Autoevaluacion')
+                    ->exists();
 
                 if (!$existe) {
+
                     $this->registrarAsignacion(
-                      $request->formulario_id, 
-                      $emp_id, 
-                      $emp_id, 
-                      'Autoevaluacion', 
-                       0, 
-                       $proyecto_id // Variable unificada
+                        $request->formulario_id,
+                        $emp_id,
+                        $emp_id,
+                        'Autoevaluacion',
+                        0,
+                        $proyecto_id
                     );
-                   
+
+                    // Notificación
                     $usuario = User::where('empleado_id', $emp_id)->first();
+
                     if ($usuario) {
-                        $usuario->notify(new EvaluacionAsignada('Autoevaluación', $request->formulario_id));
+                        $usuario->notify(
+                            new EvaluacionAsignada(
+                                'Autoevaluación',
+                                $request->formulario_id
+                            )
+                        );
                     }
+
                     $creados++;
+
                 } else {
+
                     $omitidos++;
                 }
-            } 
-            
-            // --- EVALUACIÓN DE JEFE ---
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | EVALUACIÓN JEFE
+            |--------------------------------------------------------------------------
+            */
             elseif ($request->tipo === 'Evaluacion Jefe') {
+
                 if ($request->has('evaluador_id') && is_array($request->evaluador_id)) {
+
                     foreach ($request->evaluador_id as $jefe_id) {
+
                         $existeJefe = DB::table('asignacion_evaluaciones')
-                                        ->where('formulario_id', $request->formulario_id)
-                                        ->where('empleado_id', $emp_id)
-                                        ->where('evaluador_id', $jefe_id)
-                                        ->where('tipo', 'Evaluacion Jefe')
-                                        ->exists();
+                            ->where('formulario_id', $request->formulario_id)
+                            ->where('empleado_id', $emp_id)
+                            ->where('evaluador_id', $jefe_id)
+                            ->where('tipo', 'Evaluacion Jefe')
+                            ->exists();
 
                         if (!$existeJefe) {
+
                             $peso = $request->peso_jefe[$jefe_id] ?? 0;
 
                             $this->registrarAsignacion(
-                               $request->formulario_id,
+                                $request->formulario_id,
                                 $emp_id,
                                 $jefe_id,
-                               'Evaluacion Jefe',
-                               $peso,
-                               $proyecto_id // Variable unificada
+                                'Evaluacion Jefe',
+                                $peso,
+                                $proyecto_id
                             );
-                         
+
+                            // Notificación
                             $jefe = User::where('empleado_id', $jefe_id)->first();
+
                             if ($jefe) {
-                               $jefe->notify(new EvaluacionAsignada('Evaluación de Jefe', $request->formulario_id));
+                                $jefe->notify(
+                                    new EvaluacionAsignada(
+                                        'Evaluación de Jefe',
+                                        $request->formulario_id
+                                    )
+                                );
                             }
+
                             $creados++;
+
                         } else {
+
                             $omitidos++;
                         }
                     }
@@ -187,21 +224,38 @@ class FormularioController extends Controller
 
         DB::commit();
 
-        if ($creados > 0 && $omitidos === 0) {
-            return back()->with('success', "Se crearon $creados nuevas asignaciones vinculadas al proyecto.");
-        } 
-        elseif ($creados > 0 && $omitidos > 0) {
-            return back()->with('warning', "Se crearon $creados asignaciones, pero se omitieron $omitidos duplicadas.");
-        } 
-        else {
-            return back()->with('info', "No hubo cambios. Las asignaciones ya existen.");
+        /*
+        |--------------------------------------------------------------------------
+        | RESPUESTAS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($creados > 0) {
+
+            return redirect()->back()
+                ->withInput()
+                ->with('success',
+                    "Asignación completada: {$creados} creados, {$omitidos} omitidos."
+                );
         }
 
-       } catch (\Exception $e) {
-          DB::rollBack();
-          return back()->with('error', 'Error técnico: ' . $e->getMessage());
-       }
+        return redirect()->back()
+            ->withInput()
+            ->with('warning',
+                'No se realizaron cambios: todas las asignaciones ya existían.'
+            );
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return redirect()->back()
+            ->withInput()
+            ->with('error',
+                'Error técnico: ' . $e->getMessage()
+            );
     }
+   }
 
    // Función privada para insertar en la BD
    private function registrarAsignacion($form_id, $emp_id, $eval_id, $tipo,  $peso = 0, $proyecto_id = null)

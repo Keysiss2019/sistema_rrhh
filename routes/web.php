@@ -428,20 +428,6 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | ASIGNACIONES
-    |--------------------------------------------------------------------------
-    */
-
-    // Guardar asignación
-    Route::post('/asignaciones/guardar-solicitud', [EvaluacionController::class, 'guardarAsignacion'])
-        ->name('asignaciones.store');
-
-    // Cargar asignaciones
-    Route::get('/evaluaciones/asignaciones/{id}', [EvaluacionController::class, 'cargarAsignacionesRF09']);
-
-
-    /*
-    |--------------------------------------------------------------------------
     | FORMULARIOS
     |--------------------------------------------------------------------------
     */
@@ -475,6 +461,10 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
         // Actualizar pregunta
         Route::put('/pregunta/{id}/actualizar', [FormularioController::class, 'actualizarPregunta'])
             ->name('formulario.actualizarPregunta');
+
+        // Guardar asignación
+        Route::post('/asignar', [FormularioController::class, 'asignarStore'])
+        ->name('asignaciones.store');
     });
 
 });
