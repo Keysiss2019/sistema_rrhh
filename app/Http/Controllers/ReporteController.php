@@ -382,42 +382,62 @@ class ReporteController extends Controller
     return view('informes.graficas.depto', compact('departamentos', 'anios'));
     }
 
-    public function dataGraficaDepto(Request $request) {
-     $depto_ids = $request->departamento_ids;
-     $anio = $request->anio;
-     $mes = $request->mes;
+    public function dataGraficaDepto(Request $request)
+    {
+    $depto_ids = $request->departamento_ids ?? [];
+    $anios = $request->anios ?? [];
+    $mes = $request->mes;
 
-     // Obtenemos los departamentos para asegurar que salgan todos (incluso con 0)
-     $departamentos = Departamento::whereIn('id', $depto_ids)->get();
+    if (!is_array($depto_ids)) $depto_ids = [$depto_ids];
+    if (!is_array($anios)) $anios = [$anios];
 
-     // Consulta de promedios
-     $query = DB::table('asignacion_evaluaciones as ae')
-         ->join('empleados as e', 'ae.empleado_id', '=', 'e.id')
-         ->select('e.departamento_id', DB::raw("AVG(ae.puntuacion_total) as promedio"))
-          ->whereIn('e.departamento_id', $depto_ids)
-         ->whereYear('ae.created_at', $anio); // Filtro de año obligatorio
+    $departamentos = Departamento::whereIn('id', $depto_ids)->get();
 
-      // Filtro de mes solo si se recibe el parámetro
-      if ($request->filled('mes')) {
-          $query->whereMonth('ae.created_at', $mes);
-       }
+    $query = DB::table('asignacion_evaluaciones as ae')
+        ->join('empleados as e', 'ae.empleado_id', '=', 'e.id')
+        ->select(
+            'e.departamento_id',
+            DB::raw("YEAR(ae.created_at) as anio"),
+            DB::raw("AVG(ae.puntuacion_total) as promedio")
+        )
+        ->whereIn('e.departamento_id', $depto_ids);
 
-      $promedios = $query->groupBy('e.departamento_id')
-                       ->get()
-                       ->keyBy('departamento_id');
+    if (!empty($anios)) {
+        $query->whereIn(DB::raw('YEAR(ae.created_at)'), $anios);
+    }
 
-      // Mapeo final
-      $dataFinal = $departamentos->map(function($depto) use ($promedios) {
-          return [
-             'nombre' => $depto->nombre,
-              'valor' => isset($promedios[$depto->id]) ? round($promedios[$depto->id]->promedio, 2) : 0
-            ];
-       });
+    if (!empty($mes)) {
+        $query->whereMonth('ae.created_at', $mes);
+    }
 
-       return response()->json([
-         'labels' => $dataFinal->pluck('nombre'),
-         'valores' => $dataFinal->pluck('valor'),
-       ]);
+    $data = $query
+        ->groupBy('e.departamento_id', DB::raw('YEAR(ae.created_at)'))
+        ->get();
+
+    $labels = $departamentos->pluck('nombre');
+
+    $datasets = [];
+
+    foreach ($anios as $anio) {
+
+        $datasets[] = [
+            'label' => "Año $anio",
+            'data' => $departamentos->map(function ($depto) use ($data, $anio) {
+
+                $row = $data->first(function ($r) use ($depto, $anio) {
+                    return $r->departamento_id == $depto->id
+                        && $r->anio == $anio;
+                });
+
+                return $row ? round($row->promedio, 2) : 0;
+            })->values(),
+        ];
+    }
+
+    return response()->json([
+        'labels' => $labels,
+        'datasets' => $datasets,
+    ]);
     }
 
     // ==========================================

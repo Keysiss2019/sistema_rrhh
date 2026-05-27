@@ -139,22 +139,23 @@
                     <label class="font-weight-bold text-gray-800">
                         Año:
                     </label>
+                   
+                    <div id="anio_check_container" style="display:none;">
+                       @foreach($anios as $anio)
+                          <label>
+                             <input type="checkbox" class="anio-check" value="{{ $anio }}">
+                             {{ $anio }}
+                          </label>
+                       @endforeach
+                    </div>
 
                     <select id="anio_valor" class="form-control">
-
-                        <option value="" selected disabled>
-                            Elija...
-                        </option>
-
-                        {{-- Recorrido de años --}}
+                       <option value="" selected disabled>Elija...</option>
                         @foreach($anios as $anio)
-
-                            <option value="{{ $anio }}">
-                                {{ $anio }}
-                            </option>
-
+                           <option value="{{ $anio }}">{{ $anio }}</option>
                         @endforeach
                     </select>
+                   
                 </div>
 
                 {{-- =========================================================
@@ -233,268 +234,124 @@
 {{-- =========================================================
      SCRIPT PRINCIPAL
 ========================================================== --}}
+
 <script>
 
-    /*
-    |--------------------------------------------------------------------------
-    | Variable global de la gráfica
-    |--------------------------------------------------------------------------
-    */
-    let miGrafica = null;
+let miGrafica = null;
 
-    /*
-    |--------------------------------------------------------------------------
-    | FUNCIÓN: cargarDatosGrafica()
-    |--------------------------------------------------------------------------
-    | Obtiene datos desde Laravel y genera la gráfica.
-    |--------------------------------------------------------------------------
-    */
-    function cargarDatosGrafica() {
+function cargarDatosGrafica() {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Obtener departamentos seleccionados
-        |--------------------------------------------------------------------------
-        */
-        const checkboxes = document.querySelectorAll('.depto-check:checked');
+    const depto_ids = Array.from(
+        document.querySelectorAll('.depto-check:checked')
+    ).map(cb => cb.value);
 
-        const depto_ids = Array
-            .from(checkboxes)
-            .map(cb => cb.value);
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Obtener filtros
-        |--------------------------------------------------------------------------
-        */
-        const anio = document.getElementById('anio_valor').value;
+    const esUnDepto = depto_ids.length === 1;
+    const esMultiDepto = depto_ids.length > 1;
 
-        const mes = document.getElementById('mes_valor').value;
+   const mesEl = document.getElementById('mes_valor');
+   const mes = mesEl.value;
+   const esTodoAnio = mes === "";
 
-        /*
-        |--------------------------------------------------------------------------
-        | Validar selección mínima
-        |--------------------------------------------------------------------------
-        */
-        if (depto_ids.length === 0) {
+    
 
+    let anios = [];
+
+    // 🔵 CASO 1: 1 DEPARTAMENTO → CHECKBOX
+    if (esUnDepto) {
+
+        anios = Array.from(
+            document.querySelectorAll('.anio-check:checked')
+        ).map(cb => cb.value);
+
+        if (anios.length < 2) {
             Swal.fire(
                 'Atención',
-                'Seleccione al menos un departamento.',
+                'Debe seleccionar al menos 2 años para comparar este departamento',
                 'warning'
             );
-
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Mostrar loading
-        |--------------------------------------------------------------------------
-        */
-        Swal.fire({
-            title: 'Generando...',
-            didOpen: () => { Swal.showLoading(); }
-        });
+    } 
+    // 🔴 CASO 2: VARIOS DEPARTAMENTOS → SELECT
+    else {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Construcción dinámica de URL
-        |--------------------------------------------------------------------------
-        */
-        let url = `
-            {{ route('graficas.data.depto') }}
-            ?${depto_ids.map(id => `departamento_ids[]=${id}`).join('&')}
-            &anio=${anio}
-        `;
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Agregar mes si fue seleccionado
-        |--------------------------------------------------------------------------
-        */
-        if (mes !== "" && mes !== null) {
+        const anio = document.getElementById('anio_valor').value;
 
-            url += `&mes=${mes}&periodo=mensual`;
+        if (!anio) {
+            Swal.fire(
+                'Atención',
+                'Seleccione un año para comparar departamentos',
+                'warning'
+            );
+            return;
         }
 
-        console.log("URL solicitada:", url);
+        anios = [anio];
+    }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Petición AJAX
-        |--------------------------------------------------------------------------
-        */
-        fetch(url)
+    // 🔴 DEPARTAMENTOS
+    if (depto_ids.length === 0) {
+        Swal.fire('Atención', 'Seleccione al menos un departamento', 'warning');
+        return;
+    }
 
-            .then(response => response.json())
+    // 🔴 MES
+   // 🔴 VALIDACIÓN CORRECTA DEL MES
+if (mesEl.selectedIndex === 0) {
+    Swal.fire('Atención', 'Debe seleccionar un mes o "Todo el año"', 'warning');
+    return;
+}
 
-            .then(data => {
+    Swal.fire({
+        title: 'Generando gráfica...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
-                Swal.close();
+    let url = "{{ route('graficas.data.depto') }}";
 
-                /*
-                |--------------------------------------------------------------------------
-                | Obtener contexto del canvas
-                |--------------------------------------------------------------------------
-                */
-                const ctx = document
-                    .getElementById('canvasDepto')
-                    .getContext('2d');
-                
-                /*
-                |--------------------------------------------------------------------------
-                | Destruir gráfica anterior
-                |--------------------------------------------------------------------------
-                */
-                if (miGrafica) {
+    url += '?' + depto_ids
+        .map(id => `departamento_ids[]=${encodeURIComponent(id)}`)
+        .join('&');
 
-                    miGrafica.destroy();
+    url += '&' + anios
+        .map(a => `anios[]=${encodeURIComponent(a)}`)
+        .join('&');
+
+    if (!esTodoAnio) {
+        url += `&mes=${encodeURIComponent(mes)}`;
+    }
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+
+            Swal.close();
+
+            const ctx = document.getElementById('canvasDepto').getContext('2d');
+
+            if (miGrafica) miGrafica.destroy();
+
+            Chart.register(ChartDataLabels);
+
+            miGrafica = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: data.datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Registrar plugin de etiquetas
-                |--------------------------------------------------------------------------
-                */
-                Chart.register(ChartDataLabels);
-
-                /*
-                |--------------------------------------------------------------------------
-                | Lista de colores dinámicos
-                |--------------------------------------------------------------------------
-                */
-                const colores = [
-                    '#4e73df',
-                    '#1cc88a',
-                    '#36b9cc',
-                    '#f6c23e',
-                    '#e74a3b',
-                    '#6610f2'
-                ];
-
-                /*
-                |--------------------------------------------------------------------------
-                | Crear gráfica
-                |--------------------------------------------------------------------------
-                */
-                miGrafica = new Chart(ctx, {
-
-                    // Tipo de gráfica
-                    type: 'bar',
-
-                    // Datos
-                    data: {
-
-                        // Etiquetas del eje X
-                        labels: data.labels,
-
-                        // Dataset principal
-                        datasets: [{
-
-                            label: 'Desempeño %',
-
-                            data: data.valores,
-
-                            // Colores dinámicos
-                            backgroundColor: colores.slice(
-                                0,
-                                data.labels.length
-                            ),
-
-                            // Bordes redondeados
-                            borderRadius: 5,
-
-                            // Tamaño de barras
-                            barPercentage: 0.7
-                        }]
-                    },
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Configuración visual
-                    |--------------------------------------------------------------------------
-                    */
-                    options: {
-
-                        responsive: true,
-
-                        maintainAspectRatio: false,
-
-                        scales: {
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Eje Y
-                            |--------------------------------------------------------------------------
-                            */
-                            y: {
-
-                                beginAtZero: true,
-
-                                max: 110,
-
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                },
-
-                                ticks: {
-                                    color: '#ffffff'
-                                }
-                            },
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Eje X
-                            |--------------------------------------------------------------------------
-                            */
-                            x: {
-
-                                ticks: {
-                                    color: '#ffffff'
-                                }
-                            }
-                        },
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Plugins
-                        |--------------------------------------------------------------------------
-                        */
-                        plugins: {
-
-                            // Ocultar leyenda
-                            legend: {
-                                display: false
-                            },
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Etiquetas encima de barras
-                            |--------------------------------------------------------------------------
-                            */
-                            datalabels: {
-
-                                color: '#ffffff',
-
-                                anchor: 'end',
-
-                                align: 'top',
-
-                                offset: 5,
-
-                                font: {
-                                    weight: 'bold',
-                                    size: 13
-                                },
-
-                                formatter: (value) => value + '%'
-                            }
-                        }
-                    }
-                });
             });
-   }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.close();
+            Swal.fire('Error', 'No se pudo cargar la gráfica', 'error');
+        });
+}
 </script>
-
 @endsection

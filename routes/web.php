@@ -531,31 +531,41 @@ Route::prefix('informes')->middleware(['auth'])->group(function () {
 
 // Grupo de rutas para Gráficas Comparativas
 Route::prefix('informes/graficas')->group(function () {
-    Route::get('/', [ReporteController::class, 'indexGraficas'])->name('informes.graficas.index');
-    
-    // Rutas específicas para tus 4 reportes
-    Route::get('/desempeno-depto', [ReporteController::class, 'graficaDepto'])->name('graficas.depto');
-    Route::get('/informes/graficas/datos-depto', [ReporteController::class, 'dataGraficaDepto'])->name('graficas.data.depto');
 
-    //Rutas específicas para gráficas individuales
-   
-    Route::get('/informes/grafica-individual', [ReporteController::class, 'graficaIndividual'])->name('graficas.individual');
-    Route::get('/informes/datos-individual', [ReporteController::class, 'dataGraficaIndividual'])->name('graficas.data.individual');
-    Route::get('/informes/get-empleados/{depto_id}', [ReporteController::class, 'getEmpleadosPorDepto'])->name('get.empleados');
+    Route::get('/', [ReporteController::class, 'indexGraficas'])
+        ->name('informes.graficas.index');
 
-   // Vista de la gráfica de permisos
-   Route::get('/informes/grafica-permisos', [ReporteController::class, 'graficaPermisos'])
-    ->name('graficas.permisos');
-   Route::get('/informes/data-permisos', [ReporteController::class, 'dataGraficaPermisos'])
-    ->name('graficas.data.permisos');
+    // DEPTO
+    Route::get('/desempeno-depto', [ReporteController::class, 'graficaDepto'])
+        ->name('graficas.depto');
 
-   // Vista de la gráfica de 
-   Route::get('/informes/grafica-compensatorio', [ReporteController::class, 'graficaCompensatorio'])
-    ->name('graficas.compensatorio');
-   Route::get('/informes/data-compensatorio', [ReporteController::class, 'dataGraficaCompensatorio'])
-    ->name('graficas.data.compensatorio');
+    Route::get('/datos-depto', [ReporteController::class, 'dataGraficaDepto'])
+        ->name('graficas.data.depto');
 
-});  
+    // INDIVIDUAL
+    Route::get('/grafica-individual', [ReporteController::class, 'graficaIndividual'])
+        ->name('graficas.individual');
+
+    Route::get('/datos-individual', [ReporteController::class, 'dataGraficaIndividual'])
+        ->name('graficas.data.individual');
+
+    Route::get('/get-empleados/{depto_id}', [ReporteController::class, 'getEmpleadosPorDepto'])
+        ->name('get.empleados');
+
+    // PERMISOS
+    Route::get('/grafica-permisos', [ReporteController::class, 'graficaPermisos'])
+        ->name('graficas.permisos');
+
+    Route::get('/data-permisos', [ReporteController::class, 'dataGraficaPermisos'])
+        ->name('graficas.data.permisos');
+
+    // COMPENSATORIO
+    Route::get('/grafica-compensatorio', [ReporteController::class, 'graficaCompensatorio'])
+        ->name('graficas.compensatorio');
+
+    Route::get('/data-compensatorio', [ReporteController::class, 'dataGraficaCompensatorio'])
+        ->name('graficas.data.compensatorio');
+});
 
 /*
 |--------------------------------------------------------------------------
