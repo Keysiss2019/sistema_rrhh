@@ -510,83 +510,91 @@ class ReporteController extends Controller
     return view('informes.graficas.permisos', compact('departamentos', 'empleados', 'anios'));
   }
 
-   public function dataGraficaPermisos(Request $request) {
-        $empleado = Empleado::findOrFail($request->empleado_id);
-        $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
+   public function dataGraficaPermisos(Request $request) 
+   {
+    $empleado = Empleado::findOrFail($request->empleado_id);
+    $nombreCompleto = $empleado->nombre . ' ' . $empleado->apellido;
 
-        // Consulta base para el empleado y año seleccionado
-        $query = DB::table('solicitudes')
-            ->where('nombre', $nombreCompleto)
-            ->where('estado', 'aprobado')
-            ->whereYear('fecha_inicio', $request->anio);
+    $query = DB::table('solicitudes')
+        ->where('nombre', $nombreCompleto)
+        ->where('estado', 'aprobado')
+        ->whereYear('fecha_inicio', $request->anio);
 
-        // Convertimos a minúsculas para evaluar de forma segura
-        $tipoRequest = strtolower($request->tipo_solicitud);
+    $tipoRequest = strtolower($request->tipo_solicitud);
 
-        if ($tipoRequest === 'vacaciones') {
-            $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
-        } 
-        elseif ($tipoRequest === 'permiso') {
-            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
-                  ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
-        } 
-        else {
-            $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
-        }
-
-        if ($request->filled('mes')) {
-            $query->whereMonth('fecha_inicio', $request->mes);
-        }
-
-        // Obtenemos la suma bruta de días y horas por cada tipo
-        $datos = $query->select(
-                            'tipo', 
-                            DB::raw('SUM(dias) as total_dias'),
-                            DB::raw('SUM(horas) as total_horas')
-                        )
-                      ->groupBy('tipo')
-                      ->get();
-
-        // 1. PRIMER PASO: Calculamos el gran total de horas equivalentes de todas las solicitudes combinadas
-        $granTotalHoras = $datos->sum(function($row) {
-            return ($row->total_dias * 8) + $row->total_horas;
-        });
-
-        // 2. SEGUNDO PASO: Estructuramos los datos calculando el porcentaje individual
-        $dataFinal = $datos->map(function($row) use ($granTotalHoras) {
-            
-            // Convertimos los días a horas (1 día = 8 horas laborales) y sumamos las horas sueltas
-            $horasTotalesEquivalentes = ($row->total_dias * 8) + $row->total_horas;
-
-            // Cálculo matemático del porcentaje (Evitamos división por cero)
-            $porcentaje = $granTotalHoras > 0 ? round(($horasTotalesEquivalentes / $granTotalHoras) * 100, 1) : 0;
-
-            // Armamos el texto combinando el tiempo real y su porcentaje equivalente
-            if ($row->total_dias > 0) {
-                $textoVisual = $row->total_dias . ($row->total_dias == 1 ? ' día' : ' días');
-                if ($row->total_horas > 0) {
-                    $textoVisual .= ' y ' . $row->total_horas . ' hrs';
-                }
-            } else {
-                $textoVisual = $row->total_horas . ' horas';
-            }
-            
-            // Le pegamos el porcentaje al final del texto para que se vea claro en la barra
-            $textoFinalConPorcentaje = $textoVisual . " (" . $porcentaje . "%)";
-            
-            return [
-                'tipo'            => $row->tipo,
-                'horas_graficar'  => $horasTotalesEquivalentes,
-                'texto_pantalla'  => $textoFinalConPorcentaje
-            ];
-        })->sortByDesc('horas_graficar');
-
-        return response()->json([
-            'labels'    => $dataFinal->pluck('tipo'),
-            'valores'   => $dataFinal->pluck('horas_graficar'),
-            'etiquetas' => $dataFinal->pluck('texto_pantalla'),
-        ]);
+    if ($tipoRequest === 'vacaciones') {
+        $query->whereRaw('UPPER(tipo) LIKE ?', ['%VACACIONES%']);
+    } elseif ($tipoRequest === 'permiso') {
+        $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%VACACIONES%'])
+              ->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
+    } else {
+        $query->whereRaw('UPPER(tipo) NOT LIKE ?', ['%COMPENSATORIO%']);
     }
+
+    if ($request->filled('mes')) {
+        $query->whereMonth('fecha_inicio', $request->mes);
+    }
+
+    $agruparPorMes = ($tipoRequest === 'vacaciones' && !$request->filled('mes'));
+
+    if ($agruparPorMes) {
+        // Obtenemos los datos reales existentes
+        $datosReales = $query->select(
+            DB::raw("MONTH(fecha_inicio) as mes_num"),
+            DB::raw('SUM(dias) as total_dias'),
+            DB::raw('SUM(horas) as total_horas')
+        )
+        ->groupBy('mes_num')
+        ->get()
+        ->keyBy('mes_num');
+
+        // Creamos la estructura fija de 12 meses
+        $mesesNombres = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 
+                         7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
+        
+        $datos = collect();
+        foreach ($mesesNombres as $num => $nombre) {
+            $fila = $datosReales->get($num);
+            $datos->push((object)[
+                'label_agrupacion' => $nombre,
+                'total_dias' => $fila ? $fila->total_dias : 0,
+                'total_horas' => $fila ? $fila->total_horas : 0
+            ]);
+        }
+    } else {
+        $datos = $query->select(
+            'tipo as label_agrupacion',
+            DB::raw('SUM(dias) as total_dias'),
+            DB::raw('SUM(horas) as total_horas')
+        )
+        ->groupBy('tipo')
+        ->get();
+    }
+
+    $granTotalHoras = $datos->sum(fn($row) => ($row->total_dias * 8) + $row->total_horas);
+
+    $dataFinal = $datos->map(function($row) use ($granTotalHoras) {
+        $horas = ($row->total_dias * 8) + $row->total_horas;
+        $porcentaje = $granTotalHoras > 0 ? round(($horas / $granTotalHoras) * 100, 1) : 0;
+        
+        $textoVisual = ($row->total_dias > 0 || $row->total_horas > 0) 
+                       ? (($row->total_dias > 0 ? $row->total_dias . ' días ' : '') . 
+                          ($row->total_horas > 0 ? $row->total_horas . ' hrs' : '')) 
+                       : '0 hrs';
+
+        return [
+            'label' => $row->label_agrupacion,
+            'valor' => $horas,
+            'etiqueta' => trim($textoVisual) . ($horas > 0 ? " ($porcentaje%)" : "")
+        ];
+    });
+
+    return response()->json([
+        'labels'    => $dataFinal->pluck('label'),
+        'valores'   => $dataFinal->pluck('valor'),
+        'etiquetas' => $dataFinal->pluck('etiqueta'),
+    ]);
+   }
     
 
   // ==========================================
