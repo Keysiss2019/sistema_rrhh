@@ -2,7 +2,8 @@
 
 // Define el espacio de nombres del controlador dentro de la aplicación
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Str;              // centraliza toda la lógica de manipulación de texto en un solo lugar
+use App\Models\Solicitud;               // Modelo de solicitudes
 use App\Models\HoraExtra;                 // Modelo que gestiona los registros de horas extra (FT-GTH-002)
 use App\Models\HoraExtraDetalle;                 // Modelo que gestiona los registros de horas extra (FT-GTH-002)
 use App\Models\SaldoTiempoCompensatorio; // Modelo que maneja el saldo consolidado de tiempo compensatorio del empleado
@@ -17,6 +18,8 @@ use App\Mail\HorasCargadasMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\NuevaHoraExtra;
+use App\Services\RolService;
+use App\Models\User;
 
 
 class HoraExtraController extends Controller
@@ -338,46 +341,61 @@ private function sumarHorasReloj($arreglo) {
     // Cambia private por public
     public function obtenerJefeId($configPaso, $solicitud, $indice)
     {
-      if (!$configPaso) return null;
-         $nombrePaso = strtoupper($configPaso->nombre_paso);
+       if (!$configPaso) return null;
 
-           // 1 y 2. (Manten igual la lógica de JEFE INMEDIATO y ACTIVIDAD que ya te funciona)
-          if ($indice === 0 || str_contains($nombrePaso, 'INMEDIATO')) {
-              $empleado = DB::table('empleados')->where('id', $solicitud->empleado_id)->first();
-               if ($empleado && $empleado->departamento_id) {
-                  $depto = DB::table('departamentos')->where('id', $empleado->departamento_id)->first();
-                  return $depto ? $depto->jefe_empleado_id : null;
-                }
-            } 
+          $nombrePaso = strtoupper(trim($configPaso->nombre_paso));
 
-           if (str_contains($nombrePaso, 'ACTIVIDAD')) {
-              $deptoDestino = DB::table('departamentos')
-               ->where('nombre', 'LIKE', '%' . trim($solicitud->departamento) . '%')
-               ->first();
-              return $deptoDestino ? $deptoDestino->jefe_empleado_id : null;
-            } 
+          // 1. JEFE INMEDIATO
+    if ($indice === 0 || str_contains($nombrePaso, 'INMEDIATO')) {
 
-           // 3. DIRECCIÓN: Buscamos al usuario que TIENE el rol, no al que está LOGUEADO
-           if (str_contains($nombrePaso, 'DIRECCION') || str_contains($nombrePaso, 'EJECUTIVA')) {
-              // Buscamos el primer usuario que tenga el rol de Dirección o Director
-              $director = \App\Models\User::all()->filter(function($u) {
-                  return $u->hasRole('Dirección') || $u->hasRole('Director');
-                })->first();
+        $empleado = DB::table('empleados')
+            ->where('id', $solicitud->empleado_id)
+            ->first();
 
-               return $director ? $director->empleado_id : null;
-            }
+        return $empleado->departamento_id
+            ? DB::table('departamentos')->where('id', $empleado->departamento_id)->value('jefe_empleado_id')
+            : null;
+    }
 
-           // 4. GTH
-          if (str_contains($nombrePaso, 'TALENTO') || str_contains($nombrePaso, 'GTH')) {
-              $gth = \App\Models\User::all()->filter(function($u) {
-                  return $u->hasRole('GTH');
-                })->first();
+    // 2. ACTIVIDAD
+    if (str_contains($nombrePaso, 'ACTIVIDAD')) {
 
-                return $gth ? $gth->empleado_id : null;
-            }
+        return DB::table('departamentos')
+            ->where('nombre', 'LIKE', '%' . trim($solicitud->departamento) . '%')
+            ->value('jefe_empleado_id');
+    }
 
-            return null;
-   }
+    // 3. DIRECCIÓN (CORRECTO CON LARAVEL MODEL)
+    if (str_contains($nombrePaso, 'DIRECCION') || str_contains($nombrePaso, 'EJECUTIVA')) {
+
+        $director = User::whereHas('rol', function ($q) {
+                $q->whereIn('nombre', [
+                    'Dirección',
+                    'Direccion',
+                    'Dirección Ejecutiva',
+                    'Director'
+                ]);
+            })
+            ->with('empleado')
+            ->first();
+
+        return $director?->empleado?->id;
+    }
+
+    // 4. GTH
+    if (str_contains($nombrePaso, 'TALENTO') || str_contains($nombrePaso, 'GTH')) {
+
+        $gth = User::whereHas('rol', function ($q) {
+                $q->where('nombre', 'GTH');
+            })
+            ->with('empleado')
+            ->first();
+
+        return $gth?->empleado?->id;
+    }
+
+    return null;
+}
 
 
 
@@ -401,16 +419,32 @@ private function sumarHorasReloj($arreglo) {
     }
 
     // Gestión de las horas
-      public function gestion(Request $request)
+ public function gestion(Request $request)
     {
      $user = auth()->user();
      $empleadoLogueado = $user->empleado;
 
      // 1. ROLES Y PERMISOS
-     $esAdmin = $user->hasRole('Administrador');
-     $esGTH = $user->hasRole('GTH') || $user->hasRole('Gestión de Talento Humano');
-     $esAdminOGTH = $esAdmin || $esGTH;
-    
+     $rol = trim($user->rol->nombre ?? '');
+
+     $rolNormalizado = Str::of($rol)
+       ->ascii()
+       ->lower()
+       ->squish()
+       ->toString();
+
+       $esAdmin = $rolNormalizado === 'administrador' || $user->hasRole('Administrador');
+
+      $esGTH = in_array($rol, ['GTH', 'Gestión de Talento Humano']);
+
+        $esDireccion = in_array($rolNormalizado, ['direccion', 'direccion ejecutiva'], true)
+       || $user->hasRole('Dirección')
+       || $user->hasRole('Direccion')
+       || $user->hasRole('Dirección Ejecutiva')
+       || $user->hasRole('Direccion Ejecutiva');
+
+      $esAdminOGTH = $esAdmin || $esGTH || $esDireccion;
+
      $departamentoQueDirige = \App\Models\Departamento::where('jefe_empleado_id', $empleadoLogueado->id)->first();
      $esJefe = !is_null($departamentoQueDirige);
 
@@ -524,8 +558,9 @@ private function sumarHorasReloj($arreglo) {
         return view('horas_extras.gestion', compact(
          'solicitudes', 'pasosConfigurados', 'totalAcumuladas', 'totalPagadas', 
          'totalConsumidas', 'totalPendientesSolicitud', 'saldoRestante', 
-         'esAdmin', 'esGTH', 'esJefe', 'departamentos', 'empleadoAConsultar', 'esBusquedaActiva'
-        ));
+         'esAdmin', 'esGTH', 'esJefe', 'esDireccion', 'departamentos', 'empleadoAConsultar', 'esBusquedaActiva'
+      
+         ));
     }
 
     /*

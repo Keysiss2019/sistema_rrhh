@@ -55,6 +55,8 @@ class Empleado extends Model
     });
 }
 
+
+
 /**
  * Este método intercepta la llamada a $empleado->cargo
  */

@@ -126,9 +126,9 @@ class SolicitudController extends Controller
             ->withQueryString();
         } catch (\Exception $e) {
            // En caso de error técnico, retornamos un paginador vacío para que el index no falle
-         // \Log::error("Error en index de solicitudes: " . $e->getMessage());
-         //  $solicitudes = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
-           dd($e->getMessage());
+          \Log::error("Error en index de solicitudes: " . $e->getMessage());
+          $solicitudes = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+          
         }
 
        return view('solicitudes.index', compact('solicitudes'));

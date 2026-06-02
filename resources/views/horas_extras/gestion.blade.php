@@ -15,7 +15,7 @@
          </div>
        @endif
         <h3 class="fw-bold">Gestión de Tiempo Compensatorio</h3>
-        @if($esAdmin || $esGTH)
+        @if($esAdmin || $esGTH )
         <a href="{{ route('configuracion.firmas') }}" class="btn btn-outline-secondary btn-sm">
             <i class="fa-solid fa-gear me-1"></i> Configurar Flujo de Firmas
         </a>
@@ -43,8 +43,9 @@
         </div>
     @endif
 
-    {{-- BUSCADOR PARA ADMIN, GTH Y JEFES --}}
-    @if($esAdmin || $esGTH || $esJefe)
+
+  {{-- BUSCADOR PARA ADMIN, GTH, DIRECCIÓN Y JEFES --}}
+  @if($esAdmin || $esGTH || $esDireccion || $esJefe)
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-primary text-white fw-bold">
             <i class="fas fa-search me-2"></i> CONSULTAR SALDOS POR COLABORADOR
@@ -54,11 +55,12 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label small fw-bold text-uppercase">1. Departamento</label>
-                        <select id="select_depto" class="form-select border-primary">
+                        {{-- AÑADIDO: name="departamento_id" --}}
+                    
+                        <select id="select_depto" name="departamento_id" class="form-select border-primary">
                             <option value="">-- Seleccione un depto --</option>
                             @foreach($departamentos as $depto)
-                                {{-- Solo se marca 'selected' si hay una petición GET activa --}}
-                                <option value="{{ $depto->id }}" {{ (request('empleado_id') && isset($empleadoAConsultar) && $empleadoAConsultar->departamento_id == $depto->id) ? 'selected' : '' }}>
+                                <option value="{{ $depto->id }}" {{ request('departamento_id') == $depto->id ? 'selected' : '' }}>
                                     {{ $depto->nombre }}
                                 </option>
                             @endforeach
@@ -69,6 +71,7 @@
                         <label class="form-label small fw-bold text-uppercase">2. Colaborador</label>
                         <select name="empleado_id" id="select_empleado" class="form-select border-primary" required>
                             <option value="">-- Seleccione Colaborador --</option>
+                            {{-- Aquí tu JS debe llenar las opciones --}}
                         </select>
                     </div>
 
