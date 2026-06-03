@@ -66,7 +66,7 @@
                     <div class="row">
                         {{-- 1. TIPO DE EVALUACIÓN --}}
                         <div class="col-md-3 border-end">
-                            <label class="form-label fw-bold text-dark">1. Tipo de Evaluación</label>
+                            <label class="form-label fw-bold text-dark p-2">1. Tipo de Evaluación</label>
                             <select name="tipo" class="form-select selector-tipo-eval" required>
                                 <option value="" selected disabled>-- Seleccione --</option>
                                 <option value="Autoevaluacion">Autoevaluación</option>
