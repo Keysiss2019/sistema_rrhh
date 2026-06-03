@@ -1,6 +1,11 @@
 {{-- Extiende el layout principal de la aplicación --}}
 @extends('layouts.app')
-
+<style>
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-image: none !important; /* Quita el icono default de bootstrap si prefieres */
+    }
+</style>
 @section('content')
 
 <div class="container-fluid mt-3 px-0">
@@ -173,7 +178,7 @@
 
                             <td class="text-center">
                                 <div class="btn-group shadow-sm bg-white rounded border">
-                                    <button type="button" class="btn btn-light btn-sm text-primary border-end" data-bs-toggle="modal" data-bs-target="#modalEditarEmpleado{{ $empleado->id }}" title="Editar">
+                                    <button type="button" class="btn btn-light btn-sm text-primary border-end"  data-bs-toggle="modal" data-bs-target="#modalEditarEmpleado{{ $empleado->id }}" title="Editar">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
 
@@ -204,43 +209,47 @@
 {{-- Offcanvas de creación --}}
 @include('empleado.create')
 
+
 {{-- ===================== SCRIPTS OPTIMIZADOS ===================== --}}
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    
-    // Alerta modal centrada para acciones exitosas (Crear, Editar, Guardar)
+    // 1. Mostrar Alerta de ÉXITO (Si existe en sesión)
     @if(session('success'))
         Swal.fire({
             title: '¡Logrado!',
             text: "{{ session('success') }}",
             icon: 'success',
-            iconColor: '#a5dc86', // Color verde exacto del check circular
-            showConfirmButton: false, // Sin botones, se cierra automáticamente o haciendo clic fuera
-            timer: 3000,
-            timerProgressBar: false,
-            customClass: {
-                popup: 'rounded-4 p-5 shadow-lg',
-                title: 'fw-bold text-dark fs-2 mb-3',
-                htmlContainer: 'text-muted fs-5'
-            }
+            confirmButtonColor: '#054084',
+            timer: 3000
         });
     @endif
 
-    // Escucha en caso de que ocurran errores de validación de formulario (Mantiene el Toast o puedes personalizarlo)
-    @if($errors->any())
-        const ToastError = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true
-        });
+    // 2. Lógica para ERRORES (Apertura de modal + Alerta)
+    @if(session('error_modal_id'))
+        // A. Abrir el modal correspondiente
+        var modalId = '#modalEditarEmpleado{{ session('error_modal_id') }}';
+        var modalElement = document.querySelector(modalId);
         
-        ToastError.fire({
-            icon: 'error',
-            title: 'Por favor, revise los campos marcados en rojo.'
-        });
+        if (modalElement) {
+            var myModal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+        }
+
+        // B. Mostrar SweetAlert de error si hay un mensaje específico
+        @if(session('sweet_error'))
+            Swal.fire({
+                title: '¡Error de validación!',
+                text: "{{ session('sweet_error') }}",
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Entendido',
+                customClass: { popup: 'rounded-4 shadow-lg' }
+            });
+        @endif
     @endif
 });
 

@@ -13,6 +13,7 @@ use App\Models\DocumentoLaboral;
 use App\Models\PoliticaVacaciones;
 use App\Models\Departamento;
 
+
 /*
 |--------------------------------------------------------------------------
 | Importación de clases del framework
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon; // Librería para manejo avanzado de fechas y horas (parseo, formato, cálculos, diferencias de tiempo, etc.)
 use Illuminate\Support\Facades\DB; // Permite interactuar directamente con la base de datos usando el Query Builder y transacciones
-
+use Illuminate\Support\Facades\Validator; // Asegúrate de importar esto
 
 /*
 |--------------------------------------------------------------------------
@@ -153,27 +154,36 @@ class EmpleadoController extends Controller
     public function update(Request $request, $id)
     {
   
-    
-    $empleado = Empleado::findOrFail($id);
+      $empleado = Empleado::findOrFail($id);
 
-    $request->validate([
-        'nombre' => ['required', Rule::unique('empleados')->ignore($id)],
-        'apellido' => 'required',
-        'email' => ['nullable', 'email', Rule::unique('empleados')->ignore($id)],
-        'departamento' => 'required|exists:departamentos,id',
-        'politica_id' => 'required|exists:politicas_vacaciones,id',
-        'fecha_ingreso' => 'required|date',
-        'fecha_baja' => 'nullable|date',
-        // ✅ CORREGIDO A SINGULAR: 'documento.*' para coincidir con el HTML
-        'documento.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,png|max:10240', 
-    ]);
+      $validator = Validator::make($request->all(), [
+         'dni' => [ 'required', Rule::unique('empleados', 'dni')->ignore($id),],
+         'nombre' => ['required', Rule::unique('empleados')->ignore($id)],
+         'apellido' => 'required',
+         'email' => ['nullable', 'email', Rule::unique('empleados')->ignore($id)],
+         'departamento' => 'required|exists:departamentos,id',
+         'politica_id' => 'required|exists:politicas_vacaciones,id',
+         'fecha_ingreso' => 'required|date',
+         'fecha_baja' => 'nullable|date',
+          // ✅ CORREGIDO A SINGULAR: 'documento.*' para coincidir con el HTML
+         'documento.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,png|max:10240', 
+        ]);
+
+        // 2. Si falla, redirigir con los errores Y el ID del empleado
+        if ($validator->fails()) {
+          return redirect()->back()
+            ->withErrors($validator, 'editarEmpleado')
+            ->withInput()
+            ->with('error_modal_id', $id) // <--- Identificador del modal a abrir
+            ->with('sweet_error', 'Por favor, verifica los datos: el DNI o correo ya existen en el sistema.');
+        }
 
     // --- LÓGICA DE ASCENSO AUTOMÁTICO ---
     $esJefe = DB::table('departamentos')
              ->where('id', $request->departamento)
              ->where('jefe_empleado_id', $id)
              ->exists();
-
+    $empleado->dni = $request->dni;
     $empleado->nombre          = trim($request->nombre);
     $empleado->apellido        = trim($request->apellido);
     $empleado->email           = $request->email;

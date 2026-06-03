@@ -57,12 +57,12 @@
                                 </span>
 
                                 {{-- Campo identidad --}}
-                                <input type="text"
-                                       name="dni"
-                                       value="{{ old('dni', $empleado->dni) }}" 
-                                       class="form-control"
-                                       placeholder="0000-0000-00000"
-                                       required>
+                               <input type="text" 
+                                 name="dni" 
+                                 value="{{ old('dni', $empleado->dni) }}" 
+                                  class="form-control @error('dni', 'editarEmpleado') is-invalid @enderror">
+
+                                    
                             </div>
                         </div>
 
@@ -407,5 +407,36 @@ document.addEventListener('change', function (event) {
         // Si vuelve al contrato original, oculta alerta
         alerta.classList.add('d-none');
     }
+});
+
+</script>
+
+{{-- ========================================================= --}}
+{{-- SCRIPT: Agrega automaticamente el guión en el DNI --}}
+{{-- ========================================================= --}}
+<script>
+// Función para dar formato al DNI (ej: 0611-1992-00002)
+function formatearDNI(input) {
+    let value = input.value.replace(/\D/g, ''); // Solo números
+    let formatted = '';
+    
+    if (value.length > 0) {
+        formatted += value.substring(0, 4); // Primeros 4
+    }
+    if (value.length > 4) {
+        formatted += '-' + value.substring(4, 8); // Segundos 4
+    }
+    if (value.length > 8) {
+        formatted += '-' + value.substring(8, 13); // Resto
+    }
+    
+    input.value = formatted;
+}
+
+// Aplicar al campo DNI por su ID o clase
+document.querySelectorAll('input[name="dni"]').forEach(input => {
+    input.addEventListener('input', function() {
+        formatearDNI(this);
+    });
 });
 </script>
