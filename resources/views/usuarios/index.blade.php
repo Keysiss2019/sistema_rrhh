@@ -319,6 +319,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     @endif
+
+   /* =====================================================
+   REABRIR OFFCANVAS SI HUBO ERROR EN EDICIÓN
+   ===================================================== */
+   @if(session('abrir_edicion'))
+    // Esto se ejecuta inmediatamente al cargar el script, sin esperar a DOMContentLoaded
+    (function() {
+        const idUsuario = "{{ session('abrir_edicion.id') }}";
+        const form = document.getElementById('formEditarUsuario');
+        const offcanvasElement = document.getElementById('offcanvasEditarUsuario');
+
+        if (form && offcanvasElement) {
+            // Actualizar action
+            form.action = '/usuarios/' + idUsuario;
+
+            // Abrir componente de Bootstrap
+            const bsOffcanvas = new bootstrap.Offcanvas(offcanvasElement);
+            bsOffcanvas.show();
+        }
+    })();
+   @endif
 });
 
 /* =====================================================

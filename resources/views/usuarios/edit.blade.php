@@ -11,22 +11,24 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
 
+
     <!-- Cuerpo del offcanvas -->
     <div class="offcanvas-body">
-        <form id="formEditarUsuario" method="POST" action="">
+      
+       <form id="formEditarUsuario" method="POST" action="">
             @csrf <!-- Token de seguridad de Laravel -->
             @method('PUT') <!-- Método PUT para actualizar el recurso -->
 
             <!-- Campo del empleado (solo lectura, no editable) -->
             <div class="mb-3">
                 <label class="form-label fw-bold text-secondary small">EMPLEADO (No editable)</label>
-                <input type="text" id="edit_empleado" class="form-control border-2 bg-light" readonly>
+                <input type="text" id="edit_empleado" class="form-control border-2 bg-light" value="{{ session('abrir_edicion.empleado') }}" readonly>
             </div>
 
             <!-- Campo para editar nombre de usuario -->
             <div class="mb-3">
                 <label class="form-label fw-bold text-secondary small">NOMBRE DE USUARIO</label>
-                <input type="text" name="usuario" id="edit_usuario" class="form-control border-2 shadow-sm" required>
+                <input type="text" name="usuario" id="edit_usuario" class="form-control border-2 shadow-sm"   value="{{ old('usuario') }}" required>
             </div>
 
             <!-- Campo para asignar nueva contraseña opcional -->
@@ -71,3 +73,5 @@
         </form>
     </div>
 </div>
+
+

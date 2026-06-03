@@ -14,7 +14,8 @@ class ForcePasswordChange
             if (
                 !$request->routeIs('password.cambiar') &&
                 !$request->routeIs('password.actualizar') &&
-                !$request->routeIs('logout')
+                !$request->routeIs('logout') 
+                
             ) {
                 return redirect()->route('password.cambiar')
                     ->with('info', 'Debe cambiar su contraseña temporal para continuar.');
