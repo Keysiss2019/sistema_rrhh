@@ -51,6 +51,17 @@ class Tarea extends Model
      */
     public function responsable()
     {
-        return $this->belongsTo(User::class, 'asignado_user_id');
+       return $this->belongsTo(\App\Models\Empleado::class, 'asignado_user_id', 'user_id');
+    }
+
+     /**
+     * RELACIÓN: Tarea -> historial (Responsable)
+     */
+    // app/Models/Tarea.php
+
+    public function historial()
+    {
+      // Una tarea tiene muchas observaciones en el historial
+      return $this->hasMany(HistorialObservacion::class, 'tarea_id')->orderBy('created_at', 'ASC');
     }
 }

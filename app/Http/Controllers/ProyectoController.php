@@ -197,34 +197,33 @@ class ProyectoController extends Controller
      */
     public function getTareas($id)
     {
-        $proyecto = Proyecto::with('tareas.responsable')->findOrFail($id);
+    $proyecto = Proyecto::with(['tareas.responsable', 'tareas.historial'])->find($id);
+   
+    if (!$proyecto) return response()->json(['error' => 'Proyecto no encontrado'], 404);
 
-        $tareas = $proyecto->tareas->map(function ($t) {
-            return [
-                'id' => $t->id,
-                'titulo' => $t->titulo,
-                'estado' => $t->estado,
-                'peso' => $t->peso,
-                'observaciones_empleado' => $t->observaciones_empleado,
-                'asignado_user_id' => $t->asignado_user_id,
-                'archivo_evidencia' => $t->archivo_evidencia,
 
-                // URL del archivo si existe
-                'archivo_url' => (!empty($t->archivo_evidencia) && Storage::disk('public')->exists($t->archivo_evidencia))
-                    ? Storage::disk('public')->url($t->archivo_evidencia)
-                    : null,
+    $tareas = $proyecto->tareas->map(function ($t) {
+        
+        return [
+            'id' => $t->id,
+            'titulo' => $t->titulo,
+            'estado' => $t->estado ?? 'Pendiente',
+          'responsable' => [
+            // Eloquent ahora usará la relación corregida
+            'name' => $t->responsable ? ($t->responsable->nombre . ' ' . $t->responsable->apellido) : 'Sin asignar'
+        ],
+            'historial' => $t->historial->map(function($h) {
+                return [
+                    'fecha' => $h->created_at->format('d/m H:i'),
+                    'tipo' => $h->tipo ?? 'empleado',
+                    'mensaje' => $h->mensaje,
+                    'archivo_url' => $h->archivo_path ? asset('storage/'.$h->archivo_path) : null
+                ];
+            })
+        ];
+    });
 
-                // Responsable con fallback
-                'responsable' => $t->responsable ? [
-                    'id' => $t->responsable->id,
-                    'name' => ($t->responsable->empleado) 
-                        ? $t->responsable->empleado->nombre . ' ' . $t->responsable->empleado->apellido 
-                        : $t->responsable->usuario,
-                ] : null,
-            ];
-        });
-
-        return response()->json(['tareas' => $tareas]);
+    return response()->json(['tareas' => $tareas]);
     }
 
     /**
@@ -263,21 +262,61 @@ class ProyectoController extends Controller
      */
     public function enviarRevision(Request $request)
     {
-        $tarea = Tarea::findOrFail($request->id);
-
+    try {
+        $tarea = \App\Models\Tarea::findOrFail($request->id);
+        $user = auth()->user();
+        $rol = $this->rolActual($user); // Asegúrate de que este método exista en tu controlador
+        $esJefe = (str_contains(strtolower($rol), 'admin') || str_contains(strtolower($rol), 'jefe'));
+        
+        $path = null;
         if ($request->hasFile('archivo')) {
             $path = $request->file('archivo')->store('documentos', 'public');
-            $tarea->archivo_evidencia = $path;
         }
 
-        $tarea->observaciones_empleado = $request->observaciones;
-        $tarea->estado = 'En Revision';
-        $tarea->save();
+        if (!$esJefe) {
+            $tarea->estado = 'En Revision';
+            $tarea->save();
+        }
 
-        return response()->json([
-            'success' => true,
-            'proyecto_id' => $tarea->proyecto_id
+        \App\Models\HistorialObservacion::create([
+            'tarea_id'     => $tarea->id,
+            'user_id'      => $user->id,
+            'mensaje'      => $request->observaciones ?? 'Envío de evidencia',
+            'tipo'         => $esJefe ? 'jefe' : 'empleado',
+            'archivo_path' => $path
         ]);
+
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+    }
+
+    /**
+    * Registra una entrada simple en el historial de observaciones
+    * asociada a una tarea.
+    */
+    private function registrarHistorial($tareaId, $mensaje)
+    {
+      \App\Models\HistorialObservacion::create([
+         'tarea_id' => $tareaId,
+         'user_id'  => auth()->id(),
+         'mensaje'  => $mensaje
+        ]);
+    }
+
+    /**
+    * Registra un mensaje en el historial indicando si fue
+    * generado por un jefe o por un empleado.
+    */
+    private function registrarMensaje($tareaId, $mensaje, $esJefe = false)
+    {
+    \App\Models\HistorialObservacion::create([
+        'tarea_id' => $tareaId,
+        'user_id'  => auth()->id(),
+        'mensaje'  => $mensaje,
+        'tipo'     => $esJefe ? 'jefe' : 'empleado',
+    ]);
     }
 
     /**
@@ -428,36 +467,35 @@ class ProyectoController extends Controller
      */
     public function solicitarCorreccion(Request $request)
     {
-        try {
-            $tarea = Tarea::findOrFail($request->id);
+    try {
+        $tarea = Tarea::findOrFail($request->id);
 
-            $tarea->observaciones_jefe = $request->observaciones_jefe;
-            $tarea->estado = 'Pendiente';
-            $tarea->save();
+        // 1. Registrar en el historial (pasamos el mensaje directo del request)
+        $this->registrarMensaje($tarea->id, $request->observaciones_jefe, true);
 
-            $usuario = \App\Models\User::find($tarea->asignado_user_id);
-            $empleado = \App\Models\Empleado::where('user_id', $usuario->id)->first();
+        // 2. Actualizar estado
+        $tarea->update(['estado' => 'Pendiente']);
 
-            if ($empleado && !empty($empleado->email)) {
-                try {
-                    \Mail::to($empleado->email)
-                        ->send(new \App\Mail\TareaCorregidaMail($tarea));
-                } catch (\Exception $mailEx) {
-                    \Log::error("Error de correo: " . $mailEx->getMessage());
-                }
-            }
+        // 3. Correo
+        $usuario = \App\Models\User::find($tarea->asignado_user_id);
+        $empleado = \App\Models\Empleado::where('user_id', $usuario->id)->first();
 
-            return response()->json([
-                'success' => true,
-                'proyecto_id' => $tarea->proyecto_id
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+        if ($empleado && !empty($empleado->email)) {
+            \Mail::to($empleado->email)->send(new \App\Mail\TareaCorregidaMail($tarea));
         }
+
+        return response()->json([
+            'success' => true, 
+            'proyecto_id' => $tarea->proyecto_id
+        ]);
+
+    } catch (\Exception $e) {
+        // Esto te mostrará el error real en la respuesta JSON si falla
+        return response()->json([
+            'success' => false, 
+            'error' => $e->getMessage() 
+        ], 500);
+    }
     }
 
     /**
@@ -473,43 +511,41 @@ class ProyectoController extends Controller
     }
 
    /**
- * EDITAR PROYECTO (AJAX)
- * Muestra el proyecto con sus tareas y el equipo asignado de forma limpia.
- */
+   * EDITAR PROYECTO (AJAX)
+   * Muestra el proyecto con sus tareas y el equipo asignado de forma limpia.
+   */
+    public function edit($id)
+    {
+      // 1. Ver qué hay en el proyecto
+      $proyecto = \DB::table('proyectos')->where('id', $id)->first();
 
-/**
- * Obtener datos del proyecto y sus tareas por ID (AJAX)
- */
-public function edit($id)
-{
-    // 1. Ver qué hay en el proyecto
-    $proyecto = \DB::table('proyectos')->where('id', $id)->first();
+      // 2. BUSCAR TAREAS SIN FILTRAR (Queremos ver qué hay realmente en la tabla)
+      // Esto traerá TODAS las tareas que existan, no solo las del ID 9
+      $todasLasTareas = \DB::table('tareas')->get();
 
-    // 2. BUSCAR TAREAS SIN FILTRAR (Queremos ver qué hay realmente en la tabla)
-    // Esto traerá TODAS las tareas que existan, no solo las del ID 9
-    $todasLasTareas = \DB::table('tareas')->get();
+      // 3. Filtrar manualmente en PHP para depurar
+      $tareasCoincidentes = $todasLasTareas->filter(function ($tarea) use ($id) {
+         return (int)$tarea->proyecto_id === (int)$id;
+        });
 
-    // 3. Filtrar manualmente en PHP para depurar
-    $tareasCoincidentes = $todasLasTareas->filter(function ($tarea) use ($id) {
-        return (int)$tarea->proyecto_id === (int)$id;
-    });
+        return response()->json([
+          'debug' => [
+              'id_buscado' => (int)$id,
+              'total_tareas_en_tabla' => $todasLasTareas->count(),
+              'ejemplo_proyecto_id_en_tareas' => $todasLasTareas->take(1)->pluck('proyecto_id')
+            ],
+           'proyecto' => $proyecto,
+           'tareas' => $tareasCoincidentes->values(),
+           'colaboradores_actuales' => [] // Simplificado para probar
+        ]);
+    }
 
-    return response()->json([
-        'debug' => [
-            'id_buscado' => (int)$id,
-            'total_tareas_en_tabla' => $todasLasTareas->count(),
-            'ejemplo_proyecto_id_en_tareas' => $todasLasTareas->take(1)->pluck('proyecto_id')
-        ],
-        'proyecto' => $proyecto,
-        'tareas' => $tareasCoincidentes->values(),
-        'colaboradores_actuales' => [] // Simplificado para probar
-    ]);
-}
     /**
      * ACTUALIZAR PROYECTO + TAREAS + EQUIPO
      */
     public function update(Request $request, $id)
     {
+        
         $request->validate([
             'nombre' => 'required|string|max:255',
             'designados' => 'required|array|min:1',

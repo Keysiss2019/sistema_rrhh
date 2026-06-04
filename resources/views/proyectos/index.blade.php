@@ -224,150 +224,158 @@
 
 <script>
 let miModalTareas;
-
 function abrirModalTareas(id) {
     const contenedor = document.getElementById('contenedor-tareas-ajax');
-    // Usamos clases de Bootstrap para el spinner
-    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><p class="mt-2 text-muted">Cargando tareas...</p></div>';
+    contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info"></div></div>';
 
     fetch(`/proyectos/${id}/get-tareas`)
         .then(response => response.json())
         .then(data => {
-            let html = '<div class="list-group list-group-flush">'; // list-group-flush para que se vea más limpio en modales
-            const usuarioActualId = {{ auth()->id() }};
+            let html = '<div class="list-group list-group-flush">';
+            const rol = "{{ $rol ?? '' }}"; 
+            const esJefe = (rol.includes('jefe') || rol.includes('admin'));
             
-            const rolActual = "{{ strtolower(trim(Auth::user()->rol)) }}"
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            const esJefe = (rolActual.includes('admin') || rolActual.includes('jefe'));
-
             data.tareas.forEach(t => {
-                const estadoLimpio = t.estado 
-                    ? t.estado.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-                    : '';
-
-                let badgeColor = 'secondary';
-                if (estadoLimpio === 'completado') badgeColor = 'success';
-                else if (estadoLimpio.includes('revision')) badgeColor = 'warning';
-                else if (estadoLimpio.includes('proceso')) badgeColor = 'info';
-                else if (estadoLimpio.includes('rechazado')) badgeColor = 'danger';
-
-                const urlArchivo = t.archivo_evidencia ? `{{ asset('storage') }}/${t.archivo_evidencia}` : null;
-
-                // Nota de corrección con estilo Alert de Bootstrap
-                let notaCorreccion = (t.observaciones_jefe && estadoLimpio === 'pendiente') 
-                    ? `<div class="alert alert-warning py-2 px-3 mt-2 mb-2 small shadow-sm">
-                        <i class="fas fa-exclamation-triangle me-1"></i> <strong>Corrección:</strong> ${t.observaciones_jefe}
-                       </div>` : '';
-
-                let accionesJefe = '';
-                if (esJefe && estadoLimpio.includes('revision')) {
-                    accionesJefe = `
-                        <div class="mt-3 p-3 bg-light border-start border-4 border-warning rounded shadow-sm">
-                            <p class="small fw-bold mb-2 text-dark text-uppercase"><i class="fas fa-user-shield me-1"></i> Panel de Validación:</p>
-                            <div class="d-flex gap-2">
-                                <button type="button" onclick="validarTarea(${t.id})" class="btn btn-sm btn-success flex-fill fw-bold">
-                                    <i class="fas fa-check-circle me-1"></i> Aprobar
-                                </button>
-                                <button type="button" onclick="solicitarCorreccion(${t.id})" class="btn btn-sm btn-outline-warning flex-fill fw-bold">
-                                    <i class="fas fa-undo me-1"></i> Corregir
-                                </button>
-                            </div>
-                        </div>`;
+                let htmlHistorial = "";
+                
+                if (t.historial && t.historial.length > 0) {
+                    t.historial.forEach(h => {
+                        const claseChat = (h.tipo === 'jefe') ? 'bg-warning text-dark' : 'bg-light border';
+                        const alineacion = (h.tipo === 'jefe') ? 'text-end' : '';
+                        
+                        htmlHistorial += `
+                            <div class="mb-2 ${alineacion}">
+                                <small class="text-muted d-block">${h.fecha} - ${h.tipo === 'jefe' ? 'Jefe' : 'Empleado'}</small>
+                                <p class="p-2 rounded ${claseChat} d-inline-block text-start" style="font-size: 0.85rem;">
+                                    ${h.mensaje}
+                                    ${h.archivo_url ? `<br><a href="${h.archivo_url}" target="_blank" class="text-danger"><i class="fas fa-file-download"></i> Descargar</a>` : ''}
+                                </p>
+                            </div>`;
+                    });
                 }
 
+                // Normalización del estado para comparación
+                const estadoLower = t.estado ? t.estado.toLowerCase().replace(/í/g, 'i') : '';
+
                 html += `
-                <div class="list-group-item px-0 py-3 border-bottom shadow-none">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold mb-0 text-dark">${t.titulo}</h6>
-                        <span class="badge rounded-pill bg-${badgeColor} text-uppercase" style="font-size: 0.7rem;">${t.estado}</span>
+                <div class="list-group-item px-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">${t.titulo}</h6>
+                        <span class="badge ${estadoLower.includes('revision') ? 'bg-warning' : 'bg-secondary'}">${t.estado}</span>
+                    </div>
+                  <small class="text-muted">
+                      Responsable: 
+                      <span class="${t.responsable.name === 'Sin asignar' ? 'text-danger' : 'text-dark fw-bold'}">
+                          ${t.responsable.name}
+                       </span>
+                    </small>
+
+                    <div class="mt-3 bg-white p-2 border rounded" style="max-height: 250px; overflow-y: auto;">
+                        ${htmlHistorial}
                     </div>
                     
-       <div class="mb-2">
-        <small class="text-muted">
-            <i class="fas fa-user-circle me-1"></i> Responsable: 
-            <span class="text-primary fw-semibold">
-                ${t.responsable ? t.responsable.name : '<span class="text-danger">Sin asignar</span>'}
-            </span>
-        </small>
-    </div>
-
-                    ${notaCorreccion}
-
-                    <div class="mt-2">
-                        <textarea id="obs-${t.id}" class="form-control form-control-sm mb-3 bg-white" 
-                                  ${(estadoLimpio === 'completado') ? 'disabled' : ''} 
-                                  placeholder="Escribe tus observaciones aquí...">${t.observaciones_empleado || ''}</textarea>
-                        
-                        <div class="d-md-flex justify-content-between align-items-center gap-2">
-                            <div class="mb-2 mb-md-0">
-                                ${urlArchivo ? `<a href="${urlArchivo}" target="_blank" class="btn btn-xs btn-outline-danger btn-sm shadow-sm"><i class="fas fa-file-pdf me-1"></i> Ver Evidencia</a>` : '<span class="text-muted small italic">Sin evidencia</span>'}
+                    ${!esJefe ? `
+                        <div class="mt-3">
+                            <textarea id="obs-${t.id}" class="form-control mb-2" placeholder="Observaciones..."></textarea>
+                            <div class="input-group">
+                                <input type="file" id="file-${t.id}" class="form-control">
+                                <button onclick="enviarARevision(event, ${t.id})" class="btn btn-primary">Enviar</button>
                             </div>
-
-                            ${(t.asignado_user_id == usuarioActualId && estadoLimpio !== 'completado') ? `
-                                <div class="input-group input-group-sm w-auto shadow-sm">
-                                    <input type="file" id="file-${t.id}" class="form-control" style="max-width: 200px;">
-                                    <button type="button" onclick="enviarARevision(event, ${t.id})" class="btn btn-primary px-3">
-                                        <i class="fas fa-paper-plane me-1"></i> ${estadoLimpio.includes('revision') ? 'Actualizar' : 'Enviar'}
-                                    </button>
-                                </div>` : ''}
                         </div>
-                        ${accionesJefe}
-                    </div>
+                    ` : `
+                        ${estadoLower.includes('revision') ? `
+                            <div class="mt-3 d-flex gap-2">
+                                <button onclick="validarTarea(${t.id})" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Aprobar
+                                </button>
+                                <button onclick="solicitarCorreccion(${t.id})" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-times"></i> Pedir Corrección
+                                </button>
+                            </div>
+                        ` : ''}
+                    `}
                 </div>`;
             });
-            contenedor.innerHTML = html || '<div class="text-center text-muted py-4"><i class="fas fa-tasks fa-3x mb-3 opacity-25"></i><p>No hay tareas asignadas.</p></div>';
+            
+            contenedor.innerHTML = html + '</div>';
+            
+            // Gestión de la instancia del modal
+            const modalEl = document.getElementById('modalTareasProyecto');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            contenedor.innerHTML = '<div class="alert alert-danger d-flex align-items-center"><i class="fas fa-exclamation-circle me-2"></i> Error al cargar las tareas del servidor.</div>';
+        .catch(err => {
+            console.error("Error en fetch:", err);
+            contenedor.innerHTML = '<div class="alert alert-danger">Error al cargar tareas.</div>';
         });
-
-    const modalElement = document.getElementById('modalTareasProyecto');
-    let modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-    modalInstance.show();
 }
 
 function enviarARevision(event, id) {
-    if(event) event.preventDefault();
+    if (event) event.preventDefault();
 
-    const btn = event.currentTarget || event.target.closest('button');
-    const fileInput = document.getElementById(`file-${id}`);
-    const obsInput = document.getElementById(`obs-${id}`);
-    const obs = obsInput ? obsInput.value : '';
+    const obsElement = document.getElementById(`obs-${id}`);
+    const fileElement = document.getElementById(`file-${id}`);
+
+    if (!obsElement || obsElement.value.trim() === "") {
+        Swal.fire({
+            title: 'Campo requerido',
+            text: 'Por favor, escribe tus observaciones antes de enviar.',
+            icon: 'warning',
+            confirmButtonClass: 'btn btn-primary'
+        });
+        return;
+    }
 
     const formData = new FormData();
     formData.append('id', id);
-    formData.append('observaciones', obs);
-    if(fileInput.files[0]) formData.append('archivo', fileInput.files[0]);
-    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('observaciones', obsElement.value);
+    
+    if (fileElement && fileElement.files.length > 0) {
+        formData.append('archivo', fileElement.files[0]);
+    }
 
-    btn.disabled = true;
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    // Mostrar loader
+    Swal.fire({
+        title: 'Enviando...',
+        text: 'Por favor, espera.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
     fetch("{{ route('tareas.revision') }}", {
         method: 'POST',
         body: formData,
-        headers: { 
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        headers: {
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => {
-        if (!response.ok) return response.json().then(err => { throw err; });
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        if(data.success) {
-            Swal.fire({ title: '¡Listo!', text: 'Información actualizada.', icon: 'success' });
-            abrirModalTareas(data.proyecto_id);
+        if (data.success) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Tarea enviada a revisión correctamente.',
+                icon: 'success',
+                confirmButtonClass: 'btn btn-primary'
+            }).then(() => {
+                // Cerramos el modal
+                const modalEl = document.getElementById('modalTareasProyecto');
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
+                location.reload(); 
+            });
+        } else {
+            Swal.fire('Error', data.message || 'No se pudo enviar la tarea.', 'error');
         }
     })
-    .catch(error => {
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        Swal.fire({ title: 'Error', text: error.message || 'Error de base de datos.', icon: 'error' });
+    .catch(err => {
+        console.error("Error:", err);
+        Swal.fire('Error', 'Ocurrió un error al conectar con el servidor.', 'error');
     });
 }
 
@@ -456,7 +464,7 @@ function validarTarea(id) {
     });
 }
 
-// Agrega este estilo una sola vez en tu archivo para que SweetAlert siempre gane al modal
+// Agrega este estilo  SweetAlert siempre gane al modal
 const style = document.createElement('style');
 style.innerHTML = '.swal2-container { z-index: 99999 !important; }';
 document.head.appendChild(style);
@@ -557,7 +565,17 @@ function procesarEnvioCorreccion() {
     });
 }
 
+function enviarRespuestaChat(tareaId) {
+    const comentario = document.getElementById(`chat-input-${tareaId}`).value;
+    if (!comentario) return alert("Escribe algo primero");
 
+    // Aquí haces tu petición fetch para guardar este comentario en el servidor
+    // asegurándote de que en el controlador hagas un "concat" o un append en la BD
+    console.log("Enviando comentario:", comentario, "a la tarea:", tareaId);
+    
+    // Ejemplo de fetch:
+    // fetch(`/tareas/${tareaId}/comentar`, { method: 'POST', body: JSON.stringify({ obs: comentario }) ... })
+}
 </script>
 
  <style>
