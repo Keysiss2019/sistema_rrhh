@@ -63,7 +63,7 @@
                                     <th style="width: 30%;">Título</th>
                                     <th style="width: 25%;">Asignado a</th>
                                     <th>Inicio</th>
-                                    <th>Fin</th>
+                                    <th>Entrega</th>
                                     <th style="width: 8%;">Peso %</th>
                                     <th>Acción</th>
                                 </tr>
@@ -97,7 +97,7 @@
 
 <script>
 var listaColaboradoresModal = [];
-
+var listaEmpleadosDelDepartamento = []; // Nueva lista maestra
 document.getElementById('formEditarProyecto').addEventListener('submit', function(e) {
     e.preventDefault(); 
 
@@ -172,14 +172,38 @@ function editarProyecto(id, boton) {
         })
         .then(data => {
             console.log("Datos recibidos:", data);
-            
-            // Si esto imprime [] en la consola, el error está 100% en la consulta SQL del controlador
-            if (data.tareas.length === 0) {
-                alert("¡ALERTA! El servidor respondió, pero la lista de tareas llegó vacía. Revisa el log de Laravel.");
-            } else {
-                alert("Tareas recibidas: " + data.tareas.length);
-                // Aquí iría tu lógica de renderizado...
-            }
+            // ... dentro de la función editarProyecto, en el .then(data => { ...
+console.log("DEBUG: Contenido de data.equipo:", data.equipo); 
+
+if (data.equipo && Array.isArray(data.equipo)) {
+    listaColaboradoresModal = data.equipo;
+} else {
+    console.warn("DEBUG: data.equipo no es un array, se inicializa como []");
+    listaColaboradoresModal = [];
+}
+sincronizarHiddenInputs();
+            // 1. Llenar campos básicos del proyecto
+            document.getElementById('edit_nombre').value = data.proyecto.nombre;
+            document.getElementById('edit_fecha_inicio').value = data.proyecto.fecha_inicio;
+            document.getElementById('edit_fecha_fin').value = data.proyecto.fecha_fin;
+
+            // 2. Limpiar y llenar tabla de tareas
+    const tbody = document.querySelector('#tablaTareasEdit tbody');
+    tbody.innerHTML = ''; // Limpiar filas anteriores
+    
+    // Suponiendo que data.tareas es un array
+    data.tareas.forEach((t, index) => {
+        tbody.insertAdjacentHTML('beforeend', generarFilaTareaEdit(index, t));
+    });
+
+    //3. (Opcional) Si necesitas cargar el equipo seleccionado
+     listaColaboradoresModal = data.equipo; 
+     sincronizarHiddenInputs();
+
+    // 4. Mostrar el modal
+    const modalEl = document.getElementById('modalEditarProyecto');
+    const modalBS = new bootstrap.Modal(modalEl);
+    modalBS.show();
         })
         .catch(err => {
             console.error(err);
@@ -188,31 +212,73 @@ function editarProyecto(id, boton) {
         .finally(() => boton.disabled = false);
 }
 
-function generarFilaTareaEdit(index, t) {
+function generarFilaTareaEdit(index, t = {}) { 
+    const colaboradores = Array.isArray(listaColaboradoresModal) ? listaColaboradoresModal : [];
+    
+    // Formateo de fechas: YYYY-MM-DD
+    const fInicio = t.fecha_inicio ? String(t.fecha_inicio).split(' ')[0] : '';
+    const fechaEntrega = t.fecha_entrega ? String(t.fecha_entrega).split(' ')[0] : '';
+
     return `<tr>
-        <input type="hidden" name="tareas[${index}][id]" value="${t.id}">
-        <td><input name="tareas[${index}][titulo]" class="form-control" value="${t.titulo}"></td>
+        <input type="hidden" name="tareas[${index}][id]" value="${t.id || ''}">
+        
+        <td><input name="tareas[${index}][titulo]" class="form-control" value="${t.titulo || ''}"></td>
+        
         <td>
             <select name="tareas[${index}][asignado_user_id]" class="form-select select-asignado">
-                ${listaColaboradoresModal.map(u => `<option value="${u.id}" ${u.id == t.asignado_user_id ? 'selected' : ''}>${u.nombre}</option>`).join('')}
+                <option value="">Seleccione...</option>
+                ${colaboradores.map(u => 
+                    `<option value="${u.id}" ${String(u.id) === String(t.asignado_user_id || '') ? 'selected' : ''}>
+                        ${u.nombre}
+                    </option>`
+                ).join('')}
             </select>
         </td>
-        <td><input type="date" name="tareas[${index}][fecha_inicio]" class="form-control" value="${t.fecha_inicio}"></td>
-        <td><input type="date" name="tareas[${index}][fecha_fin]" class="form-control" value="${t.fecha_fin}"></td>
-        <td><input type="number" name="tareas[${index}][peso]" class="form-control" value="${t.peso}"></td>
-        <td><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">X</button></td>
+        
+        <td><input type="date" name="tareas[${index}][fecha_inicio]" class="form-control" value="${fInicio}"></td>
+        
+        <td>
+            <input type="date" name="tareas[${index}][fecha_entrega]" class="form-control bg-light" 
+                   value="${fechaEntrega}" readonly>
+        </td>
+        
+        <td><input type="number" name="tareas[${index}][peso]" class="form-control" value="${t.peso || ''}"></td>
+        
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
     </tr>`;
 }
-
 function sincronizarHiddenInputs() {
     const cont = document.getElementById('hidden-designados-edit');
-    cont.innerHTML = listaColaboradoresModal.map(c => `<input type="hidden" name="designados[]" value="${c.id}">`).join('');
+    if (!cont) return;
+    
+    // Validar existencia y tipo antes del map
+    const lista = Array.isArray(window.listaColaboradoresModal) ? window.listaColaboradoresModal : [];
+    
+    cont.innerHTML = lista.map(c => `<input type="hidden" name="designados[]" value="${c.id}">`).join('');
 }
 
 function actualizarSelectsTareas() {
+    // Si la lista maestra está vacía, intentamos al menos usar los ya seleccionados
+    const colaboradores = listaEmpleadosDelDepartamento.length > 0 
+                          ? listaEmpleadosDelDepartamento 
+                          : listaColaboradoresModal;
+    
     document.querySelectorAll('.select-asignado').forEach(s => {
         let val = s.value;
-        s.innerHTML = listaColaboradoresModal.map(u => `<option value="${u.id}" ${u.id == val ? 'selected' : ''}>${u.nombre}</option>`).join('');
+        s.innerHTML = '<option value="">Seleccione...</option>' + 
+                      colaboradores.map(u => {
+                          // Ajuste: si u viene de empleados, usamos user_id, si viene de equipo, usamos id
+                          const id = u.user_id || u.id;
+                          const nombre = u.nombre_completo || (u.nombre + ' ' + (u.apellido || ''));
+                          
+                          return `<option value="${id}" ${String(id) === String(val) ? 'selected' : ''}>
+                                      ${nombre}
+                                  </option>`;
+                      }).join('');
     });
 }
 
@@ -223,22 +289,27 @@ function cargarEmpleadosDepto(deptoId) {
     fetch(`/departamentos/${deptoId}/empleados`)
         .then(response => response.json())
         .then(data => {
+            // 1. Guardamos todos los empleados recibidos en la lista maestra
+            listaEmpleadosDelDepartamento = data; 
+            
             contenedor.innerHTML = '';
             data.forEach(emp => {
                 const idVincular = String(emp.user_id); 
                 const estaEnEquipo = listaColaboradoresModal.some(c => String(c.id) === idVincular);
-                const isChecked = estaEnEquipo ? 'checked' : '';
-
+                
                 contenedor.innerHTML += `
                     <div class="form-check form-switch mb-2 p-4 border-bottom">
                         <input class="form-check-input" type="checkbox" role="switch" 
-                               id="edit-emp-${idVincular}" value="${idVincular}" ${isChecked}
+                               id="edit-emp-${idVincular}" value="${idVincular}" ${estaEnEquipo ? 'checked' : ''}
                                onclick="gestionarSeleccionColaborador('${idVincular}', '${emp.nombre} ${emp.apellido}')">
                         <label class="form-check-label fw-bold small" for="edit-emp-${idVincular}">
                             ${emp.nombre} ${emp.apellido}
                         </label>
                     </div>`;
             });
+            
+            // 2. Actualizamos los selects usando la lista maestra
+            actualizarSelectsTareas();
         });
 }
 

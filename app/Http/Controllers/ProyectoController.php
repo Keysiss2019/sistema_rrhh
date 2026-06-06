@@ -514,100 +514,94 @@ class ProyectoController extends Controller
    * EDITAR PROYECTO (AJAX)
    * Muestra el proyecto con sus tareas y el equipo asignado de forma limpia.
    */
-    public function edit($id)
-    {
-      // 1. Ver qué hay en el proyecto
-      $proyecto = \DB::table('proyectos')->where('id', $id)->first();
+   public function edit($id)
+   {
+    $proyecto = \DB::table('proyectos')->where('id', $id)->first();
+    
+    // Consulta los colaboradores vinculados al proyecto usando 'empleados'
+    $equipo = \DB::table('proyecto_designados')
+        ->join('empleados', 'proyecto_designados.user_id', '=', 'empleados.user_id')
+        ->where('proyecto_designados.proyecto_id', $id)
+        ->select('empleados.user_id as id', 'empleados.nombre') 
+        ->get();
 
-      // 2. BUSCAR TAREAS SIN FILTRAR (Queremos ver qué hay realmente en la tabla)
-      // Esto traerá TODAS las tareas que existan, no solo las del ID 9
-      $todasLasTareas = \DB::table('tareas')->get();
+    $tareas = \DB::table('tareas')->where('proyecto_id', $id)->get();
 
-      // 3. Filtrar manualmente en PHP para depurar
-      $tareasCoincidentes = $todasLasTareas->filter(function ($tarea) use ($id) {
-         return (int)$tarea->proyecto_id === (int)$id;
-        });
-
-        return response()->json([
-          'debug' => [
-              'id_buscado' => (int)$id,
-              'total_tareas_en_tabla' => $todasLasTareas->count(),
-              'ejemplo_proyecto_id_en_tareas' => $todasLasTareas->take(1)->pluck('proyecto_id')
-            ],
-           'proyecto' => $proyecto,
-           'tareas' => $tareasCoincidentes->values(),
-           'colaboradores_actuales' => [] // Simplificado para probar
-        ]);
-    }
+    return response()->json([
+        'proyecto' => $proyecto,
+        'tareas' => $tareas,
+        'equipo' => $equipo
+    ]);
+   }
 
     /**
      * ACTUALIZAR PROYECTO + TAREAS + EQUIPO
      */
     public function update(Request $request, $id)
-    {
-        
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'designados' => 'required|array|min:1',
-            'tareas' => 'nullable|array',
-            'tareas.*.titulo' => 'required|string',
-            'tareas.*.asignado_user_id' => 'required',
-        ]);
+{
+    $request->validate([
+        'nombre' => 'required|string|max:255',
+        'designados' => 'required|array|min:1',
+        'tareas' => 'nullable|array',
+        'tareas.*.titulo' => 'required|string',
+        'tareas.*.asignado_user_id' => 'required',
+    ]);
 
-        DB::beginTransaction();
+    DB::beginTransaction();
 
-        try {
-            $proyecto = Proyecto::findOrFail($id);
+    try {
+        $proyecto = Proyecto::findOrFail($id);
+        $proyecto->update($request->only('nombre', 'fecha_inicio', 'fecha_fin'));
+        $proyecto->designados()->sync($request->designados);
 
-            $proyecto->update($request->only('nombre', 'fecha_inicio', 'fecha_fin'));
+        $tareasMantenerIds = [];
 
-            // sincroniza equipo
-            $proyecto->designados()->sync($request->designados);
-
-            $tareasMantenerIds = [];
-
-            // actualizar o crear tareas
-            if ($request->has('tareas')) {
-                foreach ($request->tareas as $tareaData) {
-
-                    if (isset($tareaData['id']) && !empty($tareaData['id'])) {
-                        $tarea = Tarea::findOrFail($tareaData['id']);
-                        $tarea->update($tareaData);
-                        $tareasMantenerIds[] = $tarea->id;
-                    } else {
-                        $nuevaTarea = $proyecto->tareas()->create([
-                            'titulo' => $tareaData['titulo'],
-                            'asignado_user_id' => $tareaData['asignado_user_id'],
-                            'fecha_inicio' => $tareaData['fecha_inicio'],
-                            'fecha_fin' => $tareaData['fecha_fin'],
-                            'peso' => $tareaData['peso'] ?? 10,
-                            'estado' => 'Pendiente'
-                        ]);
-
-                        $tareasMantenerIds[] = $nuevaTarea->id;
+        if ($request->has('tareas')) {
+            foreach ($request->tareas as $tareaData) {
+                
+                // LÓGICA DE FECHA DE ENTREGA:
+                // Si el usuario marca como completado o si llega una fecha de entrega manual
+                if (isset($tareaData['estado']) && $tareaData['estado'] === 'Completado') {
+                    // Si no tiene fecha de entrega, le ponemos la de hoy
+                    if (empty($tareaData['fecha_entrega'])) {
+                        $tareaData['fecha_entrega'] = now(); 
                     }
                 }
+
+                if (isset($tareaData['id']) && !empty($tareaData['id'])) {
+                    $tarea = Tarea::findOrFail($tareaData['id']);
+                    $tarea->update($tareaData);
+                    $tareasMantenerIds[] = $tarea->id;
+                } else {
+                    $nuevaTarea = $proyecto->tareas()->create([
+                        'titulo'           => $tareaData['titulo'],
+                        'asignado_user_id' => $tareaData['asignado_user_id'],
+                        'fecha_inicio'     => $tareaData['fecha_inicio'],
+                        'fecha_fin'        => $tareaData['fecha_fin'],
+                        'fecha_entrega'    => $tareaData['fecha_entrega'] ?? null, // Guardamos la fecha
+                        'peso'             => $tareaData['peso'] ?? 10,
+                        'estado'           => $tareaData['estado'] ?? 'Pendiente'
+                    ]);
+                    $tareasMantenerIds[] = $nuevaTarea->id;
+                }
             }
-
-            // eliminar tareas que ya no existen
-            $proyecto->tareas()
-                ->whereNotIn('id', $tareasMantenerIds)
-                ->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => '¡Proyecto y equipo actualizados con éxito!'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error al guardar: ' . $e->getMessage()
-            ], 500);
         }
+
+        $proyecto->tareas()->whereNotIn('id', $tareasMantenerIds)->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => '¡Proyecto y equipo actualizados con éxito!'
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error al guardar: ' . $e->getMessage()
+        ], 500);
     }
+}
 }

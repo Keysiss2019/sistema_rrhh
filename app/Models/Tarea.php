@@ -17,6 +17,7 @@ class Tarea extends Model
         'fecha_fin', 
         'peso', 
         'completada',
+        'fecha_entrega', 
         'estado',                
         'archivo_evidencia',      
         'observaciones_empleado'  
