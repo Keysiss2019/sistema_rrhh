@@ -206,26 +206,26 @@ class ProyectoController extends Controller
     /**
      * OBTENER TAREAS DEL PROYECTO (AJAX)
      */
-    public function getTareas($id)
-    {
+public function getTareas($id)
+{
     $proyecto = Proyecto::with(['tareas.responsable', 'tareas.historial'])->find($id);
-   
-    if (!$proyecto) return response()->json(['error' => 'Proyecto no encontrado'], 404);
 
+    if (!$proyecto) {
+        return response()->json(['error' => 'Proyecto no encontrado'], 404);
+    }
 
     $tareas = $proyecto->tareas->map(function ($t) {
-        
         return [
             'id' => $t->id,
             'titulo' => $t->titulo,
             'estado' => $t->estado ?? 'Pendiente',
-          'responsable' => [
-            // Eloquent ahora usará la relación corregida
-            'name' => $t->responsable ? ($t->responsable->nombre . ' ' . $t->responsable->apellido) : 'Sin asignar'
-        ],
+            'responsable_id' => $t->asignado_user_id ?? 0, 
+            'responsable' => [
+                'name' => $t->responsable ? ($t->responsable->nombre . ' ' . $t->responsable->apellido) : 'Sin asignar'
+            ],
             'historial' => $t->historial->map(function($h) {
                 return [
-                    'fecha' => $h->created_at->format('d/m H:i'),
+                    'fecha' => $h->created_at ? $h->created_at->format('d/m H:i') : '-',
                     'tipo' => $h->tipo ?? 'empleado',
                     'mensaje' => $h->mensaje,
                     'archivo_url' => $h->archivo_path ? asset('storage/'.$h->archivo_path) : null
@@ -235,7 +235,7 @@ class ProyectoController extends Controller
     });
 
     return response()->json(['tareas' => $tareas]);
-    }
+}
 
     /**
      * SUBIR DOCUMENTO DE TAREA
@@ -276,9 +276,16 @@ class ProyectoController extends Controller
     try {
         $tarea = \App\Models\Tarea::findOrFail($request->id);
         $user = auth()->user();
-        $rol = $this->rolActual($user); // Asegúrate de que este método exista en tu controlador
+
+        // Verifica si es jefe
+        $rol = $this->rolActual($user); 
         $esJefe = (str_contains(strtolower($rol), 'admin') || str_contains(strtolower($rol), 'jefe'));
         
+        // BLOQUEO: Si no es jefe Y no es el responsable, abortar
+        if (!$esJefe && $tarea->asignado_user_id !== $user->id) {
+         return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
         $path = null;
         if ($request->hasFile('archivo')) {
             $path = $request->file('archivo')->store('documentos', 'public');

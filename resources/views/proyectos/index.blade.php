@@ -4,13 +4,13 @@
 <div class="container-fluid">
     {{-- 1. ENCABEZADO Y BOTÓN CREAR (Siempre arriba) --}}
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-primary fw-bold">
-        <i class="fas fa-briefcase me-2"></i>Gestión de Proyectos
-    </h1>
-    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
-        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Nueva Meta / Proyecto
-    </button>
-</div>
+      <h1 class="h3 mb-0 text-primary fw-bold">
+         <i class="fas fa-briefcase me-2"></i>Gestión de Proyectos
+      </h1>
+       <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
+          <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Nueva Meta / Proyecto
+       </button>
+   </div>
 
     {{-- 2. FILA PRINCIPAL (GRID) --}}
     <div class="row">
@@ -113,7 +113,7 @@
     </div> {{-- Fin Row --}}
 </div>
 
-    {{-- TABLA PRINCIPAL --}}
+{{-- TABLA PRINCIPAL --}}
 <div class="card shadow mb-4">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -244,6 +244,7 @@ function abrirModalTareas(id) {
         .then(data => {
             let html = '<div class="list-group list-group-flush">';
             const rol = "{{ $rol ?? '' }}"; 
+            const usuarioActualId = {{ auth()->id() }}; // Obtenemos el ID del usuario logueado
             const esJefe = (rol.includes('jefe') || rol.includes('admin'));
             
             data.tareas.forEach(t => {
@@ -268,12 +269,26 @@ function abrirModalTareas(id) {
                 // Normalización del estado para comparación
                 const estadoLower = t.estado ? t.estado.toLowerCase().replace(/í/g, 'i') : '';
 
+                // Aseguramos que ambos sean tratados como strings para comparar IDs
+                const responsableId = String(t.responsable_id);
+                const miId = String(usuarioActualId);
+
+                // Lógica para mostrar el botón de enviar
+               // Solo se muestra si ES JEFE (para ver otras cosas) 
+              // O SI EL USUARIO ACTUAL ES EL RESPONSABLE DE LA TAREA
+              const puedeEnviar = (t.responsable_id == usuarioActualId);
+
+              console.log("Tarea:", t.titulo, "Responsable:", responsableId, "Mi ID:", miId, "Coincide:", puedeEnviar);
+
                 html += `
                 <div class="list-group-item px-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold">${t.titulo}</h6>
-                        <span class="badge ${estadoLower.includes('revision') ? 'bg-warning' : 'bg-secondary'}">${t.estado}</span>
-                    </div>
+                  
+                     <div class="d-flex justify-content-between align-items-center">
+                         <h6 class="mb-0 fw-bold">${t.titulo}</h6>
+                         <span class="badge ${estadoLower.includes('revision') ? 'bg-warning' : 'bg-secondary'}">${t.estado}</span>
+                      </div>
+                    
+
                   <small class="text-muted">
                       Responsable: 
                       <span class="${t.responsable.name === 'Sin asignar' ? 'text-danger' : 'text-dark fw-bold'}">
@@ -285,7 +300,7 @@ function abrirModalTareas(id) {
                         ${htmlHistorial}
                     </div>
                     
-                    ${!esJefe ? `
+                    ${!esJefe && puedeEnviar ? `
                         <div class="mt-3">
                             <textarea id="obs-${t.id}" class="form-control mb-2" placeholder="Observaciones..."></textarea>
                             <div class="input-group">
@@ -294,13 +309,13 @@ function abrirModalTareas(id) {
                             </div>
                         </div>
                     ` : `
-                        ${estadoLower.includes('revision') ? `
+                        ${esJefe && estadoLower.includes('revision') ? `
                             <div class="mt-3 d-flex gap-2">
                                 <button onclick="validarTarea(${t.id})" class="btn btn-success btn-sm">
-                                    <i class="fas fa-check"></i> Aprobar
+                                     Aprobar
                                 </button>
-                                <button onclick="solicitarCorreccion(${t.id})" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-times"></i> Pedir Corrección
+                                <button onclick="solicitarCorreccion(${t.id})" class="btn btn-warning btn-sm">
+                                     Corrección
                                 </button>
                             </div>
                         ` : ''}
