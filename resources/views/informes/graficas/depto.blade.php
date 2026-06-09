@@ -2,7 +2,18 @@
 
 @section('content')
 <style>
-    .grafico-container { position: relative; height: 500px; width: 100%; background-color: #141820 !important; border-radius: 15px; padding: 30px; border: 1px solid #d1d3e2; }
+    /* Fondo limpio, acorde a los estándares de tarjetas de Bootstrap/AdminLTE */
+    .grafico-container { 
+        position: relative; 
+        height: 500px; 
+        width: 100%; 
+        background-color: #ffffff !important; /* Fondo blanco */
+        border-radius: 10px; 
+        padding: 20px; 
+        border: 1px solid #e3e6f0; /* Borde suave, no tan oscuro */
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); /* Sombra ligera opcional */
+    }
+
     .custom-dropdown { position: relative; width: 100%; }
     .dropdown-trigger { width: 100%; text-align: left; background: white; border: 1px solid #ced4da; padding: 0.375rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .dropdown-content { display: none; position: absolute; background: white; border: 1px solid #ced4da; width: 100%; z-index: 1000; max-height: 200px; overflow-y: auto; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -131,19 +142,73 @@ function generarGrafica() {
         .then(r => r.json())
         .then(data => {
             Swal.close();
-            if (miGrafica) miGrafica.destroy();
-            const ctx = document.getElementById('canvasDepto').getContext('2d');
-            miGrafica = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: data.labels, datasets: data.datasets },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        })
+           
+  
+           if (miGrafica) miGrafica.destroy();
+               const ctx = document.getElementById('canvasDepto').getContext('2d');
+
+               // Paleta institucional (puedes agregar más colores aquí si es necesario)
+              const paletaColores = [
+                  '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', 
+                  '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+                ];
+
+              miGrafica = new Chart(ctx, {
+                 type: 'bar',
+                  plugins: [ChartDataLabels],
+                  data: { 
+                     labels: data.labels, 
+                       datasets: data.datasets.map((ds, index) => ({
+                          ...ds,
+                         // Asigna color basado en el índice para diferenciar años/departamentos
+                           backgroundColor: paletaColores[index % paletaColores.length],
+                           borderWidth: 2, 
+                            borderColor: 'rgba(0,0,0,0.2)', // El borde aporta el efecto 3D
+                             borderRadius: 6 // Bordes redondeados para un look moderno
+                        })) 
+                    },
+                   options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                           legend: { 
+                             position: 'top',
+                             labels: { font: { weight: 'bold' } }
+                            },
+                           datalabels: { 
+                              anchor: 'end',
+                              align: 'top', 
+                              offset: 5,
+                             formatter: (value) => value, 
+                             font: { weight: 'bold', size: 12 },
+                             color: '#444'
+                            }
+                        },
+                      scales: {
+                          x: { 
+                               title: { 
+                                   display: true, 
+                                   text: (data.labels.length > 0 && typeof data.labels[0] === 'number') ? 'Años' : 'Meses', 
+                                   font: { weight: 'bold', size: 14 } 
+                                },
+
+                              grid: { display: false } // Limpia el gráfico de exceso de líneas
+                            },
+                            y: { 
+                               beginAtZero: true, 
+                               ticks: { precision: 0 }, 
+                               title: { display: true, text: 'Horas Totales', font: { weight: 'bold', size: 14 } } 
+                            }
+                        }
+                    }
+               });
+
+            })
         .catch(err => {
             Swal.close();
             Swal.fire('Error', 'No se pudo cargar la gráfica', 'error');
         });
-}
+    }
 
 
 </script>
