@@ -257,58 +257,63 @@
     </table>
    </div>
 
+   <!-- SECCIÓN DE GRÁFICA -->
+    @if(!empty($graficaBase64))
+
+       <div style="margin-top:30px; text-align:center;">
+          <h3 style="color:#003366;">
+              Análisis Gráfico De Tiempo Compensatorio
+          </h3>
+
+           <img
+            src="{{ $graficaBase64 }}"
+            style="width:500px; height:auto;"
+            >
+       </div>
+
+    @endif
+
    <!-- SECCIÓN DE FIRMA AUTOGENERADA -->
-    <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
-    <tr>
-        <td style="text-align: center;">
-            <div style="display: inline-block; width: 300px;">
-                <div style="height: 100px; margin-bottom: 5px; position: relative;">
-                    @php
-                        // Obtenemos la firma activa para el rol de GTH
-                        // Se asume que el empleado_id corresponde al encargado actual o filtras por 'activo'
-                        $firma = \DB::table('firmas')
-                            ->where('activo', 1)
-                            // ->where('empleado_id', $id_encargado_gth) // Opcional: filtrar por un ID específico
-                            ->first();
+   <table style="width: 80%; margin-top: 50px; border-collapse: collapse;">
+        <tr>
+           <td style="text-align: center;">
+               <div style="display: inline-block; width: 200px;">
+                   <div style="height: 60px; margin-bottom: 5px; position: relative;">
+                       @php
+                          $firma = \DB::table('firmas')->where('activo', 1)->first();
+                         $base64Image = null;
 
-                        $base64Image = null;
-
-                        if ($firma && $firma->imagen_path) {
-                            // Convertimos el contenido del BLOB a Base64
-                            $imageData = $firma->imagen_path;
-                            
-                            // En algunos drivers de BD, el BLOB viene como recurso, en otros como string
-                            if (is_resource($imageData)) {
-                                $imageData = stream_get_contents($imageData);
+                           if ($firma && $firma->imagen_path) {
+                              $imageData = $firma->imagen_path;
+                              if (is_resource($imageData)) {
+                                  $imageData = stream_get_contents($imageData);
+                                }
+                               $base64Image = 'data:image/png;base64,' . base64_encode($imageData);
                             }
-                            
-                            $base64Image = 'data:image/png;base64,' . base64_encode($imageData);
-                        }
-                    @endphp
+                        @endphp
 
-                    @if($base64Image)
-                        <img src="{{ $base64Image }}" style="max-height: 100px; max-width: 250px;">
-                    @else
-                        <div style="padding-top: 40px; color: #ccc; font-size: 8pt; border: 1px dashed #ddd;">
-                            ESPACIO PARA FIRMA <br> (No se encontró registro activo)
-                        </div>
-                    @endif
-                </div>
+                        @if($base64Image)
+                          <img src="{{ $base64Image }}" style="max-height: 60px; max-width: 180px; width: auto; height: auto;">
+                        @else
+                          <div style="padding-top: 20px; color: #ccc; font-size: 7pt; border: 1px dashed #ddd; height: 40px;">
+                              ESPACIO FIRMA
+                           </div>
+                        @endif
+                   </div>
                 
-                <!-- Línea y Nombre del Puesto -->
-                <div style="border-top: 1.5px solid #000; padding-top: 5px;">
-                    <strong style="font-size: 9pt; text-transform: uppercase; display: block;">
-                        Gestión de Talento Humano
-                    </strong>
-                    <span style="font-size: 8pt; color: #444;">
-                        GTH
-                    </span>
-                </div>
-            </div>
-        </td>
-    </tr>
-   </table>
-
+                    <div style="border-top: 1px solid #000; padding-top: 3px;">
+                      <strong style="font-size: 8pt; text-transform: uppercase; display: block;">
+                          Gestión de Talento Humano
+                       </strong>
+                       <span style="font-size: 7pt; color: #444;">
+                         GTH
+                       </span>
+                   </div>
+               </div>
+           </td>
+       </tr>
+    </table>
+    <br> <br>
    <!-- NOTA LEGAL AL PIE DE LA PÁGINA -->
    <div style="position: absolute; bottom: 10px; width: 100%; text-align: center;">
     <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 5px;">

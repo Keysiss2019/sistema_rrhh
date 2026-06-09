@@ -208,8 +208,24 @@
       </tfoot>
 
     </table>
+    
+    <!-- SECCIÓN DE GRÁFICA -->
+    @if(!empty($graficaBase64))
 
-     <br><br><br>
+       <div style="margin-top:30px; text-align:center;">
+          <h3 style="color:#003366;">
+              Análisis Gráfico Individual
+          </h3>
+
+           <img
+            src="{{ $graficaBase64 }}"
+            style="width:700px; height:auto;"
+            >
+       </div>
+
+    @endif
+
+    <br><br><br>
     {{-- =========================================================
          SECCIÓN DE FIRMA
     ========================================================== --}}

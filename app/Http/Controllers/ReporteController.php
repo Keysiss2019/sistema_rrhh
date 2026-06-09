@@ -254,9 +254,111 @@ class ReporteController extends Controller
         $firma = DB::table('firmas')->where('activo', 1)->first();
 
         $datos = $query->get();
+
+        
+       // ===============================
+      // GRÁFICA 3D DINÁMICA - IHCI
+     // ===============================
+
+      $width = 900;
+      $height = 450;
+      $image = imagecreatetruecolor($width, $height);
+
+      // Definición de colores
+      $bg = imagecolorallocate($image, 240, 240, 242); 
+      $text_main = imagecolorallocate($image, 33, 37, 41);
+      $grid_color = imagecolorallocate($image, 215, 215, 218);
+      $accent_red = imagecolorallocate($image, 201, 28, 48);
+
+      imagefilledrectangle($image, 0, 0, $width, $height, $bg);
+
+      // Fuente (Asegúrate de que esta ruta sea accesible por PHP)
+      $fontPath = 'C:/Windows/Fonts/arial.ttf';
+
+      // Título
+      $titulo = "RESULTADOS DE GESTIÓN: PROYECTOS / ACTIVIDADES";
+      $fontSize = 12;
+      $bbox = imagettfbbox($fontSize, 0, $fontPath, $titulo);
+      $tituloWidth = $bbox[2] - $bbox[0];
+      $xTitulo = ($width - $tituloWidth) / 2;
+      imagettftext($image, $fontSize, 0, $xTitulo, 45, $text_main, $fontPath, $titulo);
+      
+
+      // Grid y límites
+      $left = 70; $bottom = 380; $top = 80; $right = 850;
+      $depth = 12;
+
+      for ($i = 0; $i <= 5; $i++) {
+          $y = $bottom - ($i * (($bottom - $top) / 5));
+          imageline($image, $left, $y, $right, $y, $grid_color);
+          imagettftext($image, 10, 0, 25, $y + 5, $text_main, $fontPath, ($i * 20) . '%');
+        }
+
+        // --- ETIQUETAS DE EJES (FUERA DEL BUCLE) ---
+        imagettftext($image, 12, 90, 20, ($bottom + $top) / 2 + 50, $text_main, $fontPath, "Porcentaje (%)");
+
+        $labelX = "Proyectos / Actividades";
+        $bboxX = imagettfbbox(12, 0, $fontPath, $labelX);
+        $xPos = ($right + $left - ($bboxX[2] - $bboxX[0])) / 2;
+        imagettftext($image, 12, 0, $xPos, $bottom + 50, $text_main, $fontPath, $labelX);
+
+        // Paleta de colores
+        $paleta = [
+          ['f' => [55, 98, 148], 't' => [80, 130, 190], 's' => [40, 70, 110]], // Azul
+          ['f' => [201, 28, 48], 't' => [230, 60, 80], 's' => [150, 10, 20]], // Rojo
+          ['f' => [34, 139, 34], 't' => [60, 179, 113], 's' => [20, 100, 20]], // Verde
+          ['f' => [255, 140, 0], 't' => [255, 170, 40], 's' => [200, 100, 0]]  // Naranja
+        ];
+
+        // Cálculo de espaciado
+        $total = count($datos);
+        $spacing = ($right - $left) / ($total + 1);
+        $barWidth = min(50, $spacing * 0.5); 
+        $x = $left + ($spacing / 2);
+
+        // Bucle principal
+       foreach ($datos as $index => $d) {
+          $valor = min(100, round($d->resultado, 2));
+          $barHeight = ($valor == 0) ? 0 : max(15, ($valor / 100) * ($bottom - $top));
+           $y1 = $bottom - $barHeight;
+
+           $col = $paleta[$index % count($paleta)];
+           $bar_color = imagecolorallocate($image, $col['f'][0], $col['f'][1], $col['f'][2]);
+           $bar_top   = imagecolorallocate($image, $col['t'][0], $col['t'][1], $col['t'][2]);
+           $bar_side  = imagecolorallocate($image, $col['s'][0], $col['s'][1], $col['s'][2]);
+
+           // Dibujar 3D
+            if ($valor > 0) {
+              imagefilledpolygon($image, [$x + $barWidth, $y1, $x + $barWidth + $depth, $y1 - $depth, $x + $barWidth + $depth, $bottom - $depth, $x + $barWidth, $bottom], 4, $bar_side);
+              imagefilledpolygon($image, [$x, $y1, $x + $depth, $y1 - $depth, $x + $barWidth + $depth, $y1 - $depth, $x + $barWidth, $y1], 4, $bar_top);
+              imagefilledrectangle($image, $x, $y1, $x + $barWidth, $bottom, $bar_color);
+            }
+
+          // Porcentaje sobre barra
+           $valText = $valor . '%';
+           $textY = ($valor > 0) ? ($y1 - $depth - 5) : ($bottom - 20);
+           imagettftext($image, 10, 0, $x + ($barWidth/2) - 15, $textY, $text_main, $fontPath, $valText);
+
+          // Etiqueta de actividad (abajo)
+          $texto = strlen($d->actividad) > 10 ? substr($d->actividad, 0, 8) . '...' : $d->actividad;
+          imagettftext($image, 10, 0, $x, $bottom + 25, $text_main, $fontPath, $texto);
+
+         $x += $spacing;
+        }
+
+       // Salida
+
+      ob_start();
+      imagepng($image);
+      $imageData = ob_get_clean();
+      $graficaBase64 = 'data:image/png;base64,' . base64_encode($imageData);
+      imagedestroy($image);
+    
+
+
         $promedio_global = $datos->avg('resultado') ?? 0;
 
-        $pdf = Pdf::loadView('informes.pdf_individual', ['datos' => $datos, 'empleado' => $empleado, 'anio' => $request->anio, 'promedio_global' => $promedio_global, 'firma' => $firma]);
+        $pdf = Pdf::loadView('informes.pdf_individual', ['datos' => $datos, 'empleado' => $empleado, 'anio' => $request->anio, 'promedio_global' => $promedio_global, 'firma' => $firma, 'graficaBase64' => $graficaBase64]);
         return $pdf->stream("Evaluacion_{$empleado->nombre}_{$empleado->apellido}.pdf");
     }
 
@@ -317,18 +419,134 @@ class ReporteController extends Controller
         return response()->json(['count' => $query->count()]);
     }
 
-    public function pdfCompensatorio(Request $request) {
-        $empleado = Empleado::with(['departamento'])->findOrFail($request->empleado_id);
-        $movimientos = HoraExtra::where('empleado_id', $empleado->id)->where('estado', 'aprobado')->whereYear('created_at', $request->anio)
-            ->when($request->mes, fn($q) => $q->whereMonth('created_at', $request->mes))->get();
+   public function pdfCompensatorio(Request $request) {
+  
+       $empleado = Empleado::with(['departamento'])->findOrFail($request->empleado_id);
+    
+       // Obtener movimientos
+       $movimientos = HoraExtra::where('empleado_id', $empleado->id)
+        ->where('estado', 'aprobado')
+        ->whereYear('created_at', $request->anio)
+        ->when($request->mes, fn($q) => $q->whereMonth('created_at', $request->mes))
+        ->get();
 
         $nombreExacto = $empleado->nombre . ' ' . $empleado->apellido;
-        $solicitudes = Solicitud::where('nombre', $nombreExacto)->where('estado', 'aprobado')->where('tipo', 'A cuenta de tiempo compensatorio')
-            ->whereYear('fecha_inicio', $request->anio)->when($request->mes, fn($q) => $q->whereMonth('fecha_inicio', $request->mes))->get();
+        $solicitudes = Solicitud::where('nombre', $nombreExacto)
+        ->where('estado', 'aprobado')
+        ->where('tipo', 'A cuenta de tiempo compensatorio')
+        ->whereYear('fecha_inicio', $request->anio)
+        ->when($request->mes, fn($q) => $q->whereMonth('fecha_inicio', $request->mes))
+        ->get();
 
-        $todosLosRegistros = $movimientos->concat($solicitudes)->sortBy(fn($item) => $item->fecha ?? $item->fecha_inicio);
-        return Pdf::loadView('informes.pdf_compensatorio', ['empleado' => $empleado, 'anio' => $request->anio, 'todosLosRegistros' => $todosLosRegistros])
-            ->setPaper('letter', 'portrait')->stream("Reporte_Compensatorio.pdf");
+        // 1. Usa el nombre de columna correcto: 'horas_acumuladas'
+       $totalGanado = $movimientos->sum('horas_acumuladas'); 
+
+       // 2. Mantén el total consumido como lo tenías, ya que ese sí funcionaba
+       $totalUtilizado = $solicitudes->sum('horas'); 
+
+       // 3. Verifica que los datos se están pasando bien
+       $datos = collect([
+           (object) ['actividad' => 'Acumulado', 'resultado' => $totalGanado],
+           (object) ['actividad' => 'Consumido', 'resultado' => $totalUtilizado]
+        ]);
+
+       // Lógica de Gráfica 3D
+       $maxValor = max($totalGanado, $totalUtilizado, 5);
+       $maxGrid = ceil(max($totalGanado, $totalUtilizado, 5) / 5) * 5;
+
+ 
+        $width = 800; $height = 400;
+        $image = imagecreatetruecolor($width, $height);
+        $bg = imagecolorallocate($image, 240, 240, 242);
+        $text_main = imagecolorallocate($image, 33, 37, 41);
+       $grid_color = imagecolorallocate($image, 215, 215, 218);
+       imagefilledrectangle($image, 0, 0, $width, $height, $bg);
+       $fontPath = 'C:/Windows/Fonts/arial.ttf';
+
+       // --- TÍTULO DE LA GRÁFICA ---
+       $titulo = "ANÁLISIS DE HORAS COMPENSATORIAS";
+       $tamanoFuenteTitulo = 12;
+
+      // Calculamos el ancho del texto para centrarlo dinámicamente
+       $bboxTitulo = imagettfbbox($tamanoFuenteTitulo, 0, $fontPath, $titulo);
+       $anchoTitulo = $bboxTitulo[2] - $bboxTitulo[0];
+       $xTitulo = ($width / 2) - ($anchoTitulo / 2);
+
+       // Dibujamos el título en la parte superior (y=40)
+       imagettftext($image, $tamanoFuenteTitulo, 0, $xTitulo, 40, $text_main, $fontPath, $titulo);
+
+        // Grid y etiquetas
+        $left = 70; $bottom = 300; $top = 50; $right = 750;
+        $depth = 10;
+      // 1. Dibuja los números del Grid (más a la derecha: x = 45)
+      for ($i = 0; $i <= 5; $i++) {
+          $y = $bottom - ($i * (($bottom - $top) / 5));
+          imageline($image, $left, $y, $right, $y, $grid_color);
+    
+          $valorEtiqueta = ($i * ($maxGrid / 5));
+          // x=45 para que los números no se crucen con la etiqueta "Cantidad"
+          imagettftext($image, 10, 0, 45, $y + 5, $text_main, $fontPath, (string)$valorEtiqueta);
+        }
+
+        // 2. Dibuja la etiqueta lateral "Cantidad (Horas)" (más a la izquierda: x = 15)
+        // x=15 deja espacio para que los números estén a su derecha
+        imagettftext($image, 14, 90, 15, ($bottom + $top) / 2 + 50, $text_main, $fontPath, "Cantidad (Horas)");
+
+       // Dibujo de barras
+       $paleta = [
+          ['f'=>[55,98,148], 't'=>[80,130,190], 's'=>[40,70,110]], // Azul (Ganadas)
+          ['f'=>[201,28,48], 't'=>[230,60,80], 's'=>[150,10,20]]   // Rojo (Utilizadas)
+        ];
+
+        $x = 200;
+        foreach ($datos as $index => $d) {
+          $h = ($maxGrid > 0) ? ($d->resultado / $maxGrid) * ($bottom - $top) : 0;
+          $barWidth = 80;
+          $y1 = $bottom - $h;
+          $c = $paleta[$index];
+        
+          // Dibujo 3D
+          imagefilledpolygon($image, [$x + $barWidth, $y1, $x + $barWidth + $depth, $y1 - $depth, $x + $barWidth + $depth, $bottom - $depth, $x + $barWidth, $bottom], 4, imagecolorallocate($image, $c['s'][0], $c['s'][1], $c['s'][2]));
+          imagefilledpolygon($image, [$x, $y1, $x + $depth, $y1 - $depth, $x + $barWidth + $depth, $y1 - $depth, $x + $barWidth, $y1], 4, imagecolorallocate($image, $c['t'][0], $c['t'][1], $c['t'][2]));
+          imagefilledrectangle($image, $x, $y1, $x + $barWidth, $bottom, imagecolorallocate($image, $c['f'][0], $c['f'][1], $c['f'][2]));
+        
+          // --- ETIQUETA SUPERIOR (El valor) ---
+          // Calculamos el ancho del texto para centrarlo sobre la barra
+           $textVal = (string)$d->resultado;
+           $bbox = imagettfbbox(12, 0, $fontPath, $textVal);
+           $textWidth = $bbox[2] - $bbox[0];
+           $xText = $x + ($barWidth / 2) - ($textWidth / 2);
+           imagettftext($image, 12, 0, $xText, $y1 - 15, $text_main, $fontPath, $textVal);
+    
+             // --- ETIQUETA INFERIOR (La categoría: Acumulado / Consumido) ---
+            $bboxCat = imagettfbbox(12, 0, $fontPath, $d->actividad);
+            $catWidth = $bboxCat[2] - $bboxCat[0];
+            $xCat = $x + ($barWidth / 2) - ($catWidth / 2);
+            imagettftext($image, 12, 0, $xCat, $bottom + 30, $text_main, $fontPath, $d->actividad);
+    
+            $x += 250;
+        }
+
+        // Etiqueta de Leyenda (Box de colores)
+        // Acumulado
+        imagefilledrectangle($image, 250, 360, 270, 380, imagecolorallocate($image, 55, 98, 148));
+        imagettftext($image, 12, 0, 280, 375, $text_main, $fontPath, "Acumulado (+)");
+
+        // Consumido
+        imagefilledrectangle($image, 450, 360, 470, 380, imagecolorallocate($image, 201, 28, 48));
+        imagettftext($image, 12, 0, 480, 375, $text_main, $fontPath, "Consumido (-)");
+
+        ob_start(); imagepng($image); $graficaBase64 = 'data:image/png;base64,' . base64_encode(ob_get_clean());
+       imagedestroy($image);
+
+       $todosLosRegistros = $movimientos->concat($solicitudes)->sortBy(fn($item) => $item->fecha ?? $item->fecha_inicio);
+    
+        return Pdf::loadView('informes.pdf_compensatorio', [
+          'empleado' => $empleado, 
+          'anio' => $request->anio, 
+          'todosLosRegistros' => $todosLosRegistros,
+          'graficaBase64' => $graficaBase64
+        ])->setPaper('letter', 'portrait')->stream("Reporte_Compensatorio.pdf");
     }
 
     public function excelCompensatorio(Request $request) {
@@ -409,11 +627,123 @@ class ReporteController extends Controller
           $query->whereMonth('fecha_inicio', $request->mes);
         }
 
-       $solicitudes = $query->orderBy('fecha_inicio', 'asc')->get();
+       // 1. Obtenemos los resultados y los guardamos en una variable consistente
+      $solicitudes = $query->orderBy('fecha_inicio', 'asc')->get();
+
+       // --- PREPARAR DATOS PARA LA GRÁFICA ---
+      // Agrupamos por tipo para que la gráfica muestre la distribución
+       $datos = $solicitudes->groupBy('tipo')->map(function ($items, $tipo) {
+          return (object) [
+              'actividad' => $tipo,
+             'dias' => $items->sum('dias'),
+              'horas' => $items->sum('horas')
+            ];
+        })->values();
+
+        $maxGrid = ceil(max($datos->max('dias'), $datos->max('horas') / 8, 1) / 5) * 5;
 
        // --- CÁLCULO DE TOTALES (Simplificado con sum) ---
        $totalDias = $solicitudes->sum('dias');
        $totalHoras = $solicitudes->sum('horas');
+
+       // ===============================
+      // GRÁFICA 3D DINÁMICA - IHCI
+     // ===============================
+
+      // 1. Obtener el valor máximo para la escala (Días u Horas)
+      $maxValor = $datos->max('resultado') > 0 ? $datos->max('resultado') : 5;
+      $maxGrid = ceil($maxValor / 5) * 5; // Redondea al múltiplo de 5 más cercano
+
+
+      // 2. Configuración Gráfica
+      $width = 900;
+      $height = 450;
+      $image = imagecreatetruecolor($width, $height);
+      $bg = imagecolorallocate($image, 240, 240, 242); 
+      $text_main = imagecolorallocate($image, 33, 37, 41);
+      $grid_color = imagecolorallocate($image, 215, 215, 218);
+      $accent_red = imagecolorallocate($image, 201, 28, 48);
+
+      imagefilledrectangle($image, 0, 0, $width, $height, $bg);
+      $fontPath = 'C:/Windows/Fonts/arial.ttf';
+
+
+     // Título
+      imagettftext($image, 15, 0, ($width - 400) / 2, 45, $text_main, $fontPath, $tituloReporte);
+
+      // Grid Dinámico
+       $left = 70; $bottom = 380; $top = 80; $right = 850;
+       $depth = 12;
+
+       for ($i = 0; $i <= 5; $i++) {
+          $y = $bottom - ($i * (($bottom - $top) / 5));
+          imageline($image, $left, $y, $right, $y, $grid_color);
+          // Etiqueta numérica dinámica
+          $labelValue = ($i * ($maxGrid / 5));
+          imagettftext($image, 10, 0, 20, $y + 5, $text_main, $fontPath, (string)($i * ($maxGrid / 5)));
+        }
+
+        // Azul para Días, Rojo para Horas
+        $colorDias = ['f' => [55, 98, 148], 't' => [80, 130, 190], 's' => [40, 70, 110]];
+        $colorHoras = ['f' => [201, 28, 48], 't' => [230, 60, 80], 's' => [150, 10, 20]];
+
+
+        // Etiquetas ejes
+        imagettftext($image, 12, 90, 10, ($bottom + $top) / 2 + 50, $text_main, $fontPath, "Cantidad (Días)");
+        imagettftext($image, 12, 0, 400, $bottom + 50, $text_main, $fontPath, "Tipos de Permisos");
+
+        // Paleta y Bucle
+        $paleta = [['f'=>[55,98,148],'t'=>[80,130,190],'s'=>[40,70,110]], ['f'=>[201,28,48],'t'=>[230,60,80],'s'=>[150,10,20]], ['f'=>[34,139,34],'t'=>[60,179,113],'s'=>[20,100,20]], ['f'=>[255,140,0],'t'=>[255,170,40],'s'=>[200,100,0]]];
+        $spacing = ($right - $left) / (count($datos) + 1);
+        $barWidth = 50;
+        $x = $left + ($spacing / 2);
+
+       foreach ($datos as $d) {
+          $barWidth = 35;
+    
+          // Función interna para dibujar barra
+          $drawBar = function($val, $color, $posX) use ($image, $bottom, $top, $maxGrid, $depth, $barWidth, $text_main, $fontPath) {
+          $h = ($maxGrid > 0) ? ($val / $maxGrid) * ($bottom - $top) : 0;
+          if($h < 5) $h = 5;
+             $y1 = $bottom - $h;
+              $c_f = imagecolorallocate($image, $color['f'][0], $color['f'][1], $color['f'][2]);
+              $c_t = imagecolorallocate($image, $color['t'][0], $color['t'][1], $color['t'][2]);
+              $c_s = imagecolorallocate($image, $color['s'][0], $color['s'][1], $color['s'][2]);
+        
+               imagefilledpolygon($image, [$posX + $barWidth, $y1, $posX + $barWidth + $depth, $y1 - $depth, $posX + $barWidth + $depth, $bottom - $depth, $posX + $barWidth, $bottom], 4, $c_s);
+               imagefilledpolygon($image, [$posX, $y1, $posX + $depth, $y1 - $depth, $posX + $barWidth + $depth, $y1 - $depth, $posX + $barWidth, $y1], 4, $c_t);
+               imagefilledrectangle($image, $posX, $y1, $posX + $barWidth, $bottom, $c_f);
+               imagettftext($image, 9, 0, $posX + 5, $y1 - $depth - 5, $text_main, $fontPath, (string)$val);
+            };
+
+           // Dibujar las dos barras
+           $drawBar($d->dias, $colorDias, $x - 40);
+          $drawBar($d->horas, $colorHoras, $x + 5);
+    
+          // Etiqueta categoría
+         imagettftext($image, 9, 0, $x - 15, $bottom + 25, $text_main, $fontPath, substr($d->actividad, 0, 10));
+         $x += $spacing;
+        }
+
+       // Leyenda
+      // Dibujar cuadrados pequeños con el color correspondiente para una leyenda clara
+       $legY = 410;
+      
+       // Cuadrado Días
+       imagefilledrectangle($image, 750, $legY, 765, $legY + 15, imagecolorallocate($image, 55, 98, 148));
+       imagettftext($image, 10, 0, 775, $legY + 12, $text_main, $fontPath, "Días");
+
+       // Cuadrado Horas
+       imagefilledrectangle($image, 820, $legY, 835, $legY + 15, imagecolorallocate($image, 201, 28, 48));
+       imagettftext($image, 10, 0, 845, $legY + 12, $text_main, $fontPath, "Horas");
+
+       // Salida
+
+      ob_start();
+      imagepng($image);
+      $imageData = ob_get_clean();
+      $graficaBase64 = 'data:image/png;base64,' . base64_encode($imageData);
+      imagedestroy($image);
 
       // Generar el PDF
       return Pdf::loadView('informes.pdf_permisos', [
@@ -423,7 +753,8 @@ class ReporteController extends Controller
            'titulo'      => $tituloReporte, // Pasa el título dinámico a la vista
            'mes'         => $request->filled('mes') ? $this->obtenerNombreMes($request->mes) : "Anual Acumulado",
           'total_dias'  => $totalDias,
-         'total_horas' => $totalHoras
+         'total_horas' => $totalHoras,
+         'graficaBase64' => $graficaBase64
          ])->setPaper('letter', 'portrait')
           ->stream("{$tituloReporte}_{$empleado->apellido}.pdf");
     }

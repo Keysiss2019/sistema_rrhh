@@ -111,6 +111,22 @@
         </tfoot>
     </table>
 
+    <!-- SECCIÓN DE GRÁFICA -->
+    @if(!empty($graficaBase64))
+
+       <div style="margin-top:30px; text-align:center;">
+          <h3 style="color:#003366;">
+              Análisis Gráfico De Permisos
+          </h3>
+
+           <img
+            src="{{ $graficaBase64 }}"
+            style="width:500px; height:auto;"
+            >
+       </div>
+
+    @endif
+
     <!-- SECCIÓN DE FIRMA AUTOGENERADA -->
     <table style="width: 100%; margin-top: 50px; border-collapse: collapse;">
         <tr>
