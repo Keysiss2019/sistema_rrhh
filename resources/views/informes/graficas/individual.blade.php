@@ -22,7 +22,7 @@
         position: relative;
         height: 500px;
         width: 100%;
-        background-color: #141820 !important;
+        background-color: #f4f6fa !important;
         border-radius: 15px;
         padding: 30px;
         border: 1px solid #d1d3e2;
@@ -363,22 +363,22 @@
 
 
     function generarGraficaIndividual() {
-    const emp = document.getElementById('empleado_id').value;
-    const anios = obtenerAniosSeleccionados();
-    const mes = document.getElementById('mes_v').value;
+       const emp = document.getElementById('empleado_id').value;
+       const anios = obtenerAniosSeleccionados();
+       const mes = document.getElementById('mes_v').value;
 
-    if (!emp || anios.length === 0) {
-        Swal.fire('Atención', 'Seleccione empleado y al menos un año.', 'warning');
-        return;
-    }
+        if (!emp || anios.length === 0) {
+          Swal.fire('Atención', 'Seleccione empleado y al menos un año.', 'warning');
+          return;
+        }
 
-    Swal.fire({ title: 'Generando gráfica...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Generando gráfica...', didOpen: () => Swal.showLoading() });
 
-    let url = `{{ route('graficas.data.individual') }}?empleado_id=${emp}`;
-    anios.forEach(a => url += `&anios[]=${a}`);
-    if (mes && mes !== 'todo') url += `&mes=${mes}`;
+        let url = `{{ route('graficas.data.individual') }}?empleado_id=${emp}`;
+        anios.forEach(a => url += `&anios[]=${a}`);
+       if (mes && mes !== 'todo') url += `&mes=${mes}`;
 
-    fetch(url)
+        fetch(url)
         .then(r => r.json())
         .then(data => {
             Swal.close();
@@ -398,14 +398,32 @@
             miGraficaInd = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: data.labels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 } },
-                        x: { grid: { display: false } }
+               options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                      y: { 
+                          beginAtZero: true, 
+                          ticks: { precision: 0 },
+                          title: {
+                              display: true,
+                              text: 'Horas Totales',
+                              font: { weight: 'bold', size: 14 }
+                            }
+                        },
+                       x: { 
+                         grid: { display: false },
+                         title: {
+                              display: true,
+                              // Cambia el texto dinámicamente según el modo
+                              text: (anios.length > 1 && mes !== 'todo') ? 'Años' : 'Meses',
+                              font: { weight: 'bold', size: 14 }
+                            }
+                        }
                     },
-                    plugins: { legend: { position: 'top' } }
+                  plugins: { 
+                     legend: { position: 'top' } 
+                    }
                 }
             });
         })
