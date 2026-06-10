@@ -2,7 +2,7 @@
 <div class="modal fade" id="modal-{{ $solicitud->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content" style="border-radius:15px;">
-            
+
             <!-- Cabecera del modal -->
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title fw-bold">
@@ -289,7 +289,7 @@
                                     <!-- Botones de aprobar o rechazar -->
                                     <div class="d-flex justify-content-center gap-3">
                                         <button type="submit" name="accion" value="aprobado" class="btn btn-success btn-lg px-5 shadow fw-bold">
-                                            <i class="fas fa-file-signature me-2"></i> FIRMAR Y APROBAR
+                                            <i class="fas fa-file-signature me-2"></i> FIRMAR
                                         </button>
                                         <button type="submit" name="accion" value="rechazado" class="btn btn-outline-danger btn-lg px-4">
                                             RECHAZAR
@@ -406,20 +406,61 @@
 
     //ALERTAS
     document.addEventListener('DOMContentLoaded', function() {
-        // Seleccionamos todas las alertas presentes en la página
-        var alerts = document.querySelectorAll('.alert');
-        
-        alerts.forEach(function(alert) {
-            // Configuramos un temporizador
-            setTimeout(function() {
-                // Verificamos si la alerta aún existe antes de intentar cerrarla
-                if (alert) {
-                    // Usamos la API de Bootstrap para un cierre animado (fade out)
-                    var bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            }, 4000); // 4 segundos es ideal para leer mensajes cortos
-        });
+    
+    // Función para abrir el modal y mostrar el mensaje
+    const abrirModalYNotificar = () => {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#modal-')) {
+            const modalElement = document.querySelector(hash);
+            if (modalElement) {
+                // 1. Limpieza inicial
+                document.body.classList.remove('modal-open');
+                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+
+                // 2. Abrir el modal
+                const modalInstance = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: true
+                });
+                modalInstance.show();
+
+                // 3. Si hay sesión de éxito, mostrar el SweetAlert AHORA
+                @if(session('success'))
+                    // Esperamos un instante a que la animación del modal termine
+                    setTimeout(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Acción exitosa!',
+                            text: '{{ session('success') }}',
+                            timer: 2500,
+                            showConfirmButton: false,
+                            target: modalElement, // Importante: montamos el Swal DENTRO del modal
+                            heightAuto: false
+                        });
+                    }, 500);
+                @endif
+
+                // 4. Limpiar la URL
+                setTimeout(() => {
+                    history.replaceState(null, null, window.location.pathname);
+                }, 800);
+            }
+        }
+    };
+
+    // Ejecutar la apertura
+    abrirModalYNotificar();
+    });
+
+    // Limpieza global al cerrar
+    document.addEventListener('hidden.bs.modal', function () {
+     document.body.classList.remove('modal-open');
+     document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
     });
 </script>
 
+<style>
+    /* Aseguramos que el contenedor de SweetAlert esté siempre arriba */
+    .swal2-container {
+    z-index: 1060 !important;}
+</style>

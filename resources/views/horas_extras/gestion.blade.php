@@ -41,61 +41,53 @@
         @endif
     </div>
 
-    {{-- BLOQUE DE MENSAJES --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4 auto-close" role="alert" style="border-radius: 10px; border-left: 5px solid #198754;">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle me-3 fa-lg"></i>
-                <div>
-                    <strong class="d-block">¡Acción exitosa!</strong>
-                    {{ session('success') }}
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+     {{-- BLOQUE DE MENSAJES --}}
+   @if(session('success') && !request()->is('horas-extras*')) 
+     <div class="alert alert-success">
+         {{ session('success') }}
+      </div>
     @endif
-
 
   {{-- BUSCADOR PARA ADMIN, GTH, DIRECCIÓN Y JEFES --}}
   @if($esAdmin || $esGTH || $esDireccion || $esJefe)
-   <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-primary text-white fw-bold">
-            <i class="fas fa-search me-2"></i> CONSULTAR SALDOS POR COLABORADOR
-        </div>
-        <div class="card-body bg-light">
-            <form action="{{ url()->current() }}" method="GET" id="formConsulta" autocomplete="off">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold text-uppercase">1. Departamento</label>
-                        {{-- AÑADIDO: name="departamento_id" --}}
+       <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white fw-bold">
+              <i class="fas fa-search me-2"></i> CONSULTAR SALDOS POR COLABORADOR
+          </div>
+           <div class="card-body bg-light">
+               <form action="{{ url()->current() }}" method="GET" id="formConsulta" autocomplete="off">
+                  <div class="row g-3">
+                       <div class="col-md-4">
+                          <label class="form-label small fw-bold text-uppercase">1. Departamento</label>
+                          {{-- AÑADIDO: name="departamento_id" --}}
                     
-                        <select id="select_depto" name="departamento_id" class="form-select border-primary">
-                            <option value="">-- Seleccione un depto --</option>
-                            @foreach($departamentos as $depto)
-                                <option value="{{ $depto->id }}" {{ request('departamento_id') == $depto->id ? 'selected' : '' }}>
-                                    {{ $depto->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                          <select id="select_depto" name="departamento_id" class="form-select border-primary">
+                              <option value="">-- Seleccione un depto --</option>
+                                @foreach($departamentos as $depto)
+                                  <option value="{{ $depto->id }}" {{ request('departamento_id') == $depto->id ? 'selected' : '' }}>
+                                     {{ $depto->nombre }}
+                                  </option>
+                                @endforeach
+                          </select>
+                       </div>
 
-                    <div class="col-md-5">
-                        <label class="form-label small fw-bold text-uppercase">2. Colaborador</label>
-                        <select name="empleado_id" id="select_empleado" class="form-select border-primary" required>
-                            <option value="">-- Seleccione Colaborador --</option>
-                            {{-- Aquí tu JS debe llenar las opciones --}}
-                        </select>
-                    </div>
+                       <div class="col-md-5">
+                          <label class="form-label small fw-bold text-uppercase">2. Colaborador</label>
+                           <select name="empleado_id" id="select_empleado" class="form-select border-primary" required>
+                              <option value="">-- Seleccione Colaborador --</option>
+                              {{-- Aquí tu JS debe llenar las opciones --}}
+                          </select>
+                       </div>
 
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">
-                            <i class="fas fa-sync-alt me-1"></i> CONSULTAR
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+                       <div class="col-md-3 d-flex align-items-end">
+                          <button type="submit" class="btn btn-primary w-100 fw-bold">
+                             <i class="fas fa-sync-alt me-1"></i> CONSULTAR
+                          </button>
+                      </div>
+                  </div>
+              </form>
+         </div>
+       </div>
     @endif
 
     {{-- BARRA DE INFORMACIÓN (Solo si hay búsqueda activa) --}}
@@ -108,62 +100,60 @@
 
    {{-- INDICADORES --}}
    @if($empleadoAConsultar)
-<div class="row g-3 mb-4">
-    {{-- TARJETA ACUMULADAS --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-             role="button" data-bs-toggle="modal" data-bs-target="#modalAcumuladas" style="cursor: pointer;">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <small class="text-uppercase fw-bold text-info mb-1">Acumuladas</small>
-                <h3 class="fw-bold mb-0 text-info">{{ number_format($totalAcumuladas, 2) }} h</h3>
-            </div>
-            <div style="height: 5px; background-color: #0dcaf0; border-radius: 0 0 5px 5px;"></div>
+      <div class="row g-3 mb-4">
+          {{-- TARJETA ACUMULADAS --}}
+          <div class="col-md-3">
+               <div class="card border-0 shadow-sm bg-dark text-white h-100" 
+                    role="button" data-bs-toggle="modal" data-bs-target="#modalAcumuladas" style="cursor: pointer;">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <small class="text-uppercase fw-bold text-info mb-1">Acumuladas</small>
+                        <h3 class="fw-bold mb-0 text-info">{{ number_format($totalAcumuladas, 2) }} h</h3>
+                  </div>
+               <div style="height: 5px; background-color: #0dcaf0; border-radius: 0 0 5px 5px;"></div>
+          </div>
         </div>
-    </div>
 
-    {{-- TARJETA PAGADAS --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm bg-secondary text-white h-100 opacity-75" 
-             role="button" data-bs-toggle="modal" data-bs-target="#modalPagadas" style="cursor: pointer;">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <small class="text-uppercase fw-bold text-light mb-1">Pagadas</small>
-                <h3 class="fw-bold mb-0 text-light">{{ number_format($totalPagadas, 2) }} h</h3>
-            </div>
+       {{-- TARJETA PAGADAS --}}
+       <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-secondary text-white h-100 opacity-75" 
+               role="button" data-bs-toggle="modal" data-bs-target="#modalPagadas" style="cursor: pointer;">
+              <div class="card-body text-center d-flex flex-column justify-content-center">
+                  <small class="text-uppercase fw-bold text-light mb-1">Pagadas</small>
+                  <h3 class="fw-bold mb-0 text-light">{{ number_format($totalPagadas, 2) }} h</h3>
+               </div>
             <div style="height: 5px; background-color: #adb5bd; border-radius: 0 0 5px 5px;"></div>
         </div>
-    </div>
+    
 
-    {{-- TARJETA CONSUMIDAS --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-             role="button" data-bs-toggle="modal" data-bs-target="#modalConsumidas" style="cursor: pointer;">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <small class="text-uppercase fw-bold text-warning mb-1">Consumidas</small>
-                <h3 class="fw-bold mb-0 text-warning">{{ number_format($totalConsumidas, 2) }} h</h3>
-            </div>
+        {{-- TARJETA CONSUMIDAS --}}
+        <div class="col-md-3">
+           <div class="card border-0 shadow-sm bg-dark text-white h-100" 
+               role="button" data-bs-toggle="modal" data-bs-target="#modalConsumidas" style="cursor: pointer;">
+               <div class="card-body text-center d-flex flex-column justify-content-center">
+                 <small class="text-uppercase fw-bold text-warning mb-1">Consumidas</small>
+                 <h3 class="fw-bold mb-0 text-warning">{{ number_format($totalConsumidas, 2) }} h</h3>
+              </div>
             <div style="height: 5px; background-color: #ffc107; border-radius: 0 0 5px 5px;"></div>
         </div>
-    </div>
+    
 
-    {{-- TARJETA SALDO DE TIEMPO --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-             role="button" data-bs-toggle="modal" data-bs-target="#modalPendientes" style="cursor: pointer;">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <small class="text-uppercase fw-bold text-danger mb-1">Saldo de Tiempo</small>
-                <h3 class="fw-bold mb-0 text-danger">{{ number_format($saldoRestante, 2) }} h</h3>
-            </div>
+       {{-- TARJETA SALDO DE TIEMPO --}}
+       <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-dark text-white h-100" 
+               role="button" data-bs-toggle="modal" data-bs-target="#modalPendientes" style="cursor: pointer;">
+              <div class="card-body text-center d-flex flex-column justify-content-center">
+                  <small class="text-uppercase fw-bold text-danger mb-1">Saldo de Tiempo</small>
+                  <h3 class="fw-bold mb-0 text-danger">{{ number_format($saldoRestante, 2) }} h</h3>
+              </div>
             <div style="height: 5px; background-color: #dc3545; border-radius: 0 0 5px 5px;"></div>
         </div>
-    </div>
-</div>
-
-    <div class="mb-4 text-end">
-        <button class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalleSaldo">
-            <i class="fas fa-list-ul me-2"></i> Ver Desglose
-        </button>
-    </div>
-@endif
+    
+       <div class="mb-4 text-end">
+          <button class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalleSaldo">
+              <i class="fas fa-list-ul me-2"></i> Ver Desglose
+          </button>
+      </div>
+    @endif
 
     {{-- TABLA --}}
     <div class="card border-0 shadow-sm">
@@ -336,24 +326,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnActivar = document.getElementById('btn-activar-busqueda');
     const formBusqueda = document.getElementById('form-busqueda');
 
+  
+
     // Si el usuario recargó y el valor persiste, vuelve a cargar los empleados de inmediato
-if (deptoSelect.value) {
-    cargarEmpleados(deptoSelect.value, "{{ request('empleado_id') }}");
-}
+    if (deptoSelect.value) {
+     cargarEmpleados(deptoSelect.value, "{{ request('empleado_id') }}");
+    }
 
     // SI EXISTE empleado_id EN LA URL, procesamos la carga y LUEGO LIMPIAMOS
    if (urlParams.has('empleado_id')) {
-    const deptoId = urlParams.get('departamento_id');
-    const empId = urlParams.get('empleado_id');
+     const deptoId = urlParams.get('departamento_id');
+     const empId = urlParams.get('empleado_id');
 
-    // Cargamos los datos
-    if (deptoId && empId) {
-        cargarEmpleados(deptoId, empId);
-    }
+     // Cargamos los datos
+     if (deptoId && empId) {
+         cargarEmpleados(deptoId, empId);
+       }
     
-    // NOTA: Si no quieres que al recargar (F5) la URL se vea "sucia" con los parámetros,
-    // es preferible dejarlos ahí. Borrarlos es lo que está causando que pierdas el estado.
-}
+    }
 
     function cargarEmpleados(deptoId, seleccionarId = null) {
         empleadoSelect.innerHTML = '<option value="">-- Seleccione Colaborador --</option>';
@@ -384,14 +374,13 @@ if (deptoSelect.value) {
         }
     }
 
-
     function imprimirReporte() {
-    // Esta función abre el diálogo de impresión del navegador
-    window.print();
-}
+     // Esta función abre el diálogo de impresión del navegador
+     window.print();
+    }
 
     //para el filtro del buscador en colaborador
-     // Si ya existe una búsqueda activa, mostrar el input de inmediato
+    // Si ya existe una búsqueda activa, mostrar el input de inmediato
     if ("{{ request('buscar') }}" !== "") {
         formBusqueda.classList.remove('d-none');
         btnActivar.classList.add('d-none');

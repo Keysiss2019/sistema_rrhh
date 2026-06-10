@@ -214,7 +214,7 @@ private function sumarHorasReloj($arreglo) {
     /**
      * Procesa la validación (Aprobación/Rechazo) desde la bandeja de pendientes
      */
-    public function validar(Request $request, $id)
+     public function validar(Request $request, $id)
     {
      // 1. Obtener datos iniciales
      $solicitud = DB::table('horas_extras')->where('id', $id)->first();
@@ -333,7 +333,7 @@ private function sumarHorasReloj($arreglo) {
                 }
             }
 
-            return back()->with('success', 'Firma registrada correctamente.');
+            return redirect(url()->previous() . '#modal-' . $id)->with('success', 'Firma registrada correctamente.');
         }
     }
     
