@@ -214,132 +214,152 @@ private function sumarHorasReloj($arreglo) {
     /**
      * Procesa la validación (Aprobación/Rechazo) desde la bandeja de pendientes
      */
-     public function validar(Request $request, $id)
-    {
-     // 1. Obtener datos iniciales
-     $solicitud = DB::table('horas_extras')->where('id', $id)->first();
-     $userLogueado = auth()->user();
-     $empLog = $userLogueado->empleado;
+public function validar(Request $request, $id)
+{
+    try {
 
-     // 2. Cargar configuración de flujos
-     $pasosFlujo = DB::table('flujo_firmas_config')->where('activo', 1)->orderBy('orden', 'asc')->get()->values();
-     $idx = (int)$solicitud->paso_actual; 
-     $configPasoActual = $pasosFlujo[$idx] ?? null;
+        $solicitud = \App\Models\HoraExtra::find($id);
 
-      // 3. VALIDACIÓN DE TURNO (Solo se hace al principio)
-      $autorizadoId = $this->obtenerJefeId($configPasoActual, $solicitud, $idx);
-      if (!$empLog || $empLog->id != $autorizadoId) {
-          return back()->with('error', 'No es tu turno de firmar.');
+        if (!$solicitud) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Solicitud no encontrada'
+            ], 404);
         }
 
-       if ($request->accion == 'aprobado') {
-          $dataUpdate = [];
-        
-          // --- LIMPIEZA DE NOMBRE PARA LÓGICA DE NEGOCIO ---
-          $nombrePasoRaw = strtoupper($configPasoActual->nombre_paso ?? '');
-          $nombrePasoLimpio = str_replace(['Á', 'É', 'Í', 'Ó', 'Ú'], ['A', 'E', 'I', 'O', 'U'], $nombrePasoRaw);
+        $user = auth()->user();
+        $emp = $user?->empleado;
 
-           // Lógica de Dirección
-           if (str_contains($nombrePasoLimpio, 'DIRECCION') || str_contains($nombrePasoLimpio, 'EJECUTIVA')) {
-              // 1. Obtener valores numéricos
-              $horasPagadas = $request->filled('horas_pagadas') ? (float)$request->horas_pagadas : 0;
-              $totalSolicitud = $request->filled('total_calculado_vista') ? (float)$request->total_calculado_vista : 0;
-               $resultadoAcumular = max(0, $totalSolicitud - $horasPagadas);
+        if (!$emp) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Usuario inválido'
+            ], 403);
+        }
 
-              // 2. DEFINIR LA VARIABLE (Esto es lo que faltaba)
-             // Buscamos 'observaciones_jefe' en el formulario, si está vacío ponemos un texto por defecto
-             // Lógica de Observación: Solo se marca si hay pago
-              $observacionManual = $request->input('observaciones_jefe');
+        $pasos = DB::table('flujo_firmas_config')
+            ->where('activo', 1)
+            ->orderBy('orden')
+            ->get()
+            ->values();
+
+        $idx = (int) $solicitud->paso_actual;
+        $pasoActual = $pasos[$idx] ?? null;
+
+        if (!$pasoActual) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Flujo no configurado'
+            ], 500);
+        }
+
+        $autorizado = $this->obtenerJefeId($pasoActual, $solicitud, $idx);
+
+        if ($emp->id != $autorizado) {
+            return response()->json([
+                'success' => false,
+                'error' => "No es tu turno. Usuario: {$emp->id}, Esperado: {$autorizado}"
     
-                if ($horasPagadas > 0) {
-                  // Formateamos las horas para que se vean como 3:00 en el texto
-                    $horasFormateadas = str_replace('.', ':', number_format($horasPagadas, 2));
-                   $observacion = "Se autoriza el pago de " . $horasFormateadas . " horas. " . $observacionManual;
-                } else {
-                  $observacion = $observacionManual; // Si es 0, queda solo lo que escribió el jefe (o vacío)
-                }
+            ], 403);
+        }
 
-               // 3. ACTUALIZACIÓN EN BASE DE DATOS
-              \DB::table('horas_extras')
-              ->where('id', $solicitud->id)
-              ->update([
-                 'horas_pagadas'      => $horasPagadas,
-                 'horas_acumuladas'   => $resultadoAcumular,
-                  'observaciones_jefe' => $observacion,  
-                  'updated_at'         => now()
+        /* =========================
+           RECHAZO
+        ========================== */
+        if ($request->accion === 'rechazado') {
+
+            $solicitud->update([
+                'estado' => 'rechazado',
+                'observaciones_jefe' => 'RECHAZADO: ' . ($request->motivo_rechazo ?? ''),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Solicitud rechazada'
+            ]);
+        }
+
+        /* =========================
+           APROBACIÓN
+        ========================== */
+        if ($request->accion === 'aprobado') {
+
+            $data = [];
+
+            $nombre = strtoupper($pasoActual->nombre_paso ?? '');
+            $nombre = str_replace(['Á','É','Í','Ó','Ú'], ['A','E','I','O','U'], $nombre);
+
+            if (str_contains($nombre, 'DIRECCION') || str_contains($nombre, 'EJECUTIVA')) {
+
+                $pagadas = (float) $request->horas_pagadas;
+                $total = (float) $request->total_calculado_vista;
+
+                $obs = $request->observaciones_jefe;
+
+                $solicitud->update([
+                    'horas_pagadas' => $pagadas,
+                    'horas_acumuladas' => max(0, $total - $pagadas),
+                    'observaciones_jefe' =>
+                        $pagadas > 0
+                        ? "Se autoriza {$pagadas} horas. " . $obs
+                        : $obs,
+                    'updated_at' => now()
                 ]);
-
-               // Actualizamos el objeto en memoria
-              $solicitud->horas_pagadas = $horasPagadas;
-              $solicitud->horas_acumuladas = $resultadoAcumular;
-              $solicitud->observaciones_jefe = $observacion;
             }
 
-           // Lógica de GTH
-           if (str_contains($nombrePasoLimpio, 'GESTION') || str_contains($nombrePasoLimpio, 'TALENTO')) {
-              $dataUpdate['aprobado_por'] = $userLogueado->id;
-              $dataUpdate['fecha_aprobacion'] = now(); // Marca el cierre final del proceso
+            $nuevo = $idx + 1;
+            $final = $nuevo >= $pasos->count();
+
+            $solicitud->update([
+                'paso_actual' => $nuevo,
+                'estado' => $final ? 'aprobado' : 'proceso',
+                'updated_at' => now()
+            ]);
+
+            if (!$final) {
+                $this->notificarSiguienteResponsable($solicitud);
+                return response()->json([
+                  'success' => true,
+                  'message' => 'Firma registrada'
+              ]);
             }
 
-           // 4. CALCULAR AVANCE
-           $nuevoPaso = $idx;
-           for ($i = 0; $i < 5; $i++) {
-              $nuevoPaso++;
-              $configSig = $pasosFlujo[$nuevoPaso] ?? null;
-              if ($configSig && $this->obtenerJefeId($configSig, $solicitud, $nuevoPaso) == $empLog->id) {
-                  continue;
-                } else { break; }
+            if ($final) {
+
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                    'horas_extras.formato_pdf',
+                    ['solicitud' => $solicitud]
+                )->setPaper('letter');
+
+                $this->actualizarSaldo($solicitud);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Solicitud finalizada'
+                ]);
             }
 
-            $esFinal = ($nuevoPaso >= $pasosFlujo->count());
-
-            // 5. ACTUALIZAR BASE DE DATOS
-            DB::table('horas_extras')->where('id', $id)->update(array_merge($dataUpdate, [
-              'paso_actual' => $nuevoPaso,
-              'estado' => $esFinal ? 'aprobado' : 'proceso',
-               'updated_at' => now()
-            ]));
-
-            // 6. LÓGICA DE CORREO (Solo si es el paso final)
-            if ($esFinal) {
-                try {
-                  $soliMail = \App\Models\HoraExtra::with(['empleado', 'detalles'])->find($id);
-                 $pasosConfigurados = DB::table('flujo_firmas_config')->where('activo', 1)->orderBy('id', 'asc')->get();
-
-                 // Si no es el final, notificamos al siguiente
-
-                   $solicitudActualizada = \App\Models\HoraExtra::find($id);
-                   $this->notificarSiguienteResponsable($solicitudActualizada);
-
-                   $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('horas_extras.formato_pdf', [
-                      'solicitud' => $soliMail,
-                      'pasosConfigurados' => $pasosConfigurados,
-                      'controller' => $this 
-                    ])->setPaper('letter', 'portrait');
-
-                    $pdfContent = $pdf->output();
-                    $correoDestino = $soliMail->empleado->user->email ?? $soliMail->empleado->email;
-
-                    if ($correoDestino) {
-                       \Mail::to($correoDestino)->send(new \App\Mail\HorasExtraMail($soliMail, $pdfContent, $pasosConfigurados));
-                    }
-
-                    $this->actualizarSaldo($soliMail);
-
-                    return back()->with('success', 'Solicitud finalizada y correo enviado al empleado.');
-                } catch (\Exception $e) {
-                   // Si el correo falla, igual notificamos que la firma se guardó
-                   return back()->with('success', 'Firma guardada, pero hubo un detalle con el correo: ' . $e->getMessage());
-                }
-            }
-
-            return redirect(url()->previous() . '#modal-' . $id)->with('success', 'Firma registrada correctamente.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Firma registrada'
+            ]);
         }
+
+        return response()->json([
+            'success' => false,
+            'error' => 'Acción inválida'
+        ], 400);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
     }
-    
-    // ESTA ES LA FUNCIÓN ÚNICA QUE RESUME TODO
-    // Cambia private por public
-    public function obtenerJefeId($configPaso, $solicitud, $indice)
+}
+  public function obtenerJefeId($configPaso, $solicitud, $indice)
     {
        if (!$configPaso) return null;
 
@@ -356,48 +376,7 @@ private function sumarHorasReloj($arreglo) {
             ? DB::table('departamentos')->where('id', $empleado->departamento_id)->value('jefe_empleado_id')
             : null;
     }
-
-    // 2. ACTIVIDAD
-    if (str_contains($nombrePaso, 'ACTIVIDAD')) {
-
-        return DB::table('departamentos')
-            ->where('nombre', 'LIKE', '%' . trim($solicitud->departamento) . '%')
-            ->value('jefe_empleado_id');
-    }
-
-    // 3. DIRECCIÓN (CORRECTO CON LARAVEL MODEL)
-    if (str_contains($nombrePaso, 'DIRECCION') || str_contains($nombrePaso, 'EJECUTIVA')) {
-
-        $director = User::whereHas('rol', function ($q) {
-                $q->whereIn('nombre', [
-                    'Dirección',
-                    'Direccion',
-                    'Dirección Ejecutiva',
-                    'Director'
-                ]);
-            })
-            ->with('empleado')
-            ->first();
-
-        return $director?->empleado?->id;
-    }
-
-    // 4. GTH
-    if (str_contains($nombrePaso, 'TALENTO') || str_contains($nombrePaso, 'GTH')) {
-
-        $gth = User::whereHas('rol', function ($q) {
-                $q->where('nombre', 'GTH');
-            })
-            ->with('empleado')
-            ->first();
-
-        return $gth?->empleado?->id;
-    }
-
-    return null;
-}
-
-
+ }
 
    // Función auxiliar para no repetir código del saldo
     private function actualizarSaldo($registro) {

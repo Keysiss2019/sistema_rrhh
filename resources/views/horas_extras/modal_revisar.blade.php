@@ -147,8 +147,10 @@
                         </div>
 
                         {{-- TABLA CON DETALLE DE ACTIVIDADES --}}
+                        
                         <div class="row mt-3 mb-2" style="font-size: 13px; font-family: Arial, sans-serif;">
-                            <table class="table table-bordered border-dark text-center small mb-2">
+                            
+                           <table class="table table-bordered border-dark text-center small mb-2">
                                 <thead class="bg-light">
                                     <tr style="font-size:10px;">
                                         <th>FECHA</th>
@@ -287,14 +289,30 @@
                                         </div>
                                     @endif
                                     <!-- Botones de aprobar o rechazar -->
+                                    <input type="hidden" name="accion" class="accion-input" value="">
+
                                     <div class="d-flex justify-content-center gap-3">
-                                        <button type="submit" name="accion" value="aprobado" class="btn btn-success btn-lg px-5 shadow fw-bold">
-                                            <i class="fas fa-file-signature me-2"></i> FIRMAR
-                                        </button>
-                                        <button type="submit" name="accion" value="rechazado" class="btn btn-outline-danger btn-lg px-4">
-                                            RECHAZAR
-                                        </button>
-                                    </div>
+                                       
+                                       <button type="button" class="btn-firmar btn btn-success btn-lg px-5 fw-bold" data-id="{{ $solicitud->id }}">
+                                          FIRMAR
+                                      </button>
+                                      
+                                  
+                                      <button type="button" class="btn-iniciar-rechazo btn btn-outline-danger btn-lg">
+                                         RECHAZAR
+                                      </button>
+                                 
+                                      <button type="button" class="btn-rechazar-confirmar btn btn-danger btn-lg" style="display:none;">
+                                          CONFIRMAR RECHAZO
+                                      </button>
+                                  </div>
+
+                                   <div class="div-motivo mt-3" style="display: none; max-width: 400px; margin: 15px auto;">
+                                      <label class="fw-bold">Motivo del rechazo:</label>
+                                      <textarea name="motivo_rechazo" class="form-control" rows="2"></textarea>
+                                   </div>
+    
+    
                                 </form>
                             @else
                                 <!-- Bloques para mostrar estado de la solicitud -->
@@ -323,6 +341,17 @@
                             @endif
                         </div>
 
+                        @if(!empty($solicitud->observaciones_jefe))
+                            <div class="mt-4 p-3 border border-danger rounded" style="background-color: #fff5f5;">
+                                <h6 class="text-danger">
+                                    <i class="fas fa-exclamation-circle"></i> Observación:
+                                </h6>
+                                <p class="mb-0 text-dark">
+                                    {{ $solicitud->observaciones_jefe }}
+                                </p>
+                            </div>
+                        @endif
+
                     </div>      
                 </div> {{-- Fin área bg-white --}}
 
@@ -342,8 +371,7 @@
     </div> {{-- Fin modal-dialog --}}
 </div> {{-- Fin modal --}}
 
-
-
+{{-- Script --}}
 <script>
     //Imprimir
     function imprimirSolicitud(id) {
@@ -404,63 +432,238 @@
         };
     }
 
-    //ALERTAS
-    document.addEventListener('DOMContentLoaded', function() {
+    //Firmar y Rechazar
+    document.addEventListener("DOMContentLoaded", function() {
     
-    // Función para abrir el modal y mostrar el mensaje
-    const abrirModalYNotificar = () => {
-        const hash = window.location.hash;
-        if (hash && hash.startsWith('#modal-')) {
-            const modalElement = document.querySelector(hash);
-            if (modalElement) {
-                // 1. Limpieza inicial
-                document.body.classList.remove('modal-open');
-                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-
-                // 2. Abrir el modal
-                const modalInstance = new bootstrap.Modal(modalElement, {
-                    backdrop: 'static',
-                    keyboard: true
-                });
-                modalInstance.show();
-
-                // 3. Si hay sesión de éxito, mostrar el SweetAlert AHORA
-                @if(session('success'))
-                    // Esperamos un instante a que la animación del modal termine
-                    setTimeout(() => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Acción exitosa!',
-                            text: '{{ session('success') }}',
-                            timer: 2500,
-                            showConfirmButton: false,
-                            target: modalElement, // Importante: montamos el Swal DENTRO del modal
-                            heightAuto: false
-                        });
-                    }, 500);
-                @endif
-
-                // 4. Limpiar la URL
-                setTimeout(() => {
-                    history.replaceState(null, null, window.location.pathname);
-                }, 800);
+      // 1. BLOQUEADOR DE CIERRE: Evita que el modal se cierre si está en proceso
+      document.addEventListener('hide.bs.modal', function (e) {
+         const btnFirmar = e.target.querySelector('.btn-firmar');
+           if (btnFirmar && btnFirmar.disabled && !e.target.dataset.terminado) {
+             e.preventDefault();
+             e.stopPropagation();
             }
+        }, true);
+
+      // 2. REAPERTURA AUTOMÁTICA
+      const urlParams = new URLSearchParams(window.location.search);
+      const idModal = urlParams.get('abrir_modal');
+
+      if (idModal) {
+          // Usamos 'load' en lugar de 'DOMContentLoaded' para asegurar que 
+          // todo el contenido (incluyendo CSS de Bootstrap) esté cargado
+           window.addEventListener('load', function() {
+              const btn = document.querySelector('[data-id="' + idModal + '"]');
+        
+              if (btn) {
+                  const modalElement = btn.closest('.modal');
+                   if (modalElement) {
+                      const myModal = new bootstrap.Modal(modalElement, {
+                          backdrop: 'static',
+                          keyboard: false
+                       });
+                       myModal.show();
+                
+                    }
+                }
+            });
         }
-    };
 
-    // Ejecutar la apertura
-    abrirModalYNotificar();
-    });
+        // 3. LOGICA DE FIRMA
 
-    // Limpieza global al cerrar
-    document.addEventListener('hidden.bs.modal', function () {
-     document.body.classList.remove('modal-open');
-     document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      document.addEventListener('click', function(e) {
+         const btn = e.target.closest('.btn-firmar');
+          if (!btn) return;
+
+              e.preventDefault();
+              e.stopImmediatePropagation();
+
+               const form = btn.closest('form');
+                btn.disabled = true;
+                btn.innerText = "Firmando...";
+
+                const formData = new FormData();
+                formData.append('_method', 'PATCH');
+                formData.append('accion', 'aprobado');
+
+               const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+               console.log("Iniciando petición de firma...");
+
+               fetch(form.action, {
+                  method: 'POST',
+                  body: formData,
+                  headers: { 
+                     'X-Requested-With': 'XMLHttpRequest',
+                     'X-CSRF-TOKEN': csrfToken 
+                    }
+                })
+             .then(res => {
+                  console.log("Respuesta del servidor recibida:", res.status);
+                  if (res.ok) {
+                      console.log("Firma exitosa. Solicitando actualización...");
+                      // Usamos un timestamp para forzar que el servidor no envíe caché
+                      return fetch(window.location.href + (window.location.href.includes('?') ? '&' : '?') + '_t=' + Date.now());
+                    } else {
+                      throw new Error("Error en el servidor: " + res.status);
+                    }
+                })
+              .then(response => response.text())
+              .then(html => {
+                  console.log("HTML recibido, actualizando modal...");
+                  const parser = new DOMParser();
+                   const doc = parser.parseFromString(html, 'text/html');
+    
+                  const modalActual = btn.closest('.modal');
+                   const modalId = modalActual.id;
+                   const nuevoModal = doc.getElementById(modalId);
+    
+                   if (nuevoModal) {
+                      const nuevoModalBody = nuevoModal.querySelector('.modal-body');
+                       const modalActualBody = modalActual.querySelector('.modal-body');
+        
+                      if (nuevoModalBody && modalActualBody) {
+                          // 1. Actualizamos el modal visualmente para el usuario
+                           modalActualBody.innerHTML = nuevoModalBody.innerHTML;
+                           
+                           // Creamos el contenedor del mensaje
+                           const msg = document.createElement('div');
+                            msg.className = 'alert alert-success text-center mt-3';
+                            msg.style.marginBottom = '0'; // Eliminamos margen inferior extra
+                            msg.innerHTML = 'Firma registrada.';
+                            modalActualBody.append(msg);
+            
+                            // NUEVO: Eliminar el mensaje automáticamente después de 5 segundos
+                            setTimeout(() => {
+                              msg.remove(); 
+                            }, 2000);
+
+                            console.log("Modal actualizado. Iniciando recarga de página en 1.5 segundos...");
+            
+                           // 2. RECARGAMOS LA PÁGINA 
+                          // Esto permite que el usuario vea el mensaje de éxito antes del refresco
+                          setTimeout(() => {
+                             window.location.reload();
+                            }, 1000);
+            
+                        } else {
+                          console.error("No se encontró el .modal-body");
+                          window.location.reload(); // Fallback
+                        }
+                    } else {
+                      console.error("El modal no existe en la página nueva. Recargando...");
+                      window.location.reload(); // Fallback
+                    }
+                })
+            .catch(err => {
+                console.error("ERROR DETECTADO:", err);
+                // Si falla, el usuario al menos sabe que algo salió mal
+                btn.innerText = "Error - Clic para recargar";
+                btn.disabled = false;
+                btn.onclick = () => window.location.reload();
+            });
+       });
+
+
+        // 3. LOGICA DE Rechazar
+        document.addEventListener('click', function(e) {
+
+          // INICIAR RECHAZO
+          if (e.target.closest('.btn-iniciar-rechazo')) {
+             const btn = e.target.closest('.btn-iniciar-rechazo');
+             const form = btn.closest('form');
+             btn.style.display = 'none';
+             form.querySelector('.btn-rechazar-confirmar').style.display = 'inline-block';
+             form.querySelector('.div-motivo').style.display = 'block';
+            }
+
+          // 2. Lógica INICIAR RECHAZO
+          if (e.target.closest('.btn-iniciar-rechazo')) {
+              const btn = e.target.closest('.btn-iniciar-rechazo');
+              const form = btn.closest('form');
+              btn.style.display = 'none';
+              form.querySelector('.btn-rechazar-confirmar').style.display = 'inline-block';
+              form.querySelector('.div-motivo').style.display = 'block';
+            }
+
+           // 3. Lógica CONFIRMAR RECHAZO
+           if (e.target.closest('.btn-rechazar-confirmar')) {
+              e.preventDefault(); 
+            
+              const btn = e.target.closest('.btn-rechazar-confirmar');
+              const form = btn.closest('form');
+              const textarea = form.querySelector('textarea[name="motivo_rechazo"]');
+            
+              if (!textarea.value.trim()) {
+                  alert("Por favor, escriba el motivo.");
+                  return;
+                }
+
+               btn.disabled = true;
+               btn.innerText = "Procesando...";
+            
+               const formData = new FormData(form);
+               formData.set('accion', 'rechazado');
+
+               fetch(form.action, {
+                 method: 'POST',
+                 body: formData,
+                 headers: { 
+                     'X-Requested-With': 'XMLHttpRequest',
+                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+               .then(response => {
+                 if (!response.ok) throw new Error('Error en el servidor');
+                 return response.json();
+                })
+                .then(data => {
+                  if (data.success) {
+                     // 1. Bloquear propagación para evitar disparos múltiples
+                     e.stopImmediatePropagation();
+
+                     // 2. Limpiar todo el contenido del formulario para que no se vean botones ni nada viejo
+                     // En lugar de ocultar uno por uno, reemplazamos el contenido con el mensaje de éxito
+                      form.innerHTML = `
+                          <div class="alert alert-success text-center">
+                              <i class="fas fa-check-circle"></i> ${data.message}
+                          </div>
+                           <div class="mt-4 p-3 border border-danger rounded" style="background-color: #fff5f5;">
+                              <h6 class="text-danger"><i class="fas fa-exclamation-circle"></i> Observación:</h6>
+                              <p class="mb-0 text-dark">${textarea.value}</p>
+                          </div>
+                       `;
+
+                      // 3. Forzar la recarga global después de un breve tiempo
+                      // Esto refrescará toda la página principal, cerrando el modal automáticamente
+                      setTimeout(() => {
+                         window.location.reload(true); 
+                        }, 1500);
+
+                    } else {
+                        throw new Error(data.message || 'Error al procesar');
+                    }
+                })
+               .catch(error => {
+                  console.error('Error:', error);
+                  btn.disabled = false;
+                  btn.innerText = "CONFIRMAR RECHAZO";
+                  alert('Error al procesar la solicitud: ' + error.message);
+                });
+            }
+        });
     });
-</script>
+</script> 
+
+
 
 <style>
-    /* Aseguramos que el contenedor de SweetAlert esté siempre arriba */
-    .swal2-container {
-    z-index: 1060 !important;}
+.swal2-container {
+    z-index: 99999!important;
+}
+
+
+
+.my-swal-container {
+    z-index: 10000 !important;
+}
 </style>

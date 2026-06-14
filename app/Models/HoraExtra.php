@@ -25,7 +25,8 @@ class HoraExtra extends Model
         'horas_pagadas',
         'estado',
         'aprobado_por',
-        'fecha_aprobacion'
+        'fecha_aprobacion',
+        'updated_at'
     ];
 
     /* =========================

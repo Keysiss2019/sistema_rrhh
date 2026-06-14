@@ -199,21 +199,42 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center align-items-center gap-2">
-                                    @foreach($pasosConfigurados as $paso)
-                                        @php
-                                            $pasoActualSoli = intval($solicitud->paso_actual ?? 0); 
-                                            $esCompletado = ($solicitud->estado == 'aprobado' || $pasoActualSoli > $loop->index);
-                                            $esActual = ($solicitud->estado != 'aprobado' && $pasoActualSoli == $loop->index);
-                                            $bgColor = $esCompletado ? '#198754' : ($esActual ? '#ffc107' : '#e9ecef');
+                                  @foreach($pasosConfigurados as $paso)
+                                     @php
+                                         $pasoActualSoli = intval($solicitud->paso_actual ?? 0); 
+        
+                                         // Determinamos los estados
+                                          $esRechazado = ($solicitud->estado == 'rechazado');
+                                           $esCompletado = ($solicitud->estado == 'aprobado' || ($pasoActualSoli > $loop->index && !$esRechazado));
+                                           $esActual = (!$esCompletado && !$esRechazado && $pasoActualSoli == $loop->index);
+        
+                                           // Lógica de colores e iconos
+                                           if ($esRechazado && $pasoActualSoli == $loop->index) {
+                                              $bgColor = '#dc3545'; // Rojo para el paso donde se rechazó
+                                              $icon = 'fa-times';
+                                            } elseif ($esCompletado) {
+                                              $bgColor = '#198754'; // Verde
+                                              $icon = 'fa-check';
+                                            } elseif ($esActual) {
+                                              $bgColor = '#ffc107'; // Amarillo
+                                              $icon = 'fa-pen-nib';
+                                            } else {
+                                              $bgColor = '#e9ecef'; // Gris
+                                              $icon = 'fa-lock';
+                                           }
                                         @endphp
-                                        <div class="text-center" style="width: 60px;" title="{{ $paso->nombre_paso }}">
-                                            <div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-1 border" 
-                                                 style="width: 30px; height: 30px; background-color: {{ $bgColor }}; color: {{ $esCompletado || $esActual ? 'white' : '#6c757d' }};">
-                                                <i class="fa-solid {{ $esCompletado ? 'fa-check' : ($esActual ? 'fa-pen-nib' : 'fa-lock') }}" style="font-size: 0.7rem;"></i>
-                                            </div>
-                                            <span style="font-size: 0.6rem;" class="text-uppercase fw-bold text-muted d-block">{{ $paso->nombre_corto }}</span>
-                                        </div>
-                                        @if(!$loop->last) <i class="fa-solid fa-chevron-right small opacity-25"></i> @endif
+
+                                      <div class="text-center" style="width: 60px;" title="{{ $esRechazado && $pasoActualSoli == $loop->index ? 'RECHAZADO' : $paso->nombre_paso }}">
+                                         <div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-1 border" 
+                                             style="width: 30px; height: 30px; background-color: {{ $bgColor }}; color: {{ $esCompletado || $esActual || $esRechazado ? 'white' : '#6c757d' }};">
+                                             <i class="fa-solid {{ $icon }}" style="font-size: 0.7rem;"></i>
+                                          </div>
+                                          <span style="font-size: 0.6rem;" class="text-uppercase fw-bold {{ $esRechazado ? 'text-danger' : 'text-muted' }} d-block">
+                                              {{ $esRechazado && $pasoActualSoli == $loop->index ? 'RECHAZADO' : $paso->nombre_corto }}
+                                           </span>
+                                       </div>
+    
+                                       @if(!$loop->last) <i class="fa-solid fa-chevron-right small opacity-25"></i> @endif
                                     @endforeach
                                 </div>
                             </td>
