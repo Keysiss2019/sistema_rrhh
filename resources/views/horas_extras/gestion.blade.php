@@ -99,61 +99,58 @@
     @endif
 
    {{-- INDICADORES --}}
+ 
    @if($empleadoAConsultar)
-      <div class="row g-3 mb-4">
-          {{-- TARJETA ACUMULADAS --}}
-          <div class="col-md-3">
-               <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-                    role="button" data-bs-toggle="modal" data-bs-target="#modalAcumuladas" style="cursor: pointer;">
-                    <div class="card-body text-center d-flex flex-column justify-content-center">
-                        <small class="text-uppercase fw-bold text-info mb-1">Acumuladas</small>
-                        <h3 class="fw-bold mb-0 text-info">{{ number_format($totalAcumuladas, 2) }} h</h3>
-                  </div>
-               <div style="height: 5px; background-color: #0dcaf0; border-radius: 0 0 5px 5px;"></div>
-          </div>
+    <div class="row g-3 mb-4">
+        {{-- TARJETA ACUMULADAS --}}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-dark text-white h-100" role="button" data-bs-toggle="modal" data-bs-target="#modalAcumuladas" style="cursor: pointer;">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <small class="text-uppercase fw-bold text-info mb-1">Acumuladas</small>
+                    <h3 class="fw-bold mb-0 text-info">{{ number_format($totalAcumuladas, 2) }} h</h3>
+                </div>
+                <div style="height: 5px; background-color: #0dcaf0; border-radius: 0 0 5px 5px;"></div>
+            </div>
         </div>
 
-       {{-- TARJETA PAGADAS --}}
-       <div class="col-md-3">
-          <div class="card border-0 shadow-sm bg-secondary text-white h-100 opacity-75" 
-               role="button" data-bs-toggle="modal" data-bs-target="#modalPagadas" style="cursor: pointer;">
-              <div class="card-body text-center d-flex flex-column justify-content-center">
-                  <small class="text-uppercase fw-bold text-light mb-1">Pagadas</small>
-                  <h3 class="fw-bold mb-0 text-light">{{ number_format($totalPagadas, 2) }} h</h3>
-               </div>
-            <div style="height: 5px; background-color: #adb5bd; border-radius: 0 0 5px 5px;"></div>
+        {{-- TARJETA PAGADAS --}}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-secondary text-white h-100 opacity-75" role="button" data-bs-toggle="modal" data-bs-target="#modalPagadas" style="cursor: pointer;">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <small class="text-uppercase fw-bold text-light mb-1">Pagadas</small>
+                    <h3 class="fw-bold mb-0 text-light">{{ number_format($totalPagadas, 2) }} h</h3>
+                </div>
+                <div style="height: 5px; background-color: #adb5bd; border-radius: 0 0 5px 5px;"></div>
+            </div>
         </div>
-    
 
         {{-- TARJETA CONSUMIDAS --}}
         <div class="col-md-3">
-           <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-               role="button" data-bs-toggle="modal" data-bs-target="#modalConsumidas" style="cursor: pointer;">
-               <div class="card-body text-center d-flex flex-column justify-content-center">
-                 <small class="text-uppercase fw-bold text-warning mb-1">Consumidas</small>
-                 <h3 class="fw-bold mb-0 text-warning">{{ number_format($totalConsumidas, 2) }} h</h3>
-              </div>
-            <div style="height: 5px; background-color: #ffc107; border-radius: 0 0 5px 5px;"></div>
+            <div class="card border-0 shadow-sm bg-dark text-white h-100" role="button" data-bs-toggle="modal" data-bs-target="#modalConsumidas" style="cursor: pointer;">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <small class="text-uppercase fw-bold text-warning mb-1">Consumidas</small>
+                    <h3 class="fw-bold mb-0 text-warning">{{ number_format($totalConsumidas, 2) }} h</h3>
+                </div>
+                <div style="height: 5px; background-color: #ffc107; border-radius: 0 0 5px 5px;"></div>
+            </div>
         </div>
-    
 
-       {{-- TARJETA SALDO DE TIEMPO --}}
-       <div class="col-md-3">
-          <div class="card border-0 shadow-sm bg-dark text-white h-100" 
-               role="button" data-bs-toggle="modal" data-bs-target="#modalPendientes" style="cursor: pointer;">
-              <div class="card-body text-center d-flex flex-column justify-content-center">
-                  <small class="text-uppercase fw-bold text-danger mb-1">Saldo de Tiempo</small>
-                  <h3 class="fw-bold mb-0 text-danger">{{ number_format($saldoRestante, 2) }} h</h3>
-              </div>
-            <div style="height: 5px; background-color: #dc3545; border-radius: 0 0 5px 5px;"></div>
+        {{-- TARJETA SALDO DE TIEMPO --}}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-dark text-white h-100" role="button" data-bs-toggle="modal" data-bs-target="#modalPendientes" style="cursor: pointer;">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <small class="text-uppercase fw-bold text-danger mb-1">Saldo de Tiempo</small>
+                    <h3 class="fw-bold mb-0 text-danger">{{ number_format($saldoRestante, 2) }} h</h3>
+                </div>
+                <div style="height: 5px; background-color: #dc3545; border-radius: 0 0 5px 5px;"></div>
+            </div>
         </div>
-    
-       <div class="mb-4 text-end">
-          <button class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalleSaldo">
-              <i class="fas fa-list-ul me-2"></i> Ver Desglose
-          </button>
-      </div>
-    @endif
+    </div> <div class="mb-4 text-end">
+        <button class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalDetalleSaldo">
+            <i class="fas fa-list-ul me-2"></i> Ver Desglose
+        </button>
+    </div>
+   @endif
 
     {{-- TABLA --}}
     <div class="card border-0 shadow-sm">
@@ -452,7 +449,7 @@ if (window.location.search.length > 0) {
                                </td>
                              
                                <td>
-                                 <div class="row">
+                                    <div class="row">
 
                                      {{-- OBSERVACIONES --}}
                                      <div class="col-md-5 border-end">
@@ -631,7 +628,7 @@ if (window.location.search.length > 0) {
                         <strong>-{{ number_format($totalConsumidas, 2) }} h</strong>
                     </div>
 
-                    <hr>
+                    <br>
 
                    <div class="d-flex justify-content-between fs-5">
                       <span class="fw-bold">
