@@ -6,11 +6,11 @@
         {{-- Formulario de Carga --}}
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header modal-header text-white py-2">
-                    <h5 class="card-title mb-0"><i class="fas fa-pen-nib me-2"></i>Registrar Nueva Firma</h5>
-                </div>
+                <div class="btn btn-primary px-4 shadow-sm fw-bold"> 
+                    <h5 id="tituloForm"><i class="fas fa-pen-nib me-2"></i>Registrar Nueva Firma</h5>
+               </div>
                 <div class="card-body p-4">
-                    <form action="{{ route('firmas.store') }}" method="POST" enctype="multipart/form-data">
+                    <form id="formFirma" action="{{ route('firmas.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-4">
                             <label class="form-label fw-bold">Empleado</label>
@@ -30,9 +30,15 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn text-white rounded-pill px-4" style="background-color: #054084;">
-                            <i class="fas fa-save me-2"></i>Guardar Firma
+                        <button type="submit" id="btnSubmit" class="btn btn-primary px-4 shadow-sm fw-bold" >
+                            <i class="fas fa-save me-2"></i><span id="textoBtn">Guardar Firma</span>
                         </button>
+
+                        {{-- Botón Cancelar con estilo inicial none --}}
+                         <button type="button" id="btnCancelar" class="btn btn-secondary ms-2" 
+                              onclick="resetFormulario()" style="display: none;">
+                               Cancelar
+                          </button>
                     </form>
                 </div>
             </div>
@@ -102,7 +108,7 @@
                                               style="color: #003366; border-color: #003366;"
                                               onclick="prepararModificacion('{{ $f->empleado_id }}')" 
                                               title="Cambiar Firma">
-                                               <i class="fas fa-sync-alt"></i>
+                                               <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
 
                                            {{-- Botón para Eliminar (Formulario Inline) --}}
@@ -211,18 +217,70 @@
 </script>
 
 <script>
-    function prepararModificacion(empleadoId) {
-        // Selecciona el empleado en el dropdown automáticamente
+   function prepararModificacion(empleadoId) {
+        console.log("Editando empleado:", empleadoId); // Para ver si el click funciona
+
+        // 1. Cambiar Título
+       const titulo = document.getElementById('tituloForm');
+       const contenedorTitulo = titulo.parentElement; // El div que contiene el h5
+    
+        titulo.innerHTML = '<i class="fas fa-edit me-2"></i>Editar Firma';
+
+        // Aplicamos el color solicitado al contenedor
+       contenedorTitulo.style.backgroundColor = '#054084'; 
+       contenedorTitulo.style.color = '#fff';
+        
+        // 2. Seleccionar empleado
         const select = document.querySelector('select[name="empleado_id"]');
         select.value = empleadoId;
         
-        // Enfoca el input de archivo para que el usuario sepa que debe subir la nueva
-        document.querySelector('input[name="foto"]').focus();
+        // 3. Cambiar botón de Guardar a Actualizar
+        const btn = document.getElementById('btnSubmit');
+        document.getElementById('textoBtn').innerText = 'Actualizar Firma';
+        btn.innerHTML = '<i class="fa-solid fa-rotate me-2"></i>Actualizar Firma';
+        btn.style.backgroundColor = '#054084'; // Color solicitado para edición
+        btn.style.color = '#fff'; // Aseguramos que el texto sea blanco
+        btn.style.borderColor = '#054084';
+
+        // 4. MOSTRAR BOTÓN CANCELAR (Fuerza absoluta)
+       document.getElementById('btnCancelar').style.display = 'inline-block';
         
-        // Cambiamos el texto del botón temporalmente
-        const btn = document.querySelector('button[type="submit"]');
-        btn.innerHTML = '<i class="fas fa-edit me-2"></i>Actualizar Firma Existente';
-        btn.classList.replace('btn-success', 'btn-warning');
+        // Aplicamos el estilo directamente al elemento
+        btnCancel.style.display = 'block'; 
+        
+        console.log("Botón cancelar ahora debería ser visible:", btnCancel.style.display);
+    }
+
+    function resetFormulario() {
+        // 1. Resetear título
+        const titulo = document.getElementById('tituloForm');
+        const contenedorTitulo = titulo.parentElement;
+        
+        titulo.innerHTML = '<i class="fas fa-pen-nib me-2"></i>Registrar Nueva Firma';
+        // Limpiamos los estilos para que vuelva al color original de Bootstrap
+        contenedorTitulo.style.backgroundColor = ''; 
+        contenedorTitulo.style.color = '';
+
+        // 2. Resetear botón principal
+        const btn = document.getElementById('btnSubmit');
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Firma';
+        
+        // Esto remueve el estilo inline para que retome la clase 'btn-primary' de Bootstrap
+        btn.style.backgroundColor = ''; 
+        btn.style.color = '';
+        btn.style.borderColor = '';
+
+        // 3. OCULTAR BOTÓN CANCELAR (Forzado)
+        // OCULTAR CANCELAR: forzamos el estilo a none
+        document.getElementById('btnCancelar').style.display = 'none';
+
+        // 4. Resetear formulario
+        document.getElementById('searchInput').value = '';
+        document.querySelectorAll('.firma-row').forEach(row => row.style.display = '');
+        
+        const form = document.getElementById('formFirma');
+        form.reset();
+        form.querySelector('select[name="empleado_id"]').value = "";
     }
 
     // Buscador (el que ya tenías)
