@@ -159,69 +159,51 @@ class UsuarioController extends Controller
    }
 
     /**
-     * ACTUALIZAR USUARIO
-     */
+    * ACTUALIZAR USUARIO
+    */
     public function update(Request $request, $id)
     {
-    // 1. Buscar usuario
-    $usuario = User::with('empleado')->findOrFail($id);
+     // 1. Buscar usuario
+     $usuario = User::with('empleado')->findOrFail($id);
 
-    // 2. Definir roles permitidos
-    $allowedRoleIds = Role::whereIn('nombre', config('role.editables', []))
-        ->pluck('id')
-        ->toArray();
+     // 2. Definir roles permitidos
+    $allowedRoleIds = Role::pluck('id')->toArray();
 
-    // 3. Validación MANUAL (Evita redirección automática de $request->validate)
-    $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-        'usuario' => 'required|unique:users,usuario,' . $id,
-        'role_id' => ['required', \Illuminate\Validation\Rule::in($allowedRoleIds)],
-        'estado'  => 'required'
-    ]);
+      // 3. Validación: Solo verificamos que el rol exista y esté en la lista de permitidos
+      // Ya no validamos que sea único, por lo tanto quitamos la lógica que bloqueaba otros usuarios
+      $request->validate([
+         'usuario' => 'required|unique:users,usuario,' . $id,
+         'role_id' => ['required', \Illuminate\Validation\Rule::in($allowedRoleIds)],
+         'estado'  => 'required'
+        ]);
 
-    // 4. Si la validación falla o el rol no es permitido:
-    if ($validator->fails() || !in_array($request->role_id, $allowedRoleIds)) {
-        
-        // CREA UN NUEVO CONTENEDOR DE ERRORES VACÍO
-        $errores = new \Illuminate\Support\MessageBag();
-    
-        $errores->add('role_id', 'Rol ya esta ocupado');
+      // 4. Lógica de actualización
+      $usuario->usuario = $request->usuario;
+      $usuario->role_id = $request->role_id;
+      $usuario->estado  = $request->estado;
 
-        return redirect()->route('usuarios.index')
-            ->withErrors($errores)
-            ->withInput()
-            ->with('abrir_edicion', [
-                'id' => $usuario->id,
-                'empleado' => $usuario->empleado->nombre . ' ' . $usuario->empleado->apellido,
-            ]);
-    }
+      // Lógica de contraseña (se mantiene igual)
+      if ($request->has('reset_password')) {
+         $passwordPlano = \Illuminate\Support\Str::random(6) . rand(10, 99); 
+         $usuario->password = \Illuminate\Support\Facades\Hash::make($passwordPlano);
+         $usuario->debe_cambiar_password = 1; 
 
-    // 5. Lógica de actualización (si la validación pasa)
-    $usuario->usuario = $request->usuario;
-    $usuario->role_id = $request->role_id;
-    $usuario->estado  = $request->estado;
-
-    // Lógica de contraseña
-    if ($request->has('reset_password')) {
-        $passwordPlano = \Illuminate\Support\Str::random(6) . rand(10, 99); 
-        $usuario->password = \Illuminate\Support\Facades\Hash::make($passwordPlano);
-        $usuario->debe_cambiar_password = 1; 
-
-        if ($usuario->email) {
-            \Illuminate\Support\Facades\Mail::to($usuario->email)
+           if ($usuario->email) {
+             \Illuminate\Support\Facades\Mail::to($usuario->email)
                 ->send(new \App\Mail\PasswordTemporalMail($usuario, $passwordPlano));
+            }
         }
-    }
 
-    $usuario->save();
+     $usuario->save();
 
-    // Asegurar vínculo con empleado
-    if ($usuario->empleado_id) {
-        \Illuminate\Support\Facades\DB::table('empleados')
+     // Asegurar vínculo con empleado
+       if ($usuario->empleado_id) {
+          \Illuminate\Support\Facades\DB::table('empleados')
             ->where('id', $usuario->empleado_id)
             ->update(['user_id' => $usuario->id]);
-    }
+       }
 
-    return back()->with('success', 'Usuario actualizado correctamente.');
+      return back()->with('success', 'Usuario actualizado correctamente.');
     }
 
     /**

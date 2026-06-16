@@ -45,14 +45,23 @@
 </div>
 
             <!-- Selección del rol del usuario -->
-            <div class="mb-3">
-                <label class="form-label fw-bold text-secondary small">ROL DEL SISTEMA</label>
-                <select name="role_id" id="edit_role_id" class="form-select border-2 shadow-sm" required>
-                    @foreach($roles as $rol)
-                        <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
-                    @endforeach
-                </select>
-            </div>
+           <div class="mb-3">
+    <label class="form-label fw-bold text-secondary small">ROL DEL SISTEMA</label>
+    <select name="role_id" id="edit_role_id" class="form-select border-2 shadow-sm @error('role_id') is-invalid @enderror" required>
+        <option value="" disabled selected>Seleccione un rol</option>
+        @foreach($roles as $rol)
+            <option value="{{ $rol->id }}" {{ old('role_id', isset($usuario) ? $usuario->role_id : '') == $rol->id ? 'selected' : '' }}>
+                {{ $rol->nombre }}
+            </option>
+        @endforeach
+    </select>
+    
+    @error('role_id')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
 
             <!-- Selección del estado del usuario -->
             <div class="mb-3">
