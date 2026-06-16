@@ -165,40 +165,40 @@
 <div class="modal fade" id="modalPregunta" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            {{-- Asegúrate que la ruta sea correcta --}}
             <form action="{{ route('formulario.agregarPregunta', $formulario->id) }}" method="POST">
                 @csrf
-                {{-- Alertas --}}
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
                 
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Nueva Pregunta / Criterio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
+                
                 <div class="modal-body">
-                 <div id="contenedor-preguntas">
-                      <label class="form-label">Preguntas a agregar:</label>
-                      <div class="input-group mb-2">
-                          <input type="text" name="preguntas[]" class="form-control" placeholder="Pregunta..." required>
-                          <input type="text" name="categorias[]" class="form-control" placeholder="Categoría" style="max-width: 120px;">
-                       </div>
-                 </div>
-                   <button type="button" id="btnAgregarPregunta" class="btn btn-sm btn-success mt-2">
-                     + Agregar otra pregunta
+                    <div id="contenedor-preguntas">
+                        <label class="form-label">Preguntas a agregar:</label>
+                        
+                        {{-- Estructura de la fila --}}
+                        <div class="input-group mb-2">
+                            <input type="text" name="preguntas[]" class="form-control" placeholder="Pregunta..." required>
+                            
+                            {{-- Cambiado a Select --}}
+                            <select name="categorias[]" class="form-select" style="max-width: 150px;" required>
+                                <option value="" disabled selected>Categoría</option>
+                                <option value="Satisfacción">Satisfacción</option>
+                                <option value="Frecuencia">Frecuencia</option>
+                                <option value="Importancia">Importancia</option>
+                                <option value="Experiencia">Experiencia</option>
+                                <option value="Dificultad">Dificultad</option>
+                                <option value="Desempeño">Desempeño</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="btnAgregarPregunta" class="btn btn-sm btn-success mt-2">
+                        + Agregar otra pregunta
                     </button>
                 </div>
+                
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Preguntas</button>
@@ -269,7 +269,16 @@
                 nuevoCampo.className = 'input-group mb-2';
                 nuevoCampo.innerHTML = `
                     <input type="text" name="preguntas[]" class="form-control" placeholder="Escribe la pregunta..." required>
-                    <input type="text" name="categorias[]" class="form-control" placeholder="Categoría" style="max-width: 120px;">
+                    <select name="categorias[]" class="form-select" style="max-width: 150px;" required>
+                        <option value="" disabled selected>Categoría</option>
+                        <option value="Satisfacción">Satisfacción</option>
+                        <option value="Frecuencia">Frecuencia</option>
+                        <option value="Importancia">Importancia</option>
+                        <option value="Experiencia">Experiencia</option>
+                        <option value="Dificultad">Dificultad</option>
+                        <option value="Desempeño">Desempeño</option>
+                    </select>
+                    
                     <button type="button" class="btn btn-danger btn-eliminar">X</button>
                 `;
                 contenedor.appendChild(nuevoCampo);
