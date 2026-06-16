@@ -24,12 +24,16 @@ class FirmaController extends Controller
      */
     public function index()
     {
-        // Obtiene todos los empleados ordenados por nombre (A-Z)
-        $empleados = Empleado::orderBy('nombre')->get();
-
-        // Obtiene todas las firmas con su relación al empleado
-        // (evita consultas adicionales gracias a eager loading)
+       $user = auth()->user();
+    
+    // Si es administrador, trae todas. Si no, solo la suya (filtrada por empleado_id)
+    if ($user->isAdmin()) {
         $firmas = Firma::with('empleado')->get();
+    } else {
+        $firmas = Firma::with('empleado')->where('empleado_id', $user->empleado_id)->get();
+    }
+
+    $empleados = Empleado::orderBy('nombre')->get();
 
         // Retorna la vista 'firmas.index' enviando ambas variables
         return view('firmas.index', compact('empleados', 'firmas'));
@@ -74,6 +78,15 @@ class FirmaController extends Controller
             ]
         );
 
+        // Si no es admin, validar que el empleado_id seleccionado sea el del usuario actual
+    if (auth()->user()->role !== 'admin') {
+        $esSuEmpleado = \App\Models\Empleado::where('id', $request->empleado_id)
+                                            ->where('user_id', auth()->id())
+                                            ->exists();
+        if (!$esSuEmpleado) {
+             return back()->with('error', 'No tienes permiso para modificar esta firma.');
+        }
+    }
         // Redirige hacia atrás con mensaje de éxito
         return back()->with('success', 'Firma actualizada correctamente.');
     }
@@ -84,35 +97,15 @@ class FirmaController extends Controller
      * ---------------------------------
      * Elimina una firma por su ID.
      */
-    public function destroy($id)
-    {
-       try {
-
-          // Busca la firma por ID o lanza error si no existe
-          $firma = \App\Models\Firma::findOrFail($id);
-
-          // Elimina la firma de la base de datos
-          $firma->delete();
-
-          // Mensaje de éxito
-          return back()->with('success', 'Firma eliminada correctamente.');
-
-        } catch (\Illuminate\Database\QueryException $e) {
-
-          // Código 23000 → error de integridad (foreign key)
-          // Ocurre cuando la firma está siendo usada en otra tabla (ej: solicitudes)
-          if ($e->getCode() == "23000") {
-
-              return back()->with(
-                  'error_integridad',
-
-                  // Mensaje indicando que la firma está relacionada con registros existentes
-                  'No se puede eliminar esta firma porque ya está asociada a solicitudes de permisos existentes.'
-              );
-          }
-
-          // Cualquier otro error inesperado
-          return back()->with('error', 'Ocurrió un error inesperado al intentar eliminar.');
-       }
+   public function destroy($id)
+{
+    // Verificamos que el usuario tenga rol de admin
+   if (!auth()->user()->isAdmin()) {
+        return back()->with('error', 'No autorizado.');
     }
+    
+    $firma = Firma::findOrFail($id);
+    $firma->delete();
+    return back()->with('success', 'Eliminado.');
+}
 }

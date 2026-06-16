@@ -114,4 +114,13 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Proyecto::class, 'proyecto_designados', 'user_id', 'proyecto_id');
     }
+
+    /**
+     * Verifica si el usuario es administrador.
+     */
+    public function isAdmin() 
+    {
+        // Esto usa el método hasRole que ya tienes en el modelo
+        return $this->hasRole('Administrador') || $this->hasRole('admin');
+    }
 } // Fin de la clase User

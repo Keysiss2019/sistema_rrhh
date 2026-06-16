@@ -422,86 +422,80 @@
             <!-- PERFIL DE USUARIO -->
             <!-- ================================================= -->
 
-            <div class="dropdown">
+           <!-- Menú usuario -->
+           <div class="dropdown">
 
-                <!-- Botón perfil -->
                 <button class="btn border-0 p-0 dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        style="box-shadow: none;">
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  style="box-shadow: none;">
 
-                    <!-- Inicial usuario -->
-                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                         style="width: 40px;
-                                height: 40px;
-                                border: 2px solid white;">
+                   <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                      style="width: 40px;
+                      height: 40px;
+                      border: 2px solid white;">
+
+                      {{ strtoupper(substr(auth()->user()->usuario, 0, 1)) }}
+                   </div>
+              </button>
+
+
+               <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 rounded-4"
+                  style="width: 280px;
+                  overflow: hidden;">
+
+                  <div class="bg-light p-4 text-center">
+
+                  <div class="rounded-circle bg-info d-flex align-items-center justify-content-center text-white fw-bold mx-auto mb-3 shadow-sm"
+                      style="width: 80px;
+                          height: 80px;
+                        font-size: 2.5rem;">
 
                         {{ strtoupper(substr(auth()->user()->usuario, 0, 1)) }}
                     </div>
-                </button>
 
+                   <h6 class="fw-bold mb-0 text-dark">
 
-                <!-- Menú usuario -->
-                <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 rounded-4"
-                     style="width: 280px;
-                            overflow: hidden;">
+                       {{ auth()->user()->usuario }}
+                    </h6>
 
-                    <!-- Encabezado -->
-                    <div class="bg-light p-4 text-center">
+                  <p class="text-muted small mb-3">
 
-                        <!-- Avatar -->
-                        <div class="rounded-circle bg-info d-flex align-items-center justify-content-center text-white fw-bold mx-auto mb-3 shadow-sm"
-                             style="width: 80px;
-                                    height: 80px;
-                                    font-size: 2.5rem;">
+                      {{ auth()->user()->email }}
+                  </p>
 
-                            {{ strtoupper(substr(auth()->user()->usuario, 0, 1)) }}
-                        </div>
+                    <button type="button"
+                      class="btn btn-outline-primary btn-sm rounded-pill px-4"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modalGestionPerfil">
 
-                        <!-- Usuario -->
-                        <h6 class="fw-bold mb-0 text-dark">
-
-                            {{ auth()->user()->usuario }}
-                        </h6>
-
-                        <!-- Correo -->
-                        <p class="text-muted small mb-3">
-
-                            {{ auth()->user()->email }}
-                        </p>
-
-                        <!-- Botón perfil -->
-                        <button type="button"
-                                class="btn btn-outline-primary btn-sm rounded-pill px-4"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalGestionPerfil">
-
-                            Gestionar Perfil
-                        </button>
-                    </div>
-
-
-                    <!-- Logout -->
-                    <div class="p-3">
-
-                        <form action="{{ route('logout') }}"
-                              method="POST">
-
-                            @csrf
-
-                            <button type="submit"
-                                    class="btn btn-light btn-sm w-100 rounded-3 py-2 text-danger fw-bold">
-
-                                <i class="fa-solid fa-right-from-bracket me-2"></i>
-
-                                Cerrar sesión
-                            </button>
-                        </form>
-                    </div>
+                      Gestionar Perfil
+                   </button>
                 </div>
-            </div>
 
+                <a href="{{ route('firmas.index') }}"
+                    class="submenu-item">
+                  Gestión de Firmas
+                </a>
+
+              <div class="p-3">
+
+               <form action="{{ route('logout') }}"
+                  method="POST">
+
+                  @csrf
+
+                  <button type="submit"
+                        class="btn btn-light btn-sm w-100 rounded-3 py-2 text-danger fw-bold">
+
+                       <i class="fa-solid fa-right-from-bracket me-2"></i>
+
+                       Cerrar sesión
+                  </button>
+               </form>
+           </div>
         </div>
+    </div>
     </header>
 
     @endif

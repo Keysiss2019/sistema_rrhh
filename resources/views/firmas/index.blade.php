@@ -45,6 +45,7 @@
         </div>
 
         {{-- Listado de Firmas con Buscador --}}
+       
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white py-3">
@@ -111,15 +112,18 @@
                                                <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
 
-                                           {{-- Botón para Eliminar (Formulario Inline) --}}
-                                           <form action="{{ route('firmas.destroy', $f->id) }}" method="POST" class="d-inline">
-                                             @csrf
-                                             @method('DELETE')
+                                            {{-- ELIMINAR: Solo visible si es admin --}}
+                                            @if(auth()->user()->isAdmin())
+                                              {{-- Botón para Eliminar (Formulario Inline) --}}
+                                              <form action="{{ route('firmas.destroy', $f->id) }}" method="POST" class="d-inline">
+                                                 @csrf
+                                                   @method('DELETE')
                                                   <button type="button" class="btn btn-outline-danger btn-sm rounded-circle" 
-                                                      onclick="confirmarEliminacion(this.form)">
+                                                       onclick="confirmarEliminacion(this.form)">
                                                      <i class="fas fa-trash-alt"></i>
                                                    </button>
-                                           </form>
+                                                </form>
+                                            @endif
                                       </div>
                                   </td>
                                 </tr>
@@ -134,6 +138,7 @@
                 </div>
             </div>
         </div>
+       
     </div>
 </div>
 
