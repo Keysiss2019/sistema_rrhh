@@ -316,4 +316,74 @@ class EvaluacionController extends Controller
 
         return view('evaluaciones.llenar', compact('asignacion', 'formulario', 'preguntas'));
     }
+
+    // Ver Historial de formularios llenados por proyecto.
+
+    public function historialProyecto($proyectoId)
+    {
+    $historial = DB::table('asignacion_evaluaciones as a')
+        ->join('empleados as e', 'a.empleado_id', '=', 'e.id')
+        ->join('evaluacion_formularios as f', 'a.formulario_id', '=', 'f.id')
+        ->leftJoin('departamentos as d', 'e.departamento_id', '=', 'd.id')
+        ->select(
+            'a.id',
+            'a.formulario_id',
+            'a.empleado_id',
+            'f.nombre as formulario',
+            DB::raw("CONCAT(e.nombre,' ',e.apellido) as colaborador"),
+            'a.estado',
+            'a.puntuacion_total',
+            'a.created_at'
+        )
+        ->where('a.proyecto_id', $proyectoId)
+        ->orderByDesc('a.created_at')
+        ->get();
+
+    return view('evaluaciones.historial_proyecto', compact('historial'));
+    }
+
+    // Ver el icono del ojito de los formularios llenados por proyecto.
+
+    public function detalle($id)
+    {
+   $asignacion = DB::table('asignacion_evaluaciones as a')
+    ->join('empleados as evaluado', 'a.empleado_id', '=', 'evaluado.id')
+    ->join('empleados as evaluador', 'a.evaluador_id', '=', 'evaluador.id')
+    ->join('evaluacion_formularios as f', 'a.formulario_id', '=', 'f.id')
+    ->leftJoin('departamentos as d', 'evaluado.departamento_id', '=', 'd.id')
+    ->select(
+        'a.*',
+        'a.estado',
+        // evaluado
+        DB::raw("CONCAT(evaluado.nombre,' ',evaluado.apellido) as nombre_completo_evaluado"),
+        'evaluado.cargo as cargo',
+        'd.nombre as nombre_departamento',
+
+        // evaluador
+        DB::raw("CONCAT(evaluador.nombre,' ',evaluador.apellido) as nombre_completo_evaluador"),
+
+        // formulario (ESTO ES LO QUE TE FALTA)
+        'f.nombre as formulario'
+    )
+    ->where('a.id', $id)
+    ->first();
+
+    if (!$asignacion) {
+        abort(404, 'Evaluación no encontrada');
+    }
+
+    $preguntas = DB::table('formulario_preguntas')
+        ->where('formulario_id', $asignacion->formulario_id)
+        ->get();
+
+    $respuestas = DB::table('evaluacion_respuestas')
+        ->where('asignacion_id', $id)
+        ->pluck('valor', 'pregunta_id');
+
+    return view('evaluaciones.detalle', compact(
+        'asignacion',
+        'preguntas',
+        'respuestas'
+    ));
+    }
 }

@@ -402,8 +402,14 @@ Route::put('/proyectos/{id}', [ProyectoController::class, 'update'])->name('proy
     // Mis evaluaciones
     Route::get('/mis-evaluaciones', [EvaluacionController::class, 'index'])
         ->name('evaluaciones.pendientes');
-Route::post('/evaluaciones/guardar', [EvaluacionController::class, 'guardar'])
+    Route::post('/evaluaciones/guardar', [EvaluacionController::class, 'guardar'])
     ->name('evaluaciones.guardar');
+
+    //Historial de proyecto
+    Route::get( '/evaluaciones/historial-proyecto/{proyecto}', [EvaluacionController::class,'historialProyecto']);
+
+    //Icono del ojito ver el formulario
+    Route::get( '/evaluaciones/historial-detalle/{id}', [EvaluacionController::class, 'detalle']);
 
     /*
     |--------------------------------------------------------------------------

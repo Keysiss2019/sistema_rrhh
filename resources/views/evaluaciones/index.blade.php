@@ -147,27 +147,74 @@
         {{-- 🔥 CONTENEDOR DONDE SE CARGA EL AJAX --}}
         <div id="contenedorComparativa" class="mt-4 bg-white p-2 rounded"></div>
     </div>
+
+    <hr class="my-5">
+
+<div class="card card-soft p-4">
+    <h5 class="fw-bold mb-3">
+        Historial General de Formularios
+    </h5>
+
+    <button class="btn btn-secondary mb-3"
+            onclick="cargarHistorialProyecto()">
+        Ver Historial del Proyecto
+    </button>
+
+    <div id="contenedorHistorial"></div>
+</div>
+
+
 </div>
 
 <script>
+// Espera a que todo el DOM esté completamente cargado antes de ejecutar el código
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Obtiene el <select> de departamentos
     const deptoSelect = document.getElementById('select_depto');
+
+    // Obtiene el <select> donde se cargarán los empleados
     const empleadoSelect = document.getElementById('select_empleado');
+
+    // Datos de departamentos enviados desde Laravel (PHP → JS)
+    // Contiene algo como: [{id: 1, nombre: ..., empleados: [...]}, ...]
     const data = @json($departamentos);
 
+    // Evento cuando el usuario cambia el departamento seleccionado
     deptoSelect.addEventListener('change', function () {
+
+        // Busca el departamento seleccionado dentro del array "data"
         const depto = data.find(d => d.id == this.value);
+
+        // Reinicia el select de empleados con una opción por defecto
         empleadoSelect.innerHTML = '<option value="">Seleccione Colaborador</option>';
+
+        // Si el departamento existe y tiene empleados asociados
         if (depto && depto.empleados) {
+
+            // Recorre los empleados del departamento seleccionado
             depto.empleados.forEach(emp => {
-                empleadoSelect.add(new Option(emp.nombre + ' ' + emp.apellido, emp.id));
+
+                // Agrega cada empleado como una opción al <select>
+                empleadoSelect.add(
+                    new Option(
+                        emp.nombre + ' ' + emp.apellido, // texto visible
+                        emp.id // valor del option
+                    )
+                );
             });
         }
     });
 });
 
+// Función que muestra u oculta la sección de configuración según el empleado seleccionado
 function mostrarConfiguracion() {
+
+    // Obtiene el valor del <select> de empleados (ID del empleado seleccionado)
     const empleadoId = document.getElementById('select_empleado').value;
+
+    // Obtiene el contenedor de configuración del método
+    // y alterna la clase 'd-none' (oculta el elemento si no hay empleado seleccionado)
     document.getElementById('configuracion_metodo').classList.toggle('d-none', !empleadoId);
 }
 
@@ -321,6 +368,7 @@ function generarPDF() {
         btn.disabled = false;
     });
 }
+
 function inicializarGraficaGlobal() {
 
     const contenedor = document.getElementById('datos-grafica');
@@ -410,6 +458,68 @@ function inicializarGraficaGlobal() {
             }
         }
     });
+}
+
+// Función que carga el historial de un proyecto seleccionado
+function cargarHistorialProyecto()
+{
+    // Obtiene el ID del proyecto desde un <select>
+    const proyectoId =
+        document.getElementById('select_proyecto').value;
+
+    // Validación: si no hay proyecto seleccionado
+    if(!proyectoId)
+    {
+        Swal.fire({
+            icon:'warning',
+            title:'Seleccione un proyecto'
+        });
+
+        return; // detiene la ejecución
+    }
+
+    // Muestra un loader mientras se carga la información
+    document.getElementById('contenedorHistorial').innerHTML = `
+        <div class="text-center p-4">
+            <div class="spinner-border"></div>
+        </div>
+    `;
+
+    // Petición al backend para obtener el historial del proyecto
+    fetch(`/evaluaciones/historial-proyecto/${proyectoId}`)
+        .then(r => r.text()) // se espera HTML (no JSON)
+        .then(html => {
+
+            // Inserta el HTML recibido en el contenedor
+            document.getElementById(
+                'contenedorHistorial'
+            ).innerHTML = html;
+
+            // Inicializa DataTable sobre la tabla generada dinámicamente
+            $('#tablaHistorialProyecto').DataTable({
+                pageLength:10, // número de filas por página
+                responsive:true, // tabla adaptable a móviles
+                language:{
+                    url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' // idioma español
+                }
+            });
+
+        })
+        .catch(error => {
+            // Manejo de errores en la petición
+            console.error(error);
+        });
+}
+
+
+// Función que abre el detalle de un historial específico
+function verDetalleHistorial(id)
+{
+    // Construye la URL del detalle usando el ID recibido
+    const url = `/evaluaciones/historial-detalle/${id}`;
+
+    // Abre la vista en la misma pestaña
+    window.open(url, '_self');
 }
 </script>
 
