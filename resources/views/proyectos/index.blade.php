@@ -57,64 +57,75 @@
         </div>
 
         {{-- COLUMNA DERECHA: Distribución de Tareas (8 de 12 espacios) --}}
+        
         <div class="col-lg-8 mb-4">
-            @if(request('proyecto_id') && $proyectoSeleccionado)
-                <div class="card shadow h-100">
-                    <div class="card-header py-3 bg-white">
-                        <h6 class="m-0 font-weight-bold text-primary">Equipo y Responsabilidades</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            @forelse($diagramaAsignaciones as $asig)
+           @if(request('proyecto_id') && $proyectoSeleccionado)
+              <div class="card shadow h-100">
+                  <div class="card-header py-3 bg-white">
+                     <h6 class="m-0 font-weight-bold text-primary">Equipo y Responsabilidades</h6>
+                  </div>
+                
+                  <div class="card-body">
+                      <div class="row">
+                          @forelse($diagramaAsignaciones as $asig)
+                              {{-- Calculamos el color AQUÍ, dentro del ciclo, por cada iteración --}}
+                               @php
+                                  $totalTareas = count($asig['tareas']);
+                                   $completadas = $asig['tareas']->where('completada', true)->count();
+                                  $bgColor = ($totalTareas > 0 && $totalTareas === $completadas) ? '#e8f5e9' : '#f8f9fc';
+                                @endphp
+
                                 <div class="col-md-6 mb-3">
-                                    <div class="card border-0 shadow-sm h-100" style="background-color: #f8f9fc; border-left: 4px solid {{ $asig['es_encargado'] ? '#4e73df' : '#1cc88a' }} !important;">
-                                        <div class="card-body p-3">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <div class="fw-bold text-dark">{{ $asig['usuario'] }}</div>
-                                                <span class="badge {{ $asig['es_encargado'] ? 'bg-primary' : 'bg-success' }}" style="font-size: 0.65rem;">
-                                                    {{ $asig['es_encargado'] ? 'Encargado' : 'Colaborador' }}
-                                                </span>
-                                            </div>
-                                            
-                                            <div class="responsabilidades mt-2">
-                                                <ul class="list-unstyled mb-0">
-                                                    @forelse($asig['tareas'] as $t)
-                                                        <li class="small mb-1 d-flex align-items-center">
-                                                            <i class="fas fa-check-circle {{ $t->completada ? 'text-success' : 'text-gray-300' }} me-2"></i>
-                                                            <span class="{{ $t->completada ? 'text-decoration-line-through text-muted' : '' }}">
-                                                                {{ $t->titulo }}
-                                                            </span>
-                                                        </li>
-                                                    @empty
-                                                        <li class="text-muted small italic">Sin tareas específicas.</li>
-                                                    @endforelse
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <p class="text-center text-muted w-100">No hay personal designado.</p>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-            @else
-                {{-- Placeholder cuando no hay nada seleccionado --}}
-                <div class="card shadow h-100 border-0 d-flex align-items-center justify-content-center bg-light">
-                    <div class="text-center py-5 opacity-50">
-                        <i class="fas fa-arrow-left fa-3x mb-3 text-primary"></i>
-                        <h5 class="text-gray-500">Seleccione un proyecto a la izquierda</h5>
-                    </div>
-                </div>
-            @endif
-        </div>
+                                  {{-- Usamos la variable $bgColor calculada para esta iteración específica --}}
+                                   <div class="card border-0 shadow-sm h-100" style="background-color: {{ $bgColor }}; border-left: 4px solid {{ $asig['es_encargado'] ? '#4e73df' : '#1cc88a' }} !important;">
+                                      <div class="card-body p-3">
+                                          <div class="d-flex justify-content-between align-items-start mb-2">
+                                              <div class="fw-bold text-dark">{{ $asig['usuario'] }}</div>
+                                                  <span class="badge {{ $asig['es_encargado'] ? 'bg-primary' : 'bg-success' }}" style="font-size: 0.65rem;">
+                                                      {{ $asig['es_encargado'] ? 'Encargado' : 'Colaborador' }}
+                                                  </span>
+                                              </div>
+                                    
+                                              <div class="responsabilidades mt-2">
+                                                  <ul class="list-unstyled mb-0">
+                                                       @forelse($asig['tareas'] as $t)
+                                                          <li class="small mb-1 d-flex align-items-center">
+                                                           <i class="fas fa-check-circle {{ $t->completada ? 'text-success' : 'text-gray-300' }} me-2"></i>
+                                                              <span class="{{ $t->completada ? 'text-decoration-line-through text-muted' : '' }}">
+                                                                  {{ $t->titulo }}
+                                                              </span>
+                                                          </li>
+                                                       @empty
+                                                          <li class="text-muted small italic">Sin tareas específicas.</li>
+                                                      @endforelse
+                                                   </ul>
+                                              </div>
+                                         </div>
+                                      </div>
+                                  </div>
+                              @empty
+                                 <p class="text-center text-muted w-100">No hay personal designado.</p>
+                             @endforelse
+                         </div>
+                      </div>
+                  </div>
+               @else
+                  {{-- Placeholder --}}
+                   <div class="card shadow h-100 border-0 d-flex align-items-center justify-content-center bg-light">
+                      <div class="text-center py-5 opacity-50">
+                          <i class="fas fa-arrow-left fa-3x mb-3 text-primary"></i>
+                          <h5 class="text-gray-500">Seleccione un proyecto a la izquierda</h5>
+                      </div>
+                  </div>
+               @endif
+          </div>
+         
 
-    </div> {{-- Fin Row --}}
-</div>
+        </div> {{-- Fin Row --}}
+    </div>
 
-{{-- TABLA PRINCIPAL --}}
-<div class="card shadow mb-4">
+    {{-- TABLA PRINCIPAL --}}
+    <div class="card shadow mb-4">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -176,7 +187,7 @@
             </table>
         </div>
     </div>
-</div>
+    </div>
     
     {{-- BOTONES DE PAGINACIÓN --}}
     <div class="card-footer bg-white">
