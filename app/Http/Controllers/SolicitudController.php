@@ -49,7 +49,11 @@ class SolicitudController extends Controller
       $userEmail = $user->email;
 
       $query = Solicitud::with('empleado');
+// En tu controlador
+$solicitudes = Solicitud::all();
 
+// Si quieres evitar este error y mejorar el rendimiento, 
+// lo ideal es enviar a la vista el objeto ya relacionado.
       // --- 1. FILTROS DE SEGURIDAD/VISIBILIDAD ---
 
        if (in_array($rolNormalizado, ['administrador', 'gth', 'direccion'], true)) {
@@ -135,7 +139,7 @@ class SolicitudController extends Controller
     }
 
    /**
-   * MÉTODO: store
+   * MÉTODO: show
    * ---------------------------------
    * Procesa y guarda una firma como imagen binaria.
    * Se utiliza cuando el usuario sube su firma.

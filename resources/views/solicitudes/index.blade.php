@@ -122,24 +122,40 @@
                                     $esMiTurnoParaFirmar = true;
                                 }
                             @endphp
+                           <td class="ps-4">
+                              @php
+                               // 1. Obtenemos el nombre de la solicitud
+                               $nombre_solicitud = trim($solicitud->nombre);
+                               $partes = explode(' ', $nombre_solicitud);
+        
+                              // 2. Extraemos el primer nombre y el último apellido
+                               $nombre_buscado = $partes[0]; // Danny
+                               $apellido_buscado = end($partes); // Rosales
+        
+                              // 3. Buscamos al empleado que tenga ambos
+                              $emp = \App\Models\Empleado::where('nombre', 'LIKE', '%' . $nombre_buscado . '%')
+                                   ->where('apellido', 'LIKE', '%' . $apellido_buscado . '%')
+                                   ->first();
+                                @endphp
 
-                            <tr id="fila-{{ $solicitud->id }}">
-                                {{-- Columna: Empleado --}}
-                                <td class="ps-4">
-                                    <div class="fw-bold text-primary">{{ $solicitud->empleado ? strtoupper($solicitud->empleado->nombre . ' ' . $solicitud->empleado->apellido) : strtoupper($solicitud->nombre) }}</div>
-                                    <div class="small text-muted"><b>{{ $solicitud->empleado ? strtoupper($solicitud->empleado->cargo) : 'N/A' }}</b></div>
-                                </td>
+                               <div class="fw-bold text-primary">
+                                  {{ $emp ? strtoupper($emp->nombre . ' ' . $emp->apellido) : strtoupper($solicitud->nombre) }}
+                               </div>
+    
+                               <div class="small text-muted">
+                                    <b>{{ $emp ? strtoupper($emp->cargo) : 'CARGO NO DEFINIDO' }}</b>
+                              </div>
+                            </td>
 
-                                {{-- Columna: Tipo --}}
-                                <td class="text-center">
-                                    <span class="badge bg-white text-dark border shadow-sm">{{ strtoupper(str_replace('_',' ',$solicitud->tipo)) }}</span>
-                                </td>
+                            {{-- Columna: Tipo --}}
+                            <td class="text-center">
+                                <span class="badge bg-white text-dark border shadow-sm">{{ strtoupper(str_replace('_',' ',$solicitud->tipo)) }}</span>
+                            </td>
 
-                                {{-- Columna: Periodo --}}
-                                <td class="text-center">
-                                    <div class="small text-success"><b>INICIO:</b> {{ \Carbon\Carbon::parse($solicitud->fecha_inicio)->format('d/m/Y') }}</div>
-                                    <div class="small text-danger"><b>FIN:</b> {{ \Carbon\Carbon::parse($solicitud->fecha_fin)->format('d/m/Y') }}</div>
-                                </td>
+                            {{-- Columna: Periodo --}}
+                            <td class="text-center">
+                                <div class="small text-success"><b>INICIO:</b> {{ \Carbon\Carbon::parse($solicitud->fecha_inicio)->format('d/m/Y') }}</div>
+                                <div class="small text-danger"><b>FIN:</b> {{ \Carbon\Carbon::parse($solicitud->fecha_fin)->format('d/m/Y') }}</div>                                </td>
 
                                 {{-- Columna: Estado visual --}}
                                 <td class="text-center">
@@ -217,7 +233,7 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 function verDetalles(id) {
     const content = document.getElementById('modalBodyContent');

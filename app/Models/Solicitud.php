@@ -42,15 +42,35 @@ class Solicitud extends Model
      */
      public function empleado()
     {
-     /**
-     * Explicación de los parámetros:
-     * 1. Empleado::class: El modelo con el que se relaciona.
-     * 2. 'correo': El nombre de la columna en tu tabla 'solicitudes'.
-     * 3. 'email': El nombre de la columna en tu tabla 'empleados'.
-     */
-       return $this->belongsTo(Empleado::class, 'correo', 'email');
+    
+       // Vinculamos por ID, que es lo correcto para las relaciones de base de datos
+       return $this->belongsTo(\App\Models\Empleado::class, 'empleado_id', 'id');
     }
 
+    // 2. Crea un Accessor para obtener el empleado de forma dinámica
+public function getEmpleadoInfoAttribute()
+{
+    // 1. Prioridad 1: ID
+    if ($this->empleado_id) {
+        return Empleado::find($this->empleado_id);
+    }
+
+    // 2. Prioridad 2: Correo
+    if (!empty($this->correo)) {
+        $empleado = Empleado::where('email', $this->correo)->first();
+        if ($empleado) return $empleado;
+    }
+
+    // 3. Prioridad 3: Nombre (Solución para nombres completos)
+    if (!empty($this->nombre)) {
+        // Concatenamos nombre y apellido en la BD para comparar contra el nombre completo de la solicitud
+        return Empleado::whereRaw("CONCAT(nombre, ' ', apellido) LIKE ?", ['%' . $this->nombre . '%'])
+            ->orWhere('nombre', 'LIKE', '%' . $this->nombre . '%')
+            ->first();
+    }
+
+    return null;
+}
 
     public function firma()
     {
