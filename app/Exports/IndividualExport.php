@@ -8,6 +8,7 @@ use Illuminate\Contracts\View\View; // Permite retornar una vista Blade
 use Maatwebsite\Excel\Concerns\FromView; // Exporta Excel usando una vista
 use Maatwebsite\Excel\Concerns\ShouldAutoSize; // Ajusta automáticamente el ancho de columnas (aunque aquí no se usa)
 use Maatwebsite\Excel\Concerns\WithDrawings; // Permite insertar imágenes en el Excel
+use Maatwebsite\Excel\Concerns\WithColumnWidths;// columnas
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing; // Clase para manejar imágenes
 use Illuminate\Support\Facades\DB; // Facade para consultas SQL
 
@@ -30,6 +31,19 @@ class IndividualExport implements FromView, WithDrawings
         $this->anio = $anio;
         $this->promedio_individual = $promedio_individual;
          $this->firma = $firma;  // Guardamos la firma si aplica
+    }
+
+    //Tamaño de las columnas
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 30, // Actividad / Proyecto
+            'B' => 20, // Formulario
+            'C' => 20, // Tipo
+            'D' => 25, // Departamento
+            'E' => 15, // Fecha
+            'F' => 15, // Resultado
+        ];
     }
 
     // Método encargado de insertar el logo en el archivo Excel
@@ -61,14 +75,18 @@ class IndividualExport implements FromView, WithDrawings
         $signature = new Drawing();
         $signature->setName('Firma');
         $signature->setPath($tempPath);
-        $signature->setHeight(50); // Un poquito más grande para que resalte
+        $signature->setHeight(60); // Un poquito más grande para que resalte
 
-        // CAMBIO CLAVE: Bajamos la firma a la fila 25
-        // Si la tabla es muy larga, puedes usar: 'B' . (count($datos) + 25)
-        $signature->setCoordinates('B27'); 
-
-        // Centrado manual dentro del bloque de firma
-        $signature->setOffsetX(50); 
+        // Calculamos la fila donde termina la tabla.
+        // Si tienes encabezados + datos + pie de página, 
+        // ajusta el número (ejemplo: count($this->datos) + 12)
+        $filaFirma = count($this->datos) + 13; 
+        
+        $signature->setCoordinates('C' . $filaFirma); 
+        
+        // Ajuste fino para centrarla sobre la línea de "GESTIÓN DE TALENTO HUMANO"
+        $signature->setOffsetX(20); 
+        $signature->setOffsetY(40); // Ajusta este valor negativo para subirla o bajarla
        
         
         $drawings[] = $signature;

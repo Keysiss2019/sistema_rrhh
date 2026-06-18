@@ -403,37 +403,48 @@ class ReporteController extends Controller
 
     public function generarIndividualExcel(Request $request) {
     $empleado = Empleado::findOrFail($request->empleado_id);
-    
+
+    // Consulta consistente con la del PDF
     $query = DB::table('asignacion_evaluaciones as ae')
         ->leftJoin('proyectos as p', 'ae.proyecto_id', '=', 'p.id')
-        ->select(DB::raw("COALESCE(p.nombre, ae.tipo) as actividad"), 'ae.created_at as fecha', 'ae.puntuacion_total as resultado')
+        ->leftJoin('evaluacion_formularios as f', 'ae.formulario_id', '=', 'f.id')
+        ->select(
+            'ae.evaluador_id',
+            'ae.tipo',
+            'ae.puntuacion_total as resultado',
+            'ae.created_at as fecha',
+            'p.nombre as nombre_proyecto',
+            'f.nombre as nombre_formulario',
+            DB::raw("COALESCE(p.nombre, f.nombre, ae.tipo) as actividad")
+        )
         ->where('ae.empleado_id', $request->empleado_id)
+        ->where('ae.estado', 'Completada')
         ->whereYear('ae.created_at', $request->anio);
 
-    $periodo_texto = ($request->periodo == 'mensual' && $request->mes) ? "Mensual (" . $request->mes . ")" : "Anual Acumulado";
-    
     if ($request->periodo == 'mensual' && $request->mes) {
         $query->whereMonth('ae.created_at', $request->mes);
     }
 
     $datos = $query->get();
 
-    // 1. Buscamos la firma activa
+    // Lógica para obtener el departamento del evaluador (igual que en el PDF)
+    foreach ($datos as $dato) {
+        $nombreDepto = DB::table('empleados as e')
+            ->join('departamentos as d', 'e.departamento_id', '=', 'd.id')
+            ->where('e.id', $dato->evaluador_id)
+            ->value('d.nombre');
+        
+        $dato->depto_evaluador = $nombreDepto ?? 'Sin Depto';
+    }
+
+    $periodo_texto = ($request->periodo == 'mensual' && $request->mes) ? "Mensual (" . $request->mes . ")" : "Anual Acumulado";
     $firma = DB::table('firmas')->where('activo', 1)->first();
 
-    // 2. Pasamos los 6 argumentos: agregamos $firma al final
     return Excel::download(
-        new IndividualExport(
-            $empleado, 
-            $datos, 
-            $periodo_texto, 
-            $request->anio, 
-            $datos->avg('resultado') ?? 0, 
-            $firma 
-        ), 
+        new IndividualExport($empleado, $datos, $periodo_texto, $request->anio, $datos->avg('resultado') ?? 0, $firma), 
         "Reporte_Individual_{$empleado->apellido}.xlsx"
     );
-    }
+}
 
     private function obtenerNombreMes($mes) {
         $meses = ['01'=>'Enero','02'=>'Febrero','03'=>'Marzo','04'=>'Abril','05'=>'Mayo','06'=>'Junio','07'=>'Julio','08'=>'Agosto','09'=>'Septiembre','10'=>'Octubre','11'=>'Noviembre','12'=>'Diciembre'];

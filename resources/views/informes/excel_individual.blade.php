@@ -1,105 +1,89 @@
 <table>
-    {{-- Dejamos filas vacías para el logo en la esquina --}}
-    <tr></tr>
-
     <thead>
-        {{-- Fila 1: Encabezado Institucional --}}
+        {{-- Añade 4 filas vacías al principio para que el logo (A1) no tape el título --}}
+        <tr></tr>
+        <tr></tr>
+      
+        {{-- Encabezado Institucional (Cubre las 6 columnas) --}}
         <tr>
             <td style="width: 100px;"></td> {{-- Espacio para el logo --}}
-            <th colspan="2" style="font-size: 16pt; font-weight: bold; text-align: left; color: #003366;">
+
+            <th colspan="6" style="font-size: 16pt; font-weight: bold; text-align: left; color: #003366;">
                 INSTITUTO HONDUREÑO DE CULTURA INTERAMERICANA
             </th>
         </tr>
-
-        {{-- Fila 2: Título del Reporte --}}
         <tr>
-            <td></td>
-            <th colspan="2" style="font-size: 12pt; text-align: left; font-weight: bold;">
+            <th colspan="6" style="font-size: 12pt; text-align: left; font-weight: bold;">
                 Reporte de Desempeño Individual del Colaborador
             </th>
         </tr>
-    
-        <tr></tr>
-        <tr></tr>
+        <tr><td colspan="6"></td></tr>
 
-        {{-- Información Personal del Colaborador --}}
+        {{-- Información Personal --}}
         <tr>
-            <td style="font-weight: bold; background-color: #f2f2f2;">Colaborador:</td>
-            <td colspan="2" style="text-transform: uppercase;">{{ $empleado->nombre }} {{ $empleado->apellido }}</td>
+            <td colspan="2" style="font-weight: bold; background-color: #f2f2f2;">Colaborador:</td>
+            <td colspan="4" style="text-transform: uppercase;">{{ $empleado->nombre }} {{ $empleado->apellido }}</td>
         </tr>
         <tr>
-            <td style="font-weight: bold; background-color: #f2f2f2;">Departamento:</td>
-            <td colspan="2">{{ $empleado->departamento->nombre }}</td>
+            <td colspan="2" style="font-weight: bold; background-color: #f2f2f2;">Departamento:</td>
+            <td colspan="4">{{ $empleado->departamento->nombre }}</td>
         </tr>
         <tr>
-            <td style="font-weight: bold; background-color: #f2f2f2;">Período:</td>
-            <td colspan="2">{{ $periodo_texto }}</td>
+            <td colspan="2" style="font-weight: bold; background-color: #f2f2f2;">Período:</td>
+            <td colspan="4">{{ $periodo_texto }}</td>
         </tr>
         <tr>
-            <td style="font-weight: bold; background-color: #f2f2f2;">Año Fiscal:</td>
-            <td colspan="2">{{ $anio }}</td>
+            <td colspan="2" style="font-weight: bold; background-color: #f2f2f2;">Año Fiscal:</td>
+            <td colspan="4">{{ $anio }}</td>
         </tr>
-    
-        <tr></tr>
+        <tr><td colspan="6"></td></tr>
 
-        {{-- Encabezados de la Tabla --}}
-        <tr>
-            <th style="background-color: #003366; color: #ffffff; font-weight: bold; border: 1px solid #000000; text-align: center; width: 350px;">Actividad / Proyecto Evaluado</th>
-            <th style="background-color: #003366; color: #ffffff; font-weight: bold; border: 1px solid #000000; text-align: center; width: 150px;">Fecha de Registro</th>
-            <th style="background-color: #003366; color: #ffffff; font-weight: bold; border: 1px solid #000000; text-align: center; width: 120px;">Puntuación</th>
+        {{-- Encabezados de la Tabla (6 columnas exactas) --}}
+        <tr style="background-color: #003366; color: #ffffff;">
+            <th style="border: 1px solid #000000;">Actividad / Proyecto</th>
+            <th style="border: 1px solid #000000;">Formulario</th>
+            <th style="border: 1px solid #000000;">Tipo</th>
+            <th style="border: 1px solid #000000;">Departamento</th>
+            <th style="border: 1px solid #000000;">Fecha</th>
+            <th style="border: 1px solid #000000;">Resultado</th>
         </tr>
     </thead>
     
     <tbody>
-        @foreach($datos as $d)
-        <tr>
-            <td style="border: 1px solid #000000;">{{ $d->actividad }}</td>
-            <td style="border: 1px solid #000000; text-align: center;">{{ \Carbon\Carbon::parse($d->fecha)->format('d/m/Y') }}</td>
-            <td style="border: 1px solid #000000; text-align: center; font-weight: bold;">
-                {{ number_format($d->resultado, 2) }}%
-            </td>
-        </tr>
+        @foreach($datos as $dato)
+           <tr>
+                <td style="border: 1px solid #000000; padding: 10px;">{{ $dato->actividad }}</td>
+                <td style="border: 1px solid #000000; padding: 10px;">{{ $dato->nombre_formulario ?? 'N/A' }}</td>
+                <td style="border: 1px solid #000000; padding: 10px;">{{ $dato->tipo }}</td>
+                <td sstyle="border: 1px solid #000000; padding: 10px;">{{ $dato->depto_evaluador }}</td>
+                <td style="border: 1px solid #000000; padding: 10px;">{{ \Carbon\Carbon::parse($dato->fecha)->format('d/m/Y') }}</td>
+                <td style="border: 1px solid #000000; padding: 10px;">{{ number_format($dato->resultado, 2) }}%</td>
+           </tr>
         @endforeach
     </tbody>
 
-    <tfoot>
-        <tr></tr>
-        <tr>
-            <th colspan="2" style="text-align: right; font-weight: bold;">PROMEDIO DE RENDIMIENTO INDIVIDUAL:</th>
-            <th style="background-color: #f2f2f2; font-weight: bold; text-align: center; border: 1px solid #000000;">
-                {{ number_format($promedio_individual, 2) }}%
-            </th>
-        </tr>
-        
-        <tr></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
-        <tr><td colspan="6" style="background-color: #ffffff;">&nbsp;</td></tr>
+   <tfoot>
+      <tr>
+         <td colspan="5" style="text-align: right; font-weight: bold; border: 1px solid #000000;">PROMEDIO DE RENDIMIENTO:</td>
+          <td style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #f2f2f2;">
+             {{ number_format($promedio_individual, 2) }}%
+         </td>
+      </tr>
+    
+      {{-- Mantenemos el espacio mediante margen en el estilo, no con filas vacías --}}
+      <tr><td colspan="6" style="height: 120px;"></td></tr>
 
-
-      {{-- Texto de Gestión de Talento Humano --}}
-        <tr>
-          <td style="background-color: #ffffff;"></td>
-           <td colspan="3" style="border-top: 2px solid #000000; text-align: center; font-weight: bold; background-color: #ffffff;">
-               GESTIÓN DE TALENTO HUMANO
-           </td>
-           <td style="background-color: #ffffff;"></td>
-          <td style="background-color: #ffffff;"></td>
-       </tr>
+      <tr>
+         <td></td>
+         <td colspan="3" style="border-top: 2px solid #000000; text-align: center; font-weight: bold;">
+             GESTIÓN DE TALENTO HUMANO
+         </td>
+         <td colspan="2"></td>
+      </tr>
        <tr>
-          <td style="background-color: #ffffff;"></td>
-          <td colspan="3" style="text-align: center; background-color: #ffffff;">GTH</td>
-          <td style="background-color: #ffffff;"></td>
-          <td style="background-color: #ffffff;"></td>
-       </tr>
-    </tfoot>
+         <td></td>
+         <td colspan="3" style="text-align: center;">GTH</td>
+         <td colspan="2"></td>
+      </tr>
+   </tfoot>
 </table>
