@@ -1,3 +1,5 @@
+
+  
 <div id="contenedor-principal-show">
 
    <div id="area-impresion-final" style="background:white;padding:30px;color:black;font-family:sans-serif;">
@@ -284,7 +286,7 @@
 
         {{-- JEFE --}}
         <td>
-            <div style="height:80px;display:flex;align-items:center;justify-content:center;">
+            <div id="area-firma-jefe" style="height:80px;display:flex;align-items:center;justify-content:center;">
                 @if($firmaJefe && $firmaJefe->firma)
                     <img src="data:image/png;base64,{{ base64_encode(is_resource($firmaJefe->firma->imagen_path) ? stream_get_contents($firmaJefe->firma->imagen_path) : $firmaJefe->firma->imagen_path) }}" style="max-height:70px;">
                 @else
@@ -298,7 +300,7 @@
 
         {{-- GTH --}}
         <td>
-            <div style="height:80px;display:flex;align-items:center;justify-content:center;">
+            <div id="area-firma-gth" style="height:80px;display:flex;align-items:center;justify-content:center;">
                 @if($firmaGTH && $firmaGTH->firma)
                     <img src="data:image/png;base64,{{ base64_encode(is_resource($firmaGTH->firma->imagen_path) ? stream_get_contents($firmaGTH->firma->imagen_path) : $firmaGTH->firma->imagen_path) }}" style="max-height:70px;">
                 @else
@@ -312,46 +314,34 @@
     </tr>
   </table>
 
-   {{-- BOTONES DE FIRMA DEFINITIVOS CON ONCLICK DIRECTO --}}
-   <div class="text-center mt-4">
-    {{-- BLOQUE DEL JEFE INMEDIATO --}}
-    @if($esJefe && (!$firmaJefe || !$firmaJefe->firma))
-        <div class="d-inline-block">
-            <form action="{{ route('solicitudes.procesar', $solicitud->id) }}" method="POST" class="d-inline">
-                @csrf
-                <input type="hidden" name="estado" value="aprobado">
-                <button type="submit" class="btn btn-primary btn-sm mx-1">Firmar como Jefe</button>
-            </form>
-
-            <form action="{{ route('solicitudes.procesar', $solicitud->id) }}" method="POST" class="d-inline" 
-                  onsubmit="let motivo = prompt('Por favor, ingrese el motivo del rechazo (Obligatorio):'); if(!motivo){ return false; } this.observaciones.value = motivo; return true;">
-                @csrf
-                <input type="hidden" name="estado" value="rechazado">
-                <input type="hidden" name="observaciones" value="">
-                <button type="submit" class="btn btn-danger btn-sm mx-1">Rechazar</button>
-            </form>
+  
+    
+<div id="contenedor-botones">
+    {{-- AÑADE ESTA CONDICIÓN --}}
+      
+    @if($solicitud->estado !== 'rechazado')
+    
+        @if($esJefe && (!$firmaJefe || !$firmaJefe->firma))
+            <button type="button" class="btn btn-primary btn-sm mx-1" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
+            <button type="button" class="btn btn-danger btn-sm mx-1" onclick=" abrirModalRechazo('{{ $solicitud->id }}')">Rechazar</button>
+        @endif
+        
+        @if($esGTH && !($firmaGTH && $firmaGTH->firma))
+            <button type="button" class="btn btn-success btn-sm" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
+            <button type="button" class="btn btn-danger btn-sm mx-1" onclick="abrirModalRechazo('{{ $solicitud->id }}')">Rechazar</button>
+        @endif
+    @else
+        {{-- Si ya está rechazado, mostramos el mensaje de rechazo aquí mismo --}}
+       
+        <div style="border: 2px solid #dc3545; padding: 15px; color: #dc3545; font-weight: bold; text-align: center;">
+            SOLICITUD RECHAZADA<br>
+            <span style="color: black; font-weight: normal;">{{ $solicitud->observaciones }}</span>
         </div>
+        
     @endif
+</div>
 
-    {{-- BLOQUE DE GESTIÓN DE TALENTO HUMANO --}}
-    @if($esGTH && (!$firmaGTH || !$firmaGTH->firma))
-        <div class="d-inline-block">
-            <form action="{{ route('solicitudes.procesar', $solicitud->id) }}" method="POST" class="d-inline">
-                @csrf
-                <input type="hidden" name="estado" value="aprobado">
-                <button type="submit" class="btn btn-success btn-sm mx-1">Firmar como GTH</button>
-            </form>
-
-            <form action="{{ route('solicitudes.procesar', $solicitud->id) }}" method="POST" class="d-inline"
-                  onsubmit="let motivo = prompt('Por favor, ingrese el motivo del rechazo (Obligatorio):'); if(!motivo){ return false; } this.observaciones.value = motivo; return true;">
-                @csrf
-                <input type="hidden" name="estado" value="rechazado">
-                <input type="hidden" name="observaciones" value="">
-                <button type="submit" class="btn btn-danger btn-sm mx-1">Rechazar</button>
-            </form>
-        </div>
-    @endif
-   </div>
+</div>
 
    <div style="margin-top: 60px; font-size: 10px; color: black; font-style: italic; text-align: center;">
 
@@ -406,62 +396,4 @@
 
 </div>
 
-{{-- LÓGICA UNIFICADA PARA APERTURA DE MODAL --}}
-<script>
-function procesarFirmaModal(e, accion, estado) {
-    // Frenamos en seco cualquier envío o redirección nativa del formulario
-    if(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
 
-    let observaciones = '';
-
-    // Si es un rechazo, forzamos la captura del motivo
-    if (estado === 'rechazado') {
-        observaciones = prompt('Por favor, ingrese el motivo del rechazo (Obligatorio):');
-        if (observaciones === null) return; // Si cancela, no hace nada
-        if (observaciones.trim() === '') {
-            alert('Debe especificar un motivo para poder rechazar la solicitud.');
-            return;
-        }
-    }
-
-    // Buscamos el token CSRF disponible en el documento
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
-    // Deshabilitamos el botón que originó el evento para evitar doble petición
-    if(e && e.target) {
-        e.target.disabled = true;
-    }
-
-    // Petición directa y limpia mediante fetch
-    fetch('/solicitudes/{{ $solicitud->id }}/procesar', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': token
-        },
-        body: JSON.stringify({
-            estado: estado,
-            observaciones: observaciones
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Ahora la respuesta sí saldrá en un alert controlado dentro de tu aplicación
-        alert(data.message);
-        if (data.success) {
-            location.reload(); // Recarga la vista para actualizar el estatus de la firma
-        } else {
-            if(e && e.target) e.target.disabled = false;
-        }
-    })
-    .catch(err => {
-        console.error("Error en la petición:", err);
-        alert('Ocurrió un inconveniente de red al procesar la solicitud.');
-        if(e && e.target) e.target.disabled = false;
-    });
-}
-</script>

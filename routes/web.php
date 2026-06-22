@@ -194,6 +194,8 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 
         // Cálculo permanente
         Route::get('/calculo-permanente/{empleadoId}', [SolicitudController::class, 'calculoPermanente']);
+    
+        
     });
 
 

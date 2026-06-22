@@ -32,8 +32,10 @@ class Solicitud extends Model
         'dias',
         'horas',
         'estado',
+        'observaciones',
         'aprobado_por',
         'fecha_aprobacion',
+        'notificacion_enviada',
         'dias_anuales_aplicados'
     ];
 

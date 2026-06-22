@@ -8,6 +8,8 @@ namespace App\Http\Controllers; // Define el namespace del controlador
 use Illuminate\Support\Str;              // centraliza toda la lógica de manipulación de texto en un solo lugar
 use App\Models\Solicitud;               // Modelo de solicitudes
 use App\Models\Empleado;                // Modelo de empleados
+use App\Models\Departamento;
+use App\Models\Firma;
 use App\Models\PoliticaVacaciones;      // Modelo de políticas de vacaciones
 use App\Models\TiempoCompensatorio;     // Modelo para registrar movimientos de tiempo compensatorio
 use App\Models\SaldoTiempoCompensatorio; // Modelo para saldo de tiempo compensatorio
@@ -344,17 +346,16 @@ public function show($id)
     * Gestiona aprobación o rechazo de solicitudes.
     * Controla flujo: Jefe → GTH.
     */
-  public function procesar(Request $request, $id)
-  {
+public function procesar(Request $request, $id)
+{
     try {
         $solicitud = Solicitud::with('empleado')->findOrFail($id);
         $user = auth()->user();
         $empleado = $user->empleado;
- 
-        $rolUsuario = ($user->rol) ? $user->rol->nombre : 'SIN ROL';
+
+        $rolUsuario = ($user->rol) ? strtolower($user->rol->nombre) : 'sin rol';
         $deptoUser = $empleado ? $empleado->departamento_id : null;
 
-        // Leemos los campos normales del formulario POST
         $estado = $request->input('estado', 'aprobado');
         $observacionesRecibidas = $request->input('observaciones', '');
 
@@ -362,42 +363,35 @@ public function show($id)
             ->where('jefe_empleado_id', $empleado->id)
             ->exists();
 
-        /* ======================================
-           ACCION: APROBADO
-        ====================================== */
         if ($estado == 'aprobado') {
-
-            $firmaActiva = \App\Models\Firma::where('empleado_id', $empleado->id)
-                                ->where('activo', 1)
-                                ->first();
+            $firmaActiva = \App\Models\Firma::where('empleado_id', $empleado->id)->where('activo', 1)->first();
+            
             if (!$firmaActiva) {
-                return redirect()->back()->with('error', 'No tienes firma activa.');
+                return response()->json(['success' => false, 'message' => 'No tienes firma activa.'], 403);
             }
 
-            $rol_aprobacion = null;
-            $paso = null;
+          if (strtolower($rolUsuario) == 'gth') {
+    // Lógica de GTH
+    if (!$solicitud->aprobaciones()->where('rol_nombre','Jefe Inmediato')->exists()) {
+        return response()->json(['success' => false, 'message' => 'Falta la firma del Jefe.'], 422);
+    }
+    if ($solicitud->aprobaciones()->where('rol_nombre','GTH')->exists()) {
+        return response()->json(['success' => false, 'message' => 'Ya firmaste como GTH.'], 422);
+    }
+    $rol_aprobacion = 'GTH';
+    $paso = 2;
 
-            if ($esJefeDepto) {
-                if ($solicitud->aprobaciones()->where('rol_nombre','Jefe Inmediato')->exists()) {
-                    return redirect()->back()->with('error', 'La solicitud ya tiene la firma del Jefe Inmediato.');
-                }
-                $rol_aprobacion = 'Jefe Inmediato';
-                $paso = 1;
+} elseif ($esJefeDepto) {
+    // Lógica de Jefe
+    if ($solicitud->aprobaciones()->where('rol_nombre','Jefe Inmediato')->exists()) {
+        return response()->json(['success' => false, 'message' => 'Ya tiene firma del Jefe.'], 422);
+    }
+    $rol_aprobacion = 'Jefe Inmediato';
+    $paso = 1;
 
-            } elseif (strtolower($rolUsuario) == 'gth') {
-                if (!$solicitud->aprobaciones()->where('rol_nombre','Jefe Inmediato')->exists()) {
-                    return redirect()->back()->with('error', 'La solicitud requiere la firma del Jefe Inmediato antes que RRHH.');
-                }
-              
-                if ($solicitud->aprobaciones()->where('rol_nombre','GTH')->exists()) {
-                    return redirect()->back()->with('error', 'La solicitud ya tiene la firma de GTH.');
-                }
-                $rol_aprobacion = 'GTH';
-                $paso = 2;
-
-            } else {
-                return redirect()->back()->with('error', 'No tienes permiso para firmar esta solicitud.');
-            }
+} else {
+    return response()->json(['success' => false, 'message' => 'No tienes permisos.'], 403);
+}
 
             $solicitud->aprobaciones()->create([
                 'user_id'    => $user->id,
@@ -406,119 +400,138 @@ public function show($id)
                 'paso_orden' => $paso,
             ]);
 
-            if ($solicitud->aprobaciones()->whereIn('rol_nombre',['Jefe Inmediato','GTH'])->count() == 2) {
-                $solicitud->estado = 'aprobado';
-            } else {
-                $solicitud->estado = 'en proceso';
-            }
-
+            $solicitud->estado = ($solicitud->aprobaciones()->count() >= 2) ? 'aprobado' : 'en proceso';
             $solicitud->save();
+            $solicitud = $solicitud->fresh();
 
-            return redirect()->back()->with('success', 'Firma aplicada correctamente.');
+            $firmaJefe = $solicitud->aprobaciones()
+            ->with('firma')
+            ->where('paso_orden', 1)
+            ->first();
+
+            $firmaGTH = $solicitud->aprobaciones()
+            ->with('firma')
+            ->where('paso_orden', 2)
+            ->first();
+
+           return response()->json([
+    'success' => true,
+    'message' => 'Firma aplicada correctamente.',
+
+    'jefe_html' => $firmaJefe
+        ? '<img src="data:image/png;base64,'.base64_encode(
+            is_resource($firmaJefe->firma->imagen_path)
+                ? stream_get_contents($firmaJefe->firma->imagen_path)
+                : $firmaJefe->firma->imagen_path
+          ).'" style="max-height:70px;">'
+        : '<span style="color:#ccc;">PENDIENTE JEFE</span>',
+
+    'gth_html' => $firmaGTH
+        ? '<img src="data:image/png;base64,'.base64_encode(
+            is_resource($firmaGTH->firma->imagen_path)
+                ? stream_get_contents($firmaGTH->firma->imagen_path)
+                : $firmaGTH->firma->imagen_path
+          ).'" style="max-height:70px;">'
+        : '<span style="color:#ccc;">PENDIENTE GTH</span>',
+
+]);
         }
 
-        /* ======================================
-           ACCION: RECHAZADO
-        ====================================== */
-        elseif ($estado == 'rechazado') {
+        // Si es rechazado
+    if ($esJefeDepto || strtolower($rolUsuario) == 'gth') {
 
-            if ($esJefeDepto || strtolower($rolUsuario) == 'gth') {
-                $solicitud->estado = 'rechazado';
-                $solicitud->observaciones = $observacionesRecibidas;
-                $solicitud->aprobaciones()->delete();
-                $solicitud->save();
-                
-                return redirect()->back()->with('success', 'Solicitud rechazada con éxito.');
-            }
+  
 
-            return redirect()->back()->with('error', 'No tienes autoridad para rechazar.');
-        }
+    $solicitud->observaciones = $observacionesRecibidas;
+    $solicitud->estado = 'rechazado';
+    $solicitud->aprobado_por = $user->id;
+    $solicitud->save();
 
-        return redirect()->back()->with('error', 'Acción inválida.');
+    
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Solicitud rechazada.'
+    ]);
+}
+
+        return response()->json(['success' => false, 'message' => 'No tienes autoridad.'], 403);
 
     } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Error interno: '.$e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
     }
-   }
+}
 
-    /**
+
+ /**
     * MÉTODO: accionar
     * ---------------------------------
     * Maneja firmas de forma más directa (flujo simplificado).
     */
 
-    public function accionar(Request $request, $id)
-    {
-       try {
-          $solicitud = \App\Models\Solicitud::findOrFail($id);
-          $user = auth()->user();
-          $empleadoId = $user->empleado->id;
+public function accionar(Request $request, $id)
+{
+    try {
+        $solicitud = \App\Models\Solicitud::findOrFail($id);
+        $user = auth()->user();
+        $empleado = $user->empleado;
 
-          // Obtener departamento de la solicitud
-          $departamento = \App\Models\Departamento::where('nombre', $solicitud->departamento)->first();
-          if (!$departamento) {
-             return response()->json(['success' => false, 'message' => 'Departamento no encontrado.'], 404);
+        // 1. Identificación de roles
+        $esGth = (strtoupper(trim($user->rol->nombre ?? '')) == 'GTH');
+        $departamento = \App\Models\Departamento::where('nombre', $solicitud->departamento)->first();
+        $esJefe = ($departamento && $departamento->jefe_empleado_id == $empleado->id);
+
+        // 2. Definición de reglas según el rol
+        if ($esGth) {
+            // Verificar si el paso 1 (Jefe) ya existe
+            if (!$solicitud->aprobaciones()->where('paso_orden', 1)->exists()) {
+                return response()->json(['success' => false, 'message' => 'El jefe debe firmar primero.'], 403);
             }
-
-           // Verificar si el usuario es el jefe de ese departamento
-           if ($departamento->jefe_empleado_id == $empleadoId) {
-              $rolUsuario = 'Jefe Inmediato';
-              $estado = 'en proceso';
+            $paso = 2;
+            $nombreParaRegistro = 'GTH';
+            $estadoSiguiente = 'aprobado';
+        } elseif ($esJefe) {
             $paso = 1;
             $nombreParaRegistro = 'JEFE INMEDIATO';
-            } 
-               // Verificar si es GTH
-           elseif ($user->rol->nombre == 'GTH') {
-               // Validar que el jefe ya firmó
-                $jefeFirmo = \App\Models\SolicitudAprobacion::where('solicitud_id', $id)
-                ->where('paso_orden', 1)
-                ->exists();
-
-                if (!$jefeFirmo) {
-                    return response()->json(['success' => false, 'message' => 'El jefe debe firmar primero.'], 403);
-                }
-
-                $rolUsuario = 'GTH';
-                $estado = 'aprobado';
-                $paso = 2;
-                $nombreParaRegistro = 'GTH';
-            } else {
-              return response()->json(['success' => false, 'message' => 'Rol no autorizado para firmar esta solicitud.'], 403);
-           }
-
-           // Buscar la firma activa del usuario
-          $firma = \App\Models\Firma::where('empleado_id', $empleadoId)
-            ->where('activo', 1)
-            ->first();
-
-           if (!$firma) {
-             return response()->json(['success' => false, 'message' => 'No tienes una firma activa.'], 422);
-            }
-
-          // Guardar la firma en solicitud_aprobaciones
-            \App\Models\SolicitudAprobacion::updateOrCreate(
-            [
-                'solicitud_id' => $id,
-                'paso_orden'   => $paso
-            ],
-            [
-                'user_id' => $user->id,
-                'firma_id' => $firma->id,
-                'rol_nombre' => $nombreParaRegistro,
-                'fecha_aprobacion' => now()
-            ]
-            );
-
-           // Cambiar el estado de la solicitud
-           $solicitud->estado = $estado;
-           $solicitud->save();
-  
-            return response()->json(['success' => true]);
-
-        } catch (\Exception $e) {
-          return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            $estadoSiguiente = 'en proceso';
+        } else {
+            return response()->json(['success' => false, 'message' => 'No tienes permisos de firma.'], 403);
         }
+
+        // 3. Verificación de existencia del paso (Evitar firmas duplicadas)
+        if ($solicitud->aprobaciones()->where('paso_orden', $paso)->exists()) {
+            return response()->json(['success' => false, 'message' => "El paso $paso ya ha sido completado."]);
+        }
+
+        // 4. Guardar firma
+        $firma = \App\Models\Firma::where('empleado_id', $empleado->id)->where('activo', 1)->first();
+        if (!$firma) {
+            return response()->json(['success' => false, 'message' => 'Firma no encontrada.'], 422);
+        }
+
+        \App\Models\SolicitudAprobacion::create([
+            'solicitud_id' => $id,
+            'user_id' => $user->id,
+            'firma_id' => $firma->id,
+            'rol_nombre' => $nombreParaRegistro,
+            'paso_orden' => $paso,
+            'fecha_aprobacion' => now()
+        ]);
+
+        $solicitud->estado = $estadoSiguiente;
+        $solicitud->save();
+        
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Firma registrada con éxito.',
+          'html' => '<span class="text-success font-weight-bold">✓ Firma aplicada correctamente</span>'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
     }
+}
 
     /**
     * MÉTODO: rectificarTipo
@@ -566,7 +579,8 @@ public function show($id)
 
         return back()->with('success', 'Cambios aplicados correctamente.');
     }
-
+    
+ 
     /**
     * MÉTODO: update
     * ---------------------------------
