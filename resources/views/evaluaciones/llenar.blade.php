@@ -4,7 +4,7 @@
 <div class="container-fluid py-4">
     <div class="card shadow mb-4">
         {{-- Encabezado Estilo Institucional IHCI --}}
-        <div class="card-header py-4 text-center" style="background-color: rgb(63, 81, 243); color: white; border-bottom: 4px solid #d9534f;">
+        <div class="card-header py-4 text-center" style="background-color: rgb(144, 145, 152); color: white; border-bottom: 4px solid #d9534f;">
             <div class="d-flex justify-content-between align-items-center px-3">
                 <div class="logo-nav">
                     <img src="{{ asset('images/ihci_logo.jpg') }}" alt="IHCI" style="max-height: 60px;">
@@ -22,7 +22,7 @@
                 </div>
 
                 <div style="width: 150px;" class="text-right">
-                    <a href="{{ url()->previous() }}" class="btn btn-sm btn-danger shadow-sm">
+                    <a href="{{ url()->previous() }}" class="btn btn-sm btn-white shadow-sm">
                         <i class="fas fa-arrow-left"></i> Regresar
                     </a>
                 </div>
