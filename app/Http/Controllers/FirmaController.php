@@ -12,6 +12,8 @@ use App\Models\Firma;
 // Modelo de empleados
 use App\Models\Empleado;
 
+use Illuminate\Database\QueryException;
+
 
 // Definición del controlador de firmas
 class FirmaController extends Controller
@@ -26,14 +28,14 @@ class FirmaController extends Controller
     {
        $user = auth()->user();
     
-    // Si es administrador, trae todas. Si no, solo la suya (filtrada por empleado_id)
-    if ($user->isAdmin()) {
-        $firmas = Firma::with('empleado')->get();
-    } else {
-        $firmas = Firma::with('empleado')->where('empleado_id', $user->empleado_id)->get();
-    }
+       // Si es administrador, trae todas. Si no, solo la suya (filtrada por empleado_id)
+      if ($user->isAdmin()) {
+          $firmas = Firma::with('empleado')->get();
+        } else {
+          $firmas = Firma::with('empleado')->where('empleado_id', $user->empleado_id)->get();
+        }
 
-    $empleados = Empleado::orderBy('nombre')->get();
+       $empleados = Empleado::orderBy('nombre')->get();
 
         // Retorna la vista 'firmas.index' enviando ambas variables
         return view('firmas.index', compact('empleados', 'firmas'));
@@ -99,13 +101,30 @@ class FirmaController extends Controller
      */
    public function destroy($id)
 {
-    // Verificamos que el usuario tenga rol de admin
-   if (!auth()->user()->isAdmin()) {
+    if (!auth()->user()->isAdmin()) {
         return back()->with('error', 'No autorizado.');
     }
-    
-    $firma = Firma::findOrFail($id);
-    $firma->delete();
-    return back()->with('success', 'Eliminado.');
+
+    try {
+
+        $firma = Firma::findOrFail($id);
+        $firma->delete();
+
+        return back()->with('success', 'Eliminado.');
+
+    } catch (QueryException $e) {
+
+        return back()->with(
+            'error_integridad',
+            'No se puede eliminar esta firma porque está siendo utilizada en el sistema.'
+        );
+
+    } catch (\Exception $e) {
+
+        return back()->with(
+            'error',
+            'Ocurrió un error al eliminar la firma.'
+        );
+    }
 }
 }
