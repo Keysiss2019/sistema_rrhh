@@ -172,7 +172,7 @@
 <br><br>
 {{-- MOTIVO --}}
 <p><b>Motivo del permiso:</b></p>
-<table style="width:100%; border:1px solid black; border-collapse:collapse; font-size:12px;">
+<table style="width:100%; table-layout: fixed; border:1px solid black; border-collapse:collapse; font-size:12px;">
     @php 
         $tipo = strtolower($solicitud->tipo); 
         // Definimos las opciones que NO son "Otros"
@@ -182,20 +182,20 @@
     @endphp
 
     <tr>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'vacaciones') ? 'X' : '' }} ] A Cuenta de Vacaciones</td>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'nupcias') ? 'X' : '' }} ] Nupcias</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'vacaciones') ? 'X' : ' ' }} ] A Cuenta de Vacaciones</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'nupcias') ? 'X' : ' ' }} ] Nupcias</td>
     </tr>
     <tr>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'sin goce') ? 'X' : '' }} ] Sin Goce de Sueldo</td>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'duelo') ? 'X' : '' }} ] Duelo</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'sin goce') ? 'X' : ' ' }} ] Sin Goce de Sueldo</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'duelo') ? 'X' : ' ' }} ] Duelo</td>
     </tr>
     <tr>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'con goce') ? 'X' : '' }} ] Con Goce de Sueldo</td>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'compensatorio') ? 'X' : '' }} ] A Cuenta de Tiempo Compensatorio</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'con goce') ? 'X' : ' ' }} ] Con Goce de Sueldo</td>
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'compensatorio') ? 'X' : ' ' }} ] A Cuenta de Tiempo Compensatorio</td>
     </tr>
     <tr>
-        <td style="border:1px solid black; padding:8px;">[ {{ str_contains($tipo,'teletrabajo') ? 'X' : '' }} ] Teletrabajo</td>
-        <td style="border:1px solid black; padding:8px;">
+        <td style="border:1px solid black; padding:8px; ">[ {{ str_contains($tipo,'teletrabajo') ? 'X' : ' ' }} ] Teletrabajo</td>
+        <td style="border:1px solid black; padding:8px; ">
             [ {{ $esOtros ? 'X' : '' }} ] Otros
         </td>
     </tr>
