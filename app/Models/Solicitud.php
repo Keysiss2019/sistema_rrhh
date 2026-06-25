@@ -138,4 +138,14 @@ public function getEmpleadoInfoAttribute()
         });
     }
 
+    /**
+     * MÉTODO: DEPTO
+     * Este método se ejecuta para obtener a quien envian la solicitud. 
+     * 
+     */
+    public function departamentoSolicitado()
+    {
+      return $this->belongsTo(Departamento::class, 'solicitado_a');
+    }
+
 }

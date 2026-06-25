@@ -69,7 +69,7 @@
                     </thead>
         <tbody>
                        
-                        @forelse(isset($solicitudes) ? $solicitudes : [] as $solicitud)
+                         @forelse(isset($solicitudes) ? $solicitudes : [] as $solicitud)
                         
                             @php
                                 $aprobaciones = $solicitud->aprobaciones ?? collect();

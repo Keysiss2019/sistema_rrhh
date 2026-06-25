@@ -71,10 +71,35 @@
 
            {{-- FILA: CARGO --}}
            <div style="display: flex; align-items: flex-end; margin-bottom: 12px;">
-              <span style="font-weight: bold; white-space: nowrap; width: 140px; padding-bottom: 2px;">Cargo del solicitante:</span>
-            <div style="flex: 1; border-bottom: 1px solid black; padding-left: 5px; padding-bottom: 2px;">
-            {{ strtoupper($solicitud->empleado?->cargo ?? 'TÉCNICO') }}
+               <span style="font-weight: bold; white-space: nowrap; width: 140px; padding-bottom: 2px;">Cargo del solicitante:</span>
+               <div style="flex: 1; border-bottom: 1px solid black; padding-left: 5px; padding-bottom: 2px;">
+                  {{ strtoupper($solicitud->empleado_info?->cargo ?? '') }}
+
+                </div>
+            </div>
+
+            {{-- FILA: SOLICITADO --}}
+            <div style="display: flex; align-items: flex-end; margin-bottom: 12px;">
+               <span style="font-weight: bold; white-space: nowrap; width: 140px; padding-bottom: 2px;">
+                  Solicitado a:
+                </span>
+                <div style="flex: 1; border-bottom: 1px solid black; padding-left: 5px; padding-bottom: 2px;">
+                  {{ $solicitadoA }}
+                </div>
+           </div>
+
+           {{-- FILA: CARGO --}}
+           <div style="display: flex; align-items: flex-end; margin-bottom: 12px;">
+               <span style="font-weight: bold; white-space: nowrap; width: 140px; padding-bottom: 2px;">
+                  Cargo del autorizador:
+               </span>
+               <div style="flex: 1; border-bottom: 1px solid black; padding-left: 5px; padding-bottom: 2px;">
+                  {{ $cargoAutorizador ?? 'No definido' }}
+               </div>
+            </div>
         </div>
+
+        
     </div>
 
 </div>

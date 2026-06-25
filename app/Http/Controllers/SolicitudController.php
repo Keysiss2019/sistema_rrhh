@@ -164,14 +164,12 @@ class SolicitudController extends Controller
       $empleado = null; $saldoActual = 0; $nuevoSaldo = 0; $tiempoExacto = 'N/A';
 
       $totalDerechoHistorico = 0; $esVacaciones = false;
-
-
+      
+      $solicitadoA = null;  $cargoAutorizador = null;
 
        try {
 
-         $solicitud = \App\Models\Solicitud::findOrFail($id);
-
-       
+         $solicitud = \App\Models\Solicitud::with('empleado')->findOrFail($id);
 
           // 2. Búsqueda robusta (la que soluciona tu problema de datos)
 
@@ -255,13 +253,31 @@ class SolicitudController extends Controller
 
             }
 
+            if ($empleado && $empleado->departamento_id) {
+            // Buscamos el departamento para obtener el ID del jefe
+            $departamento = \App\Models\Departamento::find($empleado->departamento_id);
+            
+            if ($departamento && $departamento->jefe_empleado_id) {
+                // Buscamos al jefe en la tabla empleados usando el ID obtenido
+                $jefe = \App\Models\Empleado::find($departamento->jefe_empleado_id);
+                
+                if ($jefe) {
+                    $solicitadoA = $jefe->nombre . ' ' . $jefe->apellido;
+                    $cargoAutorizador = $jefe->cargo; // Usando el campo 'cargo' de tu tabla empleados
+                }
+            }
+           
+        }
+
            // 7. Renderizado
 
            return view('solicitudes.show', compact(
 
                'solicitud', 'empleado', 'saldoActual', 'nuevoSaldo',
 
-              'tiempoExacto', 'totalDerechoHistorico', 'esVacaciones'
+              'tiempoExacto', 'totalDerechoHistorico', 'esVacaciones',
+                
+              'solicitadoA', 'cargoAutorizador'
 
             ));
 
@@ -339,7 +355,7 @@ class SolicitudController extends Controller
     * Gestiona aprobación o rechazo de solicitudes.
     * Controla flujo: Jefe → GTH.
     */
-    public function procesar(Request $request, $id)
+  public function procesar(Request $request, $id)
     {
     try {
         $solicitud = Solicitud::with('empleado')->findOrFail($id);
