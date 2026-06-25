@@ -59,11 +59,19 @@ class SolicitudController extends Controller
        // lo ideal es enviar a la vista el objeto ya relacionado.
       // --- 1. FILTROS DE SEGURIDAD/VISIBILIDAD ---
 
-       if (in_array($rolNormalizado, ['administrador', 'gth', 'direccion'], true)) {
+       if (in_array($rolNormalizado, ['administrador', 'gth', 'direccion ejecutiva'], true)) {
           // Ven todo sin excepciones
         } elseif ($rolNormalizado === 'jefe inmediato') {
           $query->where('departamento', $miDepto);
         } else {
+            // Filtramos estrictamente por el ID del empleado relacionado al usuario logueado
+           if ($empleadoId) {
+              $query->where('empleado_id', $empleadoId);
+            } else {
+               // Fallback de seguridad: si no tiene un perfil de empleado, no ve nada
+               $query->whereRaw('1 = 0'); 
+            }
+
           $nombreUsuario = $user->empleado
           ? ($user->empleado->nombre . ' ' . $user->empleado->apellido)
           : null;
@@ -141,87 +149,79 @@ class SolicitudController extends Controller
        return view('solicitudes.index', compact('solicitudes'));
     }
 
+
    /**
    * MÉTODO: show
    * ---------------------------------
    * Procesa y guarda una firma como imagen binaria.
    * Se utiliza cuando el usuario sube su firma.
    */
-public function show($id)
+    public function show($id)
+    {
 
-{
+      // 1. Inicialización de variables
 
-    // 1. Inicialización de variables
+      $empleado = null; $saldoActual = 0; $nuevoSaldo = 0; $tiempoExacto = 'N/A';
 
-    $empleado = null; $saldoActual = 0; $nuevoSaldo = 0; $tiempoExacto = 'N/A';
-
-    $totalDerechoHistorico = 0; $esVacaciones = false;
-
+      $totalDerechoHistorico = 0; $esVacaciones = false;
 
 
-    try {
 
-        $solicitud = \App\Models\Solicitud::findOrFail($id);
+       try {
+
+         $solicitud = \App\Models\Solicitud::findOrFail($id);
 
        
 
-        // 2. Búsqueda robusta (la que soluciona tu problema de datos)
+          // 2. Búsqueda robusta (la que soluciona tu problema de datos)
 
-        $partes = explode(' ', trim($solicitud->nombre));
+          $partes = explode(' ', trim($solicitud->nombre));
 
-        $empleado = \App\Models\Empleado::where('nombre', 'LIKE', '%' . ($partes[0] ?? '') . '%')
+           $empleado = \App\Models\Empleado::where('nombre', 'LIKE', '%' . ($partes[0] ?? '') . '%')
 
                       ->where('apellido', 'LIKE', '%' . end($partes) . '%')
 
                       ->first();
 
+            if ($empleado) {
 
+              $fechaIngreso = \Carbon\Carbon::parse($empleado->fecha_ingreso);
 
-        if ($empleado) {
+               $ahora = now();
+ 
+               $aniosCumplidos = floor($fechaIngreso->diffInYears($ahora));
+ 
+               $tipoContrato = strtolower($empleado->tipo_contrato ?? '');
 
-            $fechaIngreso = \Carbon\Carbon::parse($empleado->fecha_ingreso);
+                $esVacaciones = str_contains(strtolower($solicitud->tipo), 'vacaciones');
 
-            $ahora = now();
+               // 3. Lógica de cálculo original (Ciclos de antigüedad)
 
-            $aniosCumplidos = floor($fechaIngreso->diffInYears($ahora));
+               if ($tipoContrato === 'permanente') {
+                   $ciclosACalcular = $aniosCumplidos + 1;
 
-            $tipoContrato = strtolower($empleado->tipo_contrato ?? '');
+                   for ($i = 1; $i <= $ciclosACalcular; $i++) {
+                      $anioBusqueda = ($i > 4) ? 4 : $i;
 
-            $esVacaciones = str_contains(strtolower($solicitud->tipo), 'vacaciones');
-
-
-
-            // 3. Lógica de cálculo original (Ciclos de antigüedad)
-
-            if ($tipoContrato === 'permanente') {
-
-                $ciclosACalcular = $aniosCumplidos + 1;
-
-                for ($i = 1; $i <= $ciclosACalcular; $i++) {
-
-                    $anioBusqueda = ($i > 4) ? 4 : $i;
-
-                    $politica = \App\Models\PoliticaVacaciones::whereRaw('LOWER(tipo_contrato) = ?', ['permanente'])
+                       $politica = \App\Models\PoliticaVacaciones::whereRaw('LOWER(tipo_contrato) = ?', ['permanente'])
 
                                 ->where('anio_antiguedad', $anioBusqueda)->first();
 
-                    if ($politica) $totalDerechoHistorico += $politica->dias_anuales;
+                       if ($politica) $totalDerechoHistorico += $politica->dias_anuales;
+
+                    }
+
+                } else {
+
+                  $politica = \App\Models\PoliticaVacaciones::whereRaw('LOWER(tipo_contrato) = ?', [$tipoContrato])->first();
+
+                  $totalDerechoHistorico = $politica ? $politica->dias_anuales : ($empleado->dias_vacaciones_anuales ?? 0);
 
                 }
 
-            } else {
+               // 4. Días consumidos (Usando tu tabla recuperada)
 
-                $politica = \App\Models\PoliticaVacaciones::whereRaw('LOWER(tipo_contrato) = ?', [$tipoContrato])->first();
-
-                $totalDerechoHistorico = $politica ? $politica->dias_anuales : ($empleado->dias_vacaciones_anuales ?? 0);
-
-            }
-
-
-
-            // 4. Días consumidos (Usando tu tabla recuperada)
-
-            $diasConsumidosOficial = (int) \DB::table('vacaciones')
+               $diasConsumidosOficial = (int) \DB::table('vacaciones')
 
                 ->where('empleado_id', $empleado->id)
 
@@ -229,57 +229,49 @@ public function show($id)
 
                 ->sum('dias_aprobados');
 
+                // 5. Lógica de saldos
 
+                if ($solicitud->estado === 'aprobado' && $esVacaciones) {
 
-            // 5. Lógica de saldos
+                  $saldoActual = $totalDerechoHistorico - ($diasConsumidosOficial - $solicitud->dias);
 
-            if ($solicitud->estado === 'aprobado' && $esVacaciones) {
+                  $nuevoSaldo  = $totalDerechoHistorico - $diasConsumidosOficial;
 
-                $saldoActual = $totalDerechoHistorico - ($diasConsumidosOficial - $solicitud->dias);
+                } else {
 
-                $nuevoSaldo  = $totalDerechoHistorico - $diasConsumidosOficial;
+                  $saldoActual = $totalDerechoHistorico - $diasConsumidosOficial;
 
-            } else {
+                  $nuevoSaldo  = $esVacaciones ? ($saldoActual - $solicitud->dias) : $saldoActual;
 
-                $saldoActual = $totalDerechoHistorico - $diasConsumidosOficial;
+                }
 
-                $nuevoSaldo  = $esVacaciones ? ($saldoActual - $solicitud->dias) : $saldoActual;
+               // 6. Tiempo Exacto
+
+               $antiguedad = $fechaIngreso->diff($ahora);
+
+               $tiempoExacto = ($antiguedad->y > 0 ? $antiguedad->y . ' años ' : '') . ($antiguedad->m > 0 ? $antiguedad->m . ' meses' : '');
+
+               if ($tiempoExacto == '') $tiempoExacto = 'Menos de un mes';
 
             }
 
+           // 7. Renderizado
 
+           return view('solicitudes.show', compact(
 
-            // 6. Tiempo Exacto
+               'solicitud', 'empleado', 'saldoActual', 'nuevoSaldo',
 
-            $antiguedad = $fechaIngreso->diff($ahora);
+              'tiempoExacto', 'totalDerechoHistorico', 'esVacaciones'
 
-            $tiempoExacto = ($antiguedad->y > 0 ? $antiguedad->y . ' años ' : '') . ($antiguedad->m > 0 ? $antiguedad->m . ' meses' : '');
+            ));
 
-            if ($tiempoExacto == '') $tiempoExacto = 'Menos de un mes';
+        } catch (\Exception $e) {
+
+          return response()->json(['html' => '<div class="alert alert-danger">Error: ' . $e->getMessage() . '</div>']);
 
         }
 
-
-
-        // 7. Renderizado
-
-      return view('solicitudes.show', compact(
-
-        'solicitud', 'empleado', 'saldoActual', 'nuevoSaldo',
-
-        'tiempoExacto', 'totalDerechoHistorico', 'esVacaciones'
-
-    ));
-
-
-
-    } catch (\Exception $e) {
-
-        return response()->json(['html' => '<div class="alert alert-danger">Error: ' . $e->getMessage() . '</div>']);
-
-    }
-
-} 
+    } 
 
 
     /**
@@ -415,12 +407,7 @@ public function show($id)
             $solicitud->estado = ($solicitud->aprobaciones()->count() >= 2) ? 'aprobado' : 'en proceso';
             $solicitud->save();
 
-            // Si ya está aprobado, enviamos el correo
-            // En lugar de buscar al empleado, usa directamente el correo de la solicitud
-         if (!empty($solicitud->correo)) {
-             \Mail::to($solicitud->correo)
-             ->send(new \App\Mail\SolicitudActualizada($solicitud, $solicitud->estado));
-           }
+           
             $solicitud = $solicitud->fresh();
 
             $firmaJefe = $solicitud->aprobaciones()
@@ -432,6 +419,18 @@ public function show($id)
             ->with('firma')
             ->where('paso_orden', 2)
             ->first();
+
+             $estadoParaCorreo = $solicitud->estado; // 'en proceso' o 'aprobado'
+
+            // Si ya está aprobado, enviamos el correo
+            // En lugar de buscar al empleado, usa directamente el correo de la solicitud
+           if (!empty($solicitud->correo)) {
+                \Mail::to($solicitud->correo)
+
+                ->send(new \App\Mail\SolicitudActualizada($solicitud, $estadoParaCorreo));
+            }
+
+           $htmlFirmas = $this->obtenerFirmasHtml($solicitud); //llama la funcion private function obtenerFirmasHtml
 
            return response()->json([
                'success' => true,
@@ -462,6 +461,7 @@ public function show($id)
            $solicitud->observaciones = $observacionesRecibidas;
            $solicitud->estado = 'rechazado';
            $solicitud->aprobado_por = $user->id;
+          
            $solicitud->save();
 
            // Enviamos el correo de rechazo
@@ -470,10 +470,15 @@ public function show($id)
              ->send(new \App\Mail\SolicitudActualizada($solicitud, $solicitud->estado));
            }
 
-           return response()->json([
-              'success' => true,
-              'message' => 'Solicitud rechazada.'
-            ]);
+           $htmlFirmas = $this->obtenerFirmasHtml($solicitud); //llama la funcion private function obtenerFirmasHtml
+
+          return response()->json([
+             'success' => true,
+             'message' => 'Firma aplicada correctamente.',
+             'jefe_html' => $htmlFirmas['jefe_html'],
+             'gth_html' => $htmlFirmas['gth_html'],
+             'motivo_texto' => $solicitud->observaciones
+           ]);
         }
 
         return response()->json(['success' => false, 'message' => 'No tienes autoridad.'], 403);
@@ -483,6 +488,28 @@ public function show($id)
     }
     }
 
+
+   /**
+    * MÉTODO: Obtener firmas
+    * ---------------------------------
+    * Maneja firmas de forma más directa (flujo simplificado).
+    */
+    private function obtenerFirmasHtml($solicitud) 
+    {
+      $aprobacionJefe = $solicitud->aprobaciones()->where('paso_orden', 1)->first();
+      $aprobacionGth = $solicitud->aprobaciones()->where('paso_orden', 2)->first();
+
+       return [
+           'jefe_html' => view('solicitudes.firma_visual', [
+               'firma' => $aprobacionJefe?->firma, 
+               'label' => 'PENDIENTE JEFE'
+            ])->render(),
+              'gth_html' => view('solicitudes.firma_visual', [
+              'firma' => $aprobacionGth?->firma, 
+              'label' => 'PENDIENTE GTH'
+            ])->render()
+        ];
+    }
 
     /**
     * MÉTODO: accionar
@@ -574,8 +601,6 @@ public function show($id)
        Mail::to($solicitud->user->email)->send(new SolicitudActualizada($solicitud, $nuevoEstado));
           return response()->json(['message' => 'Estado actualizado y correo enviado']);
     }
-
-
 
     /**
     * MÉTODO: rectificarTipo

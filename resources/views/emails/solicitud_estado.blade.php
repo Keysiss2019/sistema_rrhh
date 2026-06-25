@@ -16,28 +16,37 @@
 </head>
 <body>
     <div class="container">
-        @if($solicitud->estado == 'aprobado') <div class="header-aprobada">
-                <h2 style="margin:0;">Solicitud Aprobada</h2>
-            </div>
-            <div class="content">
-                <p>Estimado(a) <strong>{{ $solicitud->nombre }}</strong>,</p>
-                <p>Le informamos que su solicitud con código <span class="badge-aprobada">#{{ $solicitud->id }}</span> ha sido <strong>AUTORIZADA</strong>.</p>
-                
-                <div class="info-box">
-                    <p>Adjunto los detalles de la solicitud Aprobada.</p>
-                </div>
+       @if($solicitud->estado == 'aprobado')
+    <div class="header-aprobada">
+        <h2 style="margin:0;">Solicitud Aprobada</h2>
+    </div>
+    <div class="content">
+        <p>Estimado(a) <strong>{{ $solicitud->nombre }}</strong>,</p>
+        <p>Le informamos que su solicitud con código <span class="badge-aprobada">#{{ $solicitud->id }}</span> ha sido <strong>AUTORIZADA</strong>.</p>
+        <div class="info-box">
+            <p>Adjunto los detalles de la solicitud Aprobada.</p>
+        </div>
+
+        @elseif($solicitud->estado == 'en proceso')
+           <div class="header-aprobada" style="background: #f39c12;">
+              <h2 style="margin:0;">Solicitud en Proceso</h2>
+          </div>
+          <div class="content">
+              <p>Estimado(a) <strong>{{ $solicitud->nombre }}</strong>,</p>
+              <p>Le informamos que su solicitud <span style="background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">#{{ $solicitud->id }}</span> ha recibido una firma y se encuentra <strong>EN PROCESO</strong> de revisión final.</p>
+
         @else
-            <div class="header-rechazada">
-                <h2 style="margin:0;">Solicitud Rechazada</h2>
-            </div>
-            <div class="content">
-                <p>Estimado(a) <strong>{{ $solicitud->nombre }}</strong>,</p>
-                <p>Lamentamos informarle que su solicitud con código <span class="badge-rechazada">#{{ $solicitud->id }}</span> ha sido <strong>RECHAZADA</strong>.</p>
-                
-                <div class="info-box" style="border-left-color: #c0392b;">
-                    <p><strong>Motivo del rechazo:</strong></p>
-                    <p>{{ $solicitud->observaciones ?? 'No se especificó un motivo.' }}</p>
-                </div>
+           <div class="header-rechazada">
+              <h2 style="margin:0;">Solicitud Rechazada</h2>
+          </div>
+          <div class="content">
+              <p>Estimado(a) <strong>{{ $solicitud->nombre }}</strong>,</p>
+              <p>Lamentamos informarle que su solicitud con código <span class="badge-rechazada">#{{ $solicitud->id }}</span> ha sido <strong>RECHAZADA</strong>.</p>
+        
+           <div class="info-box" style="border-left-color: #c0392b;">
+              <p><strong>Motivo del rechazo:</strong></p>
+               <p>{{ $solicitud->observaciones ?? 'No se especificó un motivo.' }}</p>
+          </div>
         @endif
 
             <p>Atentamente,<br>

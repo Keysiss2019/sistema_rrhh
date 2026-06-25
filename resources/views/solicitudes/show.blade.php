@@ -316,29 +316,41 @@
 
   
     
-<div id="contenedor-botones">
-    {{-- AÑADE ESTA CONDICIÓN --}}
-      
-    @if($solicitud->estado !== 'rechazado')
+<div id="contenedor-botones-{{ $solicitud->id }}">
     
-        @if($esJefe && (!$firmaJefe || !$firmaJefe->firma))
-            <button type="button" class="btn btn-primary btn-sm mx-1" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
-            <button type="button" class="btn btn-danger btn-sm mx-1" onclick=" abrirModalRechazo('{{ $solicitud->id }}')">Rechazar</button>
-        @endif
-        
-        @if($esGTH && !($firmaGTH && $firmaGTH->firma))
-            <button type="button" class="btn btn-success btn-sm" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
-            <button type="button" class="btn btn-danger btn-sm mx-1" onclick="abrirModalRechazo('{{ $solicitud->id }}')">Rechazar</button>
-        @endif
-    @else
+    {{-- GRUPO 1: BOTONES (Firmar/Rechazar) --}}
+    <div id="grupo-botones-{{ $solicitud->id }}">
+        @if($solicitud->estado !== 'rechazado')
+            @if($esJefe && (!$firmaJefe || !$firmaJefe->firma))
+                <button type="button" class="btn btn-primary btn-sm" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('zona-rechazo-{{ $solicitud->id }}').style.display='block'">Rechazar</button>
+            @endif
+            
+            @if($esGTH && !($firmaGTH && $firmaGTH->firma))
+              <button type="button" class="btn btn-success btn-sm" onclick="procesarSolicitud('{{ $solicitud->id }}', 'aprobado')">Firmar</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('zona-rechazo-{{ $solicitud->id }}').style.display='block'">Rechazar</button>
+           @endif
+        @else
         {{-- Si ya está rechazado, mostramos el mensaje de rechazo aquí mismo --}}
-       
         <div style="border: 2px solid #dc3545; padding: 15px; color: #dc3545; font-weight: bold; text-align: center;">
             SOLICITUD RECHAZADA<br>
             <span style="color: black; font-weight: normal;">{{ $solicitud->observaciones }}</span>
         </div>
-        
-    @endif
+        @endif
+    </div>
+
+    {{--ZONA DE RECHAZO (Se oculta sola al rechazar) --}}
+    <div id="zona-rechazo-{{ $solicitud->id }}" style="display:none; margin-top: 20px;">
+        <textarea id="txtMotivoRechazo-{{ $solicitud->id }}" class="form-control"></textarea>
+        <button type="button" class="btn btn-danger mt-2" onclick="confirmarRechazoIntegrado({{ $solicitud->id }})">Confirmar</button>
+    </div>
+</div>
+
+{{-- ZONA DE RESULTADO (Aparece al rechazar) --}}
+<div id="zona-rechazo-debajo-firmas-{{ $solicitud->id }}" style="display:none; border: 2px solid #dc3545; padding: 15px; margin-top: 20px;">
+    <strong>SOLICITUD RECHAZADA</strong><br>
+    <span id="texto-motivo-final-{{ $solicitud->id }}"></span>
+    
 </div>
 
 </div>
@@ -395,5 +407,6 @@
    </div>
 
 </div>
+
 
 

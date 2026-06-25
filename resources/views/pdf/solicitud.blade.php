@@ -215,9 +215,8 @@
         </td>
 
         {{-- COLUMNA 3: V°B° GESTIÓN TH --}}
-        {{-- COLUMNA 3: V°B° GESTIÓN TH --}}
 <td style="width: 33%;">
-    <div style="height: 60px; margin-bottom: 5px; border: 1px dashed #ccc;"> {{-- Borde temporal para ver el contenedor --}}
+    <div style="height: 60px; margin-bottom: 5px;"> 
         @php 
             // Buscamos el registro de GTH (ajusta 'gth' si tu base de datos lo guarda diferente)
             $gth = $aprobaciones->first(function($item) {
@@ -232,7 +231,7 @@
                 <span style="font-size: 10px; color: orange;">(Registro encontrado, sin firma)</span>
             @endif
         @else
-            <span style="font-size: 10px; color: red;">(No se encontró rol GTH)</span>
+            <span></span>
         @endif
     </div>
     <div style="border-top: 1px solid black; width: 80%; margin: auto; padding-top: 5px;">

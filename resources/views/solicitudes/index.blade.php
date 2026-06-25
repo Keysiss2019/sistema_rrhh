@@ -67,7 +67,7 @@
                             <th class="bg-primary text-white">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+        <tbody>
                        
                         @forelse(isset($solicitudes) ? $solicitudes : [] as $solicitud)
                         
@@ -221,24 +221,10 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalRechazo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Motivo de Rechazo</h5>
-            </div>
-            <div class="modal-body">
-                <textarea id="txtMotivoRechazo" class="form-control" rows="3" placeholder="Escribe el motivo del rechazo aquí..."></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="confirmarRechazo()">Confirmar y Rechazar</button>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
+    //Botón de ver
 function verDetalles(id) {
     const content = document.getElementById('modalBodyContent');
     const modalElement = document.getElementById('verSolicitudModal');
@@ -282,6 +268,7 @@ function verDetalles(id) {
     });
 }
 
+//Firmas
 window.procesarFirma = function(id, estado = 'aprobado', observaciones = '') {
   
     fetch(`/solicitudes/${id}/procesar`, {
@@ -303,32 +290,32 @@ window.procesarFirma = function(id, estado = 'aprobado', observaciones = '') {
         if (data.success) {
 
            Swal.fire({
-    icon: 'success',
-    title: 'Éxito',
-    text: data.message,
-    timer: 2000,
-    showConfirmButton: false
-}).then(() => {
+              icon: 'success',
+              title: 'Éxito',
+              text: data.message,
+              timer: 2000,
+             showConfirmButton: false
+            }).then(() => {
 
-    const jefe = document.querySelector('#area-firma-jefe');
-    if (jefe && data.jefe_html) {
-        jefe.innerHTML = data.jefe_html;
-    }
+              const jefe = document.querySelector('#area-firma-jefe');
+               if (jefe && data.jefe_html) {
+                  jefe.innerHTML = data.jefe_html;
+                }
 
-    const gth = document.querySelector('#area-firma-gth');
-    if (gth && data.gth_html) {
-        gth.innerHTML = data.gth_html;
-    }
+              const gth = document.querySelector('#area-firma-gth');
+              if (gth && data.gth_html) {
+                  gth.innerHTML = data.gth_html;
+                }
 
-      // Ocultar botones
-    const contenedorBotones = document.querySelector('#contenedor-botones');
-    if (contenedorBotones) {
-        contenedorBotones.style.display = 'none';
-    }
+              // Ocultar botones
+              const contenedorBotones = document.querySelector('#contenedor-botones');
+              if (contenedorBotones) {
+                  contenedorBotones.style.display = 'none';
+                }
 
    
 
-});
+            });
 
         } else {
 
@@ -345,152 +332,112 @@ window.procesarFirma = function(id, estado = 'aprobado', observaciones = '') {
 };
 
 window.procesarSolicitud = function(id, estado) {
-
-    let observaciones = '';
-
- 
+    Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     fetch(`/solicitudes/${id}/procesar`, {
+        
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            modo: 'accionar',
-            estado: estado,
-            observaciones: observaciones
-        })
-    })
-    .then(async response => {
-
-        const data = await response.json();
-
-        console.log('STATUS:', response.status);
-        console.log('RESPONSE:', data);
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Error del servidor');
-        }
-
-        return data;
-    })
-    .then(data => {
-
-        if (data.success) {
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: data.message,
-                timer: 2000,
-                showConfirmButton: false
-            });
-
-             // JEFE
-        const jefe = document.querySelector('#area-firma-jefe');
-        if (jefe && data.jefe_html) {
-            jefe.innerHTML = data.jefe_html;
-        }
-
-        // GTH
-        const gth = document.querySelector('#area-firma-gth');
-        if (gth && data.gth_html) {
-            gth.innerHTML = data.gth_html;
-        }
-
-         const contenedorBotones = document.querySelector('#contenedor-botones');
-                if (contenedorBotones) {
-                  contenedorBotones.style.display = 'none';
-                }
-
-                // 2. Éxito y recarga controlada
-            Swal.fire({
-                icon: 'success',
-                title: 'Procesado',
-                text: data.message,
-                timer: 1500,
-                showConfirmButton: false,
-                willClose: () => {
-                    // Recargamos para asegurar que todo el estado de la vista sea correcto
-                    window.location.reload();
-                }
-            });
-        } else {
-
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message
-            });
-            
-        }
-
-    })
-    .catch(error => {
-
-        console.error('ERROR COMPLETO:', error);
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message
-        });
-
-    });
-
-};
-
-let idSolicitudActual = null;
-
-// Abre el modal y guarda el ID
-window.abrirModalRechazo = function(id) {
-    idSolicitudActual = id;
-    document.getElementById('txtMotivoRechazo').value = ''; // Limpiar textarea
-    const contenedorBotones = document.querySelector('#modalBodyContent #contenedor-botones');
-
-if (contenedorBotones) {
-    contenedorBotones.style.display = 'none';
-}
-    const modal = new bootstrap.Modal(document.getElementById('modalRechazo'));
-    modal.show();
-};
-
-// Se ejecuta al dar clic en el botón del modal
-window.confirmarRechazo = function() {
-    const motivo = document.getElementById('txtMotivoRechazo').value;
-    if (!motivo.trim()) return Swal.fire('Error', 'Escribe un motivo.', 'warning');
-
-    fetch(`/solicitudes/${idSolicitudActual}/procesar`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ modo: 'accionar', estado: 'rechazado', observaciones: motivo })
+        body: JSON.stringify({ estado: estado })
     })
     .then(res => res.json())
     .then(data => {
+        console.log("Respuesta del servidor:", data);
         if (data.success) {
-            // Solo cerramos el modal
-            bootstrap.Modal.getInstance(document.getElementById('modalRechazo')).hide();
+            // 1. Actualizamos el HTML SIN recargar la página
+            const elJefe = document.getElementById('area-firma-jefe');
+            const elGth = document.getElementById('area-firma-gth');
+            
+            if (elJefe) elJefe.innerHTML = data.jefe_html;
+            if (elGth) elGth.innerHTML = data.gth_html;
 
-            // Y recargamos; el Blade se encargará de no mostrar los botones
+            // 2. Ocultar botones de acción en el modal
+            const contBotones = document.getElementById('contenedor-botones');
+            if (contBotones) contBotones.style.display = 'none';
+
+            // 3. Notificación (SweetAlert no cierra el modal por sí solo)
             Swal.fire({
                 icon: 'success',
-                title: 'Éxito',
-                text: 'Solicitud rechazada.',
-                timer: 1000,
+                title: '¡Firmado!',
+                text: data.message,
+                timer: 1500,
                 showConfirmButton: false
             }).then(() => {
-                location.reload();
+                // 2. UNA VEZ EL MENSAJE SE CIERRA, ejecutamos la limpieza visual
+                
+                // Ocultar formulario de entrada
+                document.getElementById('cuerpo-entrada-rechazo').style.display = 'none';
+                document.getElementById('footer-entrada-rechazo').style.display = 'none';
+                document.querySelector('#modalRechazo .modal-header').style.display = 'none';
+
+                // Actualizar firmas
+                if(data.jefe_html) document.getElementById('area-firma-jefe').innerHTML = data.jefe_html;
+                if(data.gth_html) document.getElementById('area-firma-gth').innerHTML = data.gth_html;
+
+                // Mostrar motivo debajo de las firmas
+                const zonaRechazo = document.getElementById('zona-rechazo-debajo-firmas');
+                if (zonaRechazo) {
+                    zonaRechazo.style.display = 'block';
+                    document.getElementById('texto-motivo-final').innerText = motivo;
+                }
             });
+
+          
+
         } else {
             Swal.fire('Error', data.message, 'error');
         }
     });
 };
 
+// Actualizar la pagina 
+document.addEventListener('hidden.bs.modal', function (event) {
+    // Verificamos si el elemento que se cerró es realmente un modal
+    if (event.target.classList.contains('modal')) {
+        console.log("Detectado cierre de modal, recargando...");
+        window.location.href = window.location.href; 
+    }
+});
+
+
+// Rechazar solicitud
+
+window.confirmarRechazoIntegrado = function(id) {
+    // Buscamos el textarea específico de esta solicitud
+    const motivo = document.getElementById(`txtMotivoRechazo-${id}`).value;
+    
+    if (!motivo.trim()) return Swal.fire('Error', 'Escribe un motivo.', 'warning');
+
+    Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    fetch(`/solicitudes/${id}/procesar`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ estado: 'rechazado', observaciones: motivo })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) return Swal.fire('Error', data.message, 'error');
+
+        // Ocultar elementos de la solicitud específica
+        document.getElementById(`zona-rechazo-${id}`).style.display = 'none';
+        document.getElementById(`contenedor-botones-${id}`).style.display = 'none';
+
+        // Mostrar resultado de la solicitud específica
+        const zonaFinal = document.getElementById(`zona-rechazo-debajo-firmas-${id}`);
+        const spanTexto = document.getElementById(`texto-motivo-final-${id}`);
+        
+        spanTexto.innerText = motivo;
+        zonaFinal.style.display = 'block';
+
+        Swal.fire({ icon: 'success', title: 'Rechazado', timer: 1500, showConfirmButton: false });
+    });
+};
 </script>
 
 @endsection
