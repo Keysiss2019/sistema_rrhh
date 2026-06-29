@@ -45,8 +45,11 @@ public function login(Request $request) {
         }
 
         // 2. Validar relación y estado del EMPLEADO
-        if (!$user->empleado || $user->empleado->estado !== 'activo' || $user->empleado->fecha_baja !== null) {
-            return back()->withErrors(['usuario' => 'Acceso deshabilitado.']);
+        // 2. Validar relación y estado del EMPLEADO (Solo si NO es administrador)
+       if (!$user->isAdmin()) {
+           if (!$user->empleado || $user->empleado->estado !== 'activo' || $user->empleado->fecha_baja !== null) {
+              return back()->withErrors(['usuario' => 'Acceso deshabilitado.']);
+            }
         }
 
         // SI PASA LAS VALIDACIONES, RECIÉN AQUÍ INICIAMOS SESIÓN
